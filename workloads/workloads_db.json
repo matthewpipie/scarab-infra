@@ -37,102 +37,60 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":1013732,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":124
-            },
-            "size_bytes":2090572464
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":18313,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":119
-            },
-            "size_bytes":1534691500
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":356145,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":318
-            },
-            "size_bytes":1783731528
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3784177,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":125
-            },
-            "size_bytes":1336115538
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3785374,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":134
-            },
-            "size_bytes":1396287333
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3801151,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.16666666666666666,
             "base_memory_mb_by_mode":{
-              "memtrace":141
-            },
-            "size_bytes":4062186778
-          },
-          {
-            "cluster_id":3804254,
-            "segment_id":6,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":115
-            },
-            "size_bytes":4248630566
-          },
-          {
-            "cluster_id":3815911,
-            "segment_id":7,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":126
-            },
-            "size_bytes":4083616790
-          },
-          {
-            "cluster_id":3823950,
-            "segment_id":8,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":120
-            },
-            "size_bytes":4230671799
-          },
-          {
-            "cluster_id":482826,
-            "segment_id":9,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":101
-            },
-            "size_bytes":4181149616
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -141,102 +99,36 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":1630230,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.3333333333333333,
             "base_memory_mb_by_mode":{
-              "memtrace":148
-            },
-            "size_bytes":1027638136
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1632013,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.3333333333333333,
             "base_memory_mb_by_mode":{
-              "memtrace":574
-            },
-            "size_bytes":937071327
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2760839,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.3333333333333333,
             "base_memory_mb_by_mode":{
-              "memtrace":135
-            },
-            "size_bytes":1474749945
-          },
-          {
-            "cluster_id":2760885,
-            "segment_id":3,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":222
-            },
-            "size_bytes":3648214478
-          },
-          {
-            "cluster_id":2760886,
-            "segment_id":4,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":179
-            },
-            "size_bytes":3104713645
-          },
-          {
-            "cluster_id":2761166,
-            "segment_id":5,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":149
-            },
-            "size_bytes":2704318498
-          },
-          {
-            "cluster_id":2761174,
-            "segment_id":6,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":156
-            },
-            "size_bytes":834506820
-          },
-          {
-            "cluster_id":2761345,
-            "segment_id":7,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":188
-            },
-            "size_bytes":1062942746
-          },
-          {
-            "cluster_id":2761379,
-            "segment_id":8,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":138
-            },
-            "size_bytes":1516494295
-          },
-          {
-            "cluster_id":2762607,
-            "segment_id":9,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":220
-            },
-            "size_bytes":834451475
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -245,102 +137,188 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":2294625,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":351
-            },
-            "size_bytes":716449610
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294629,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":454
-            },
-            "size_bytes":794984952
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294633,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":651
-            },
-            "size_bytes":780253374
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294638,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":1091
-            },
-            "size_bytes":755365250
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294648,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":827
-            },
-            "size_bytes":712143514
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294650,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":252
-            },
-            "size_bytes":872116625
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2294678,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":253
-            },
-            "size_bytes":788533244
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2296542,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":101
-            },
-            "size_bytes":749026034
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2296566,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":142
-            },
-            "size_bytes":1218993190
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2302299,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.045454545454545456,
             "base_memory_mb_by_mode":{
-              "memtrace":119
-            },
-            "size_bytes":711063135
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.045454545454545456,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -349,102 +327,44 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":636293,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.25,
             "base_memory_mb_by_mode":{
-              "memtrace":208
-            },
-            "size_bytes":168728089
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":636312,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.25,
             "base_memory_mb_by_mode":{
-              "memtrace":106
-            },
-            "size_bytes":57969956
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":636343,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.25,
             "base_memory_mb_by_mode":{
-              "memtrace":180
-            },
-            "size_bytes":212291967
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":636344,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.25,
             "base_memory_mb_by_mode":{
-              "memtrace":237
-            },
-            "size_bytes":1118315392
-          },
-          {
-            "cluster_id":636345,
-            "segment_id":4,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":275
-            },
-            "size_bytes":1085956696
-          },
-          {
-            "cluster_id":636346,
-            "segment_id":5,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":219
-            },
-            "size_bytes":1060897079
-          },
-          {
-            "cluster_id":636347,
-            "segment_id":6,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":226
-            },
-            "size_bytes":1083662904
-          },
-          {
-            "cluster_id":636350,
-            "segment_id":7,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":130
-            },
-            "size_bytes":53698312
-          },
-          {
-            "cluster_id":636468,
-            "segment_id":8,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":144
-            },
-            "size_bytes":44364895
-          },
-          {
-            "cluster_id":636786,
-            "segment_id":9,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":215
-            },
-            "size_bytes":178642750
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -453,102 +373,724 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":3342967,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":122
-            },
-            "size_bytes":616009010
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3343074,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":146
-            },
-            "size_bytes":807001480
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3343075,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":108
-            },
-            "size_bytes":747824853
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3343085,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":125
-            },
-            "size_bytes":640255076
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3343086,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":132
-            },
-            "size_bytes":727265851
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3351885,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":1081
-            },
-            "size_bytes":476702218
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3351917,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":928
-            },
-            "size_bytes":478321427
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3352034,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":923
-            },
-            "size_bytes":490131687
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3352571,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":211
-            },
-            "size_bytes":480343265
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3354234,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.011235955056179775,
             "base_memory_mb_by_mode":{
-              "memtrace":146
-            },
-            "size_bytes":592176360
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":22,
+            "segment_id":22,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":23,
+            "segment_id":23,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":24,
+            "segment_id":24,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":25,
+            "segment_id":25,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":26,
+            "segment_id":26,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":27,
+            "segment_id":27,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":28,
+            "segment_id":28,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":29,
+            "segment_id":29,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":30,
+            "segment_id":30,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":31,
+            "segment_id":31,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":32,
+            "segment_id":32,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":33,
+            "segment_id":33,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":34,
+            "segment_id":34,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":35,
+            "segment_id":35,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":36,
+            "segment_id":36,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":37,
+            "segment_id":37,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":38,
+            "segment_id":38,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":39,
+            "segment_id":39,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":40,
+            "segment_id":40,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":41,
+            "segment_id":41,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":42,
+            "segment_id":42,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":43,
+            "segment_id":43,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":44,
+            "segment_id":44,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":45,
+            "segment_id":45,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":46,
+            "segment_id":46,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":47,
+            "segment_id":47,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":48,
+            "segment_id":48,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":49,
+            "segment_id":49,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":50,
+            "segment_id":50,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":51,
+            "segment_id":51,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":52,
+            "segment_id":52,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":53,
+            "segment_id":53,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":54,
+            "segment_id":54,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":55,
+            "segment_id":55,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":56,
+            "segment_id":56,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":57,
+            "segment_id":57,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":58,
+            "segment_id":58,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":59,
+            "segment_id":59,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":60,
+            "segment_id":60,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":61,
+            "segment_id":61,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":62,
+            "segment_id":62,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":63,
+            "segment_id":63,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":64,
+            "segment_id":64,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":65,
+            "segment_id":65,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":66,
+            "segment_id":66,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":67,
+            "segment_id":67,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":68,
+            "segment_id":68,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":69,
+            "segment_id":69,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":70,
+            "segment_id":70,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":71,
+            "segment_id":71,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":72,
+            "segment_id":72,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":73,
+            "segment_id":73,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":74,
+            "segment_id":74,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":75,
+            "segment_id":75,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":76,
+            "segment_id":76,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":77,
+            "segment_id":77,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":78,
+            "segment_id":78,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":79,
+            "segment_id":79,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":80,
+            "segment_id":80,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":81,
+            "segment_id":81,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":82,
+            "segment_id":82,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":83,
+            "segment_id":83,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":84,
+            "segment_id":84,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":85,
+            "segment_id":85,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":86,
+            "segment_id":86,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":87,
+            "segment_id":87,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":88,
+            "segment_id":88,
+            "weight":0.011235955056179775,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -557,102 +1099,148 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":1338450,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":301
-            },
-            "size_bytes":2888856515
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1338451,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":312
-            },
-            "size_bytes":1830691537
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1340815,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":154
-            },
-            "size_bytes":1610802883
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1340853,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":161
-            },
-            "size_bytes":1624473428
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1340857,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":638
-            },
-            "size_bytes":1779301096
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1341016,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":733
-            },
-            "size_bytes":2892544015
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1341044,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":746
-            },
-            "size_bytes":2781909090
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1341267,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":339
-            },
-            "size_bytes":1940904086
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1341302,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":164
-            },
-            "size_bytes":1609481066
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1344500,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.058823529411764705,
             "base_memory_mb_by_mode":{
-              "memtrace":265
-            },
-            "size_bytes":2830322558
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.058823529411764705,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -661,102 +1249,204 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":100564,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":623
-            },
-            "size_bytes":1245094421
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":79694,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":243
-            },
-            "size_bytes":1360710052
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":84783,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":718
-            },
-            "size_bytes":1227779574
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":87646,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":308
-            },
-            "size_bytes":1376979360
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":87991,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":303
-            },
-            "size_bytes":1389738773
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":88002,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":291
-            },
-            "size_bytes":3272042818
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":88491,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":272
-            },
-            "size_bytes":3283209306
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":89308,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":277
-            },
-            "size_bytes":3284128383
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":89851,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":308
-            },
-            "size_bytes":3279257691
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":92744,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.041666666666666664,
             "base_memory_mb_by_mode":{
-              "memtrace":314
-            },
-            "size_bytes":1314582137
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":22,
+            "segment_id":22,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":23,
+            "segment_id":23,
+            "weight":0.041666666666666664,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -765,102 +1455,156 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":2376230,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":128
-            },
-            "size_bytes":421863745
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2376612,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":187
-            },
-            "size_bytes":623890710
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2376624,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":197
-            },
-            "size_bytes":466790907
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2384784,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":265
-            },
-            "size_bytes":3663316968
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2394172,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":312
-            },
-            "size_bytes":3671485351
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2397245,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":548
-            },
-            "size_bytes":438627933
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2397512,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":282
-            },
-            "size_bytes":3708287746
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2397540,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":533
-            },
-            "size_bytes":437249099
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2397578,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":269
-            },
-            "size_bytes":3597781722
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":2397605,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.05555555555555555,
             "base_memory_mb_by_mode":{
-              "memtrace":500
-            },
-            "size_bytes":456117660
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.05555555555555555,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -869,102 +1613,332 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":3397110,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":134
-            },
-            "size_bytes":1083432673
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3397177,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":151
-            },
-            "size_bytes":1363224658
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3397179,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":161
-            },
-            "size_bytes":1288334228
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3397187,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":132
-            },
-            "size_bytes":1183762972
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3397188,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":172
-            },
-            "size_bytes":1260484742
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3403322,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":1034
-            },
-            "size_bytes":791667250
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3403460,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":529
-            },
-            "size_bytes":754424846
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3403542,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":625
-            },
-            "size_bytes":807935445
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3405246,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":167
-            },
-            "size_bytes":838615562
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3457824,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.025,
             "base_memory_mb_by_mode":{
-              "memtrace":95
-            },
-            "size_bytes":759968279
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":22,
+            "segment_id":22,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":23,
+            "segment_id":23,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":24,
+            "segment_id":24,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":25,
+            "segment_id":25,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":26,
+            "segment_id":26,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":27,
+            "segment_id":27,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":28,
+            "segment_id":28,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":29,
+            "segment_id":29,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":30,
+            "segment_id":30,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":31,
+            "segment_id":31,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":32,
+            "segment_id":32,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":33,
+            "segment_id":33,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":34,
+            "segment_id":34,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":35,
+            "segment_id":35,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":36,
+            "segment_id":36,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":37,
+            "segment_id":37,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":38,
+            "segment_id":38,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":39,
+            "segment_id":39,
+            "weight":0.025,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -973,102 +1947,420 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":857951,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":163
-            },
-            "size_bytes":743249680
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862092,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":138
-            },
-            "size_bytes":788793086
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862093,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":141
-            },
-            "size_bytes":649652436
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862102,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":129
-            },
-            "size_bytes":586444051
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862103,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":169
-            },
-            "size_bytes":624633256
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862154,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":541
-            },
-            "size_bytes":475499405
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862162,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":174
-            },
-            "size_bytes":772788463
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":862681,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":180
-            },
-            "size_bytes":563302317
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":865437,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":518
-            },
-            "size_bytes":495128146
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":865491,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.0196078431372549,
             "base_memory_mb_by_mode":{
-              "memtrace":97
-            },
-            "size_bytes":478664544
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":22,
+            "segment_id":22,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":23,
+            "segment_id":23,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":24,
+            "segment_id":24,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":25,
+            "segment_id":25,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":26,
+            "segment_id":26,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":27,
+            "segment_id":27,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":28,
+            "segment_id":28,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":29,
+            "segment_id":29,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":30,
+            "segment_id":30,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":31,
+            "segment_id":31,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":32,
+            "segment_id":32,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":33,
+            "segment_id":33,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":34,
+            "segment_id":34,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":35,
+            "segment_id":35,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":36,
+            "segment_id":36,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":37,
+            "segment_id":37,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":38,
+            "segment_id":38,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":39,
+            "segment_id":39,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":40,
+            "segment_id":40,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":41,
+            "segment_id":41,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":42,
+            "segment_id":42,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":43,
+            "segment_id":43,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":44,
+            "segment_id":44,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":45,
+            "segment_id":45,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":46,
+            "segment_id":46,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":47,
+            "segment_id":47,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":48,
+            "segment_id":48,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":49,
+            "segment_id":49,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":50,
+            "segment_id":50,
+            "weight":0.0196078431372549,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -1077,102 +2369,28 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":3287020,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.5,
             "base_memory_mb_by_mode":{
-              "memtrace":229
-            },
-            "size_bytes":755581948
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":3287021,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.5,
             "base_memory_mb_by_mode":{
-              "memtrace":220
-            },
-            "size_bytes":397947682
-          },
-          {
-            "cluster_id":3287022,
-            "segment_id":2,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":229
-            },
-            "size_bytes":567710744
-          },
-          {
-            "cluster_id":3287023,
-            "segment_id":3,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":358
-            },
-            "size_bytes":436626255
-          },
-          {
-            "cluster_id":3287025,
-            "segment_id":4,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":277
-            },
-            "size_bytes":543350252
-          },
-          {
-            "cluster_id":3287026,
-            "segment_id":5,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":236
-            },
-            "size_bytes":686236258
-          },
-          {
-            "cluster_id":3287027,
-            "segment_id":6,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":228
-            },
-            "size_bytes":625746367
-          },
-          {
-            "cluster_id":3287028,
-            "segment_id":7,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":231
-            },
-            "size_bytes":722641251
-          },
-          {
-            "cluster_id":3287330,
-            "segment_id":8,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":115
-            },
-            "size_bytes":411726536
-          },
-          {
-            "cluster_id":3287332,
-            "segment_id":9,
-            "weight":0.1,
-            "base_memory_mb_by_mode":{
-              "memtrace":107
-            },
-            "size_bytes":331921426
+              "memtrace":4096
+            }
           }
         ]
       },
@@ -1181,102 +2399,676 @@
           "prioritized_mode":"memtrace",
           "memtrace":{
             "image_name":"allbench_traces",
-            "segment_size":10000000,
-            "warmup":10000000,
-            "trace_type":"trace_then_cluster",
+            "segment_size":300000000,
+            "warmup":50000000,
+            "trace_type":"capped_iterative_trace",
             "whole_trace_file":null
           }
         },
         "simpoints":[
           {
-            "cluster_id":1292577,
+            "cluster_id":0,
             "segment_id":0,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":129
-            },
-            "size_bytes":774020469
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293239,
+            "cluster_id":1,
             "segment_id":1,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":789
-            },
-            "size_bytes":605152042
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293267,
+            "cluster_id":2,
             "segment_id":2,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":487
-            },
-            "size_bytes":654739310
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293412,
+            "cluster_id":3,
             "segment_id":3,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":981
-            },
-            "size_bytes":612598220
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293476,
+            "cluster_id":4,
             "segment_id":4,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":844
-            },
-            "size_bytes":611222205
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293538,
+            "cluster_id":5,
             "segment_id":5,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":579
-            },
-            "size_bytes":615545278
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293622,
+            "cluster_id":6,
             "segment_id":6,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":773
-            },
-            "size_bytes":603472607
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293732,
+            "cluster_id":7,
             "segment_id":7,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":909
-            },
-            "size_bytes":604981997
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293783,
+            "cluster_id":8,
             "segment_id":8,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":82
-            },
-            "size_bytes":618069216
+              "memtrace":4096
+            }
           },
           {
-            "cluster_id":1293840,
+            "cluster_id":9,
             "segment_id":9,
-            "weight":0.1,
+            "weight":0.012048192771084338,
             "base_memory_mb_by_mode":{
-              "memtrace":782
-            },
-            "size_bytes":608020155
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":10,
+            "segment_id":10,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":11,
+            "segment_id":11,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":12,
+            "segment_id":12,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":13,
+            "segment_id":13,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":14,
+            "segment_id":14,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":15,
+            "segment_id":15,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":16,
+            "segment_id":16,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":17,
+            "segment_id":17,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":18,
+            "segment_id":18,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":19,
+            "segment_id":19,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":20,
+            "segment_id":20,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":21,
+            "segment_id":21,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":22,
+            "segment_id":22,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":23,
+            "segment_id":23,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":24,
+            "segment_id":24,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":25,
+            "segment_id":25,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":26,
+            "segment_id":26,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":27,
+            "segment_id":27,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":28,
+            "segment_id":28,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":29,
+            "segment_id":29,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":30,
+            "segment_id":30,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":31,
+            "segment_id":31,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":32,
+            "segment_id":32,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":33,
+            "segment_id":33,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":34,
+            "segment_id":34,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":35,
+            "segment_id":35,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":36,
+            "segment_id":36,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":37,
+            "segment_id":37,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":38,
+            "segment_id":38,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":39,
+            "segment_id":39,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":40,
+            "segment_id":40,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":41,
+            "segment_id":41,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":42,
+            "segment_id":42,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":43,
+            "segment_id":43,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":44,
+            "segment_id":44,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":45,
+            "segment_id":45,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":46,
+            "segment_id":46,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":47,
+            "segment_id":47,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":48,
+            "segment_id":48,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":49,
+            "segment_id":49,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":50,
+            "segment_id":50,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":51,
+            "segment_id":51,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":52,
+            "segment_id":52,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":53,
+            "segment_id":53,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":54,
+            "segment_id":54,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":55,
+            "segment_id":55,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":56,
+            "segment_id":56,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":57,
+            "segment_id":57,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":58,
+            "segment_id":58,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":59,
+            "segment_id":59,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":60,
+            "segment_id":60,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":61,
+            "segment_id":61,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":62,
+            "segment_id":62,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":63,
+            "segment_id":63,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":64,
+            "segment_id":64,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":65,
+            "segment_id":65,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":66,
+            "segment_id":66,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":67,
+            "segment_id":67,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":68,
+            "segment_id":68,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":69,
+            "segment_id":69,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":70,
+            "segment_id":70,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":71,
+            "segment_id":71,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":72,
+            "segment_id":72,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":73,
+            "segment_id":73,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":74,
+            "segment_id":74,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":75,
+            "segment_id":75,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":76,
+            "segment_id":76,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":77,
+            "segment_id":77,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":78,
+            "segment_id":78,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":79,
+            "segment_id":79,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":80,
+            "segment_id":80,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":81,
+            "segment_id":81,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
+          },
+          {
+            "cluster_id":82,
+            "segment_id":82,
+            "weight":0.012048192771084338,
+            "base_memory_mb_by_mode":{
+              "memtrace":4096
+            }
           }
         ]
       }
