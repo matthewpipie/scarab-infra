@@ -186,6 +186,38 @@ def read_descriptor_from_json(filename="experiment.json", dbg_lvl = 1):
         err(f"Error decoding JSON in file '{filename}': {e}", dbg_lvl)
         return None
 
+def parse_top_simpoint(value):
+    """Validate a descriptor's `top_simpoint` field.
+
+    Returns None for false/null (every simpoint in workloads_db.json), True for the
+    precomputed top-3 set in workloads_top_simp.json, or a positive int N for the N
+    heaviest simpoints per workload taken from workloads_db.json.
+    """
+    if value is None or value is False:
+        return None
+    if value is True:
+        return True
+    if isinstance(value, int) and value > 0:
+        return value
+    raise RuntimeError(
+        f"Descriptor field 'top_simpoint' must be true, false, or a positive integer (got {value!r})."
+    )
+
+def load_workloads_for_descriptor(descriptor_data, infra_dir, dbg_lvl = 1):
+    """Load the workload DB a simulation descriptor runs against.
+
+    `"top_simpoint": true` reads workloads_top_simp.json as before. An integer N
+    keeps the N heaviest simpoints of each workload in workloads_db.json and
+    renormalizes their weights, as extract_top_simpoints does for the top-3 file.
+    Returns None if the DB file cannot be read.
+    """
+    top_n = parse_top_simpoint(descriptor_data.get("top_simpoint"))
+    db_name = "workloads_top_simp.json" if top_n is True else "workloads_db.json"
+    workloads_data = read_descriptor_from_json(os.path.join(str(infra_dir), "workloads", db_name), dbg_lvl)
+    if workloads_data is not None and top_n is not None and top_n is not True:
+        extract_top_simpoints.modify_simpoints_in_place(workloads_data, top_n)
+    return workloads_data
+
 # json descriptor writer
 def write_json_descriptor(filename, descriptor_data, dbg_lvl = 1):
     # Write the descriptor data to a JSON file
