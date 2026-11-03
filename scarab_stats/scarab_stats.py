@@ -1030,9 +1030,8 @@ class stat_aggregator:
         architecture = json_data["architecture"]
 
         infra_dir = _infra_root()
-        top_simpoint_only = bool(json_data["top_simpoint"])
-        workload_db_path = str(infra_dir / "workloads" / ("workloads_top_simp.json" if top_simpoint_only else "workloads_db.json"))
-        workloads_data = utilities.read_descriptor_from_json(workload_db_path)
+        top_simpoint_only = utilities.parse_top_simpoint(json_data["top_simpoint"]) is not None
+        workloads_data = utilities.load_workloads_for_descriptor(json_data, infra_dir)
         # ---------------------------------------------------------------------
         # Step 2: Expand the descriptor into a concrete list of simpoint tasks.
         #
@@ -1066,7 +1065,7 @@ class stat_aggregator:
                 elif found_workload != None:
                     assert found_suite is not None, "Suite cannot be None when workload is specified"
                     assert found_subsuite is not None, "Subsuite cannot be None when workload is specified"
-                    for cid in self.get_cluster_ids(found_workload, found_suite, found_subsuite, top_simpoint_only):
+                    for cid in self.get_cluster_ids(found_workload, found_suite, found_subsuite, top_simpoint_only, workloads_data=workloads_data):
                         tasks.append((config, found_suite, found_subsuite, found_workload, str(cid)))
 
                 elif found_subsuite != None:
