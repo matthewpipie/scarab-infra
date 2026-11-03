@@ -19,6 +19,7 @@ from .utilities import (
     warn,
     read_descriptor_from_json,
     load_workloads_for_descriptor,
+    parse_max_parallel,
     remove_docker_containers,
     remove_tmp_run_scripts,
     get_image_list,
@@ -85,6 +86,12 @@ def verify_descriptor(
     # Check the workload manager
     if descriptor_data["workload_manager"] != "manual" and descriptor_data["workload_manager"] != "slurm":
         err("Workload manager options: 'manual' or 'slurm'.", dbg_lvl)
+        exit(1)
+
+    try:
+        parse_max_parallel(descriptor_data.get("max_parallel"))
+    except RuntimeError as exc:
+        err(str(exc), dbg_lvl)
         exit(1)
 
     # Check if docker home path is provided

@@ -31,6 +31,7 @@ from .utilities import (
         normalize_simulations,
         require_aslr_disabled,
         use_apptainer,
+        resolve_max_parallel,
         )
 from .image_identity import image_tag_for
 
@@ -155,8 +156,8 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
 
     docker_prefix_list = get_image_list(simulations, workloads_data)
 
-    available_cores = os.cpu_count()
-    max_processes = int(available_cores * 0.9)
+    max_processes = resolve_max_parallel(descriptor_data)
+    info(f"Running at most {max_processes} simulations at once (max_parallel; host has {os.cpu_count()} logical CPUs)", dbg_lvl)
     processes = set()
     process_logs = {}
     tmp_files = set()

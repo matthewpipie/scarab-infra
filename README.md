@@ -27,7 +27,7 @@ scarab-infra is a set of tools that automate the execution of Scarab simulations
    ```
    ./sci --sim <descriptor>
    ```
-Launches the simulations defined in `json/<descriptor>.json`. Scarab runs in parallel across simpoints and reports status/logs under `<root_dir>/simulations/<descriptor>/` (with `root_dir` taken from the descriptor).
+Launches the simulations defined in `json/<descriptor>.json`. Scarab runs in parallel across simpoints (under `"workload_manager": "manual"`, at most `max_parallel` at once: 128 by default, or 90% of the logical CPUs if that is fewer) and reports status/logs under `<root_dir>/simulations/<descriptor>/` (with `root_dir` taken from the descriptor).
 
 You only need additional steps if you want to inspect workloads, collect traces, or manage jobs manually. The sections below cover those workflows in more detail.
 

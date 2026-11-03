@@ -203,6 +203,35 @@ def parse_top_simpoint(value):
         f"Descriptor field 'top_simpoint' must be true, false, or a positive integer (got {value!r})."
     )
 
+# Simulations the manual workload manager runs at once when a descriptor leaves
+# `max_parallel` null. Each simulation holds its own trace and model state in DRAM, so
+# filling every hardware thread of a large host can exhaust memory before it runs out of cores.
+DEFAULT_MAX_PARALLEL = 128
+
+def parse_max_parallel(value):
+    """Validate a descriptor's `max_parallel` field.
+
+    Returns None for null/missing (use the default) or a positive int.
+    """
+    if value is None:
+        return None
+    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+        return value
+    raise RuntimeError(
+        f"Descriptor field 'max_parallel' must be null or a positive integer (got {value!r})."
+    )
+
+def resolve_max_parallel(descriptor_data):
+    """Number of simulations the manual workload manager runs at once.
+
+    An explicit `max_parallel` is used as given. Otherwise it is DEFAULT_MAX_PARALLEL,
+    capped at 90% of this host's logical CPUs so small machines are not oversubscribed.
+    """
+    explicit = parse_max_parallel(descriptor_data.get("max_parallel"))
+    if explicit is not None:
+        return explicit
+    return max(1, min(DEFAULT_MAX_PARALLEL, int((os.cpu_count() or 1) * 0.9)))
+
 def load_workloads_for_descriptor(descriptor_data, infra_dir, dbg_lvl = 1):
     """Load the workload DB a simulation descriptor runs against.
 
