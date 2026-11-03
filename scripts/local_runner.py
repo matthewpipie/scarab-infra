@@ -300,10 +300,8 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
             # Run all the workloads within suite
             if workload == None and subsuite == None:
                 for subsuite_ in workloads_data[suite].keys():
-                    if subsuite_.startswith("_"):  # skip metadata keys (e.g. _scarab_sim_githash)
-                        continue
                     for workload_ in workloads_data[suite][subsuite_].keys():
-                        if workload_.startswith("_"):  # skip metadata keys (e.g. _scarab_sim_githash)
+                        if not isinstance(workloads_data[suite][subsuite_][workload_], dict):
                             continue
                         sim_mode_ = sim_mode
                         if sim_mode_ == None:
@@ -313,7 +311,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                         run_single_workload(suite, subsuite_, workload_, exp_cluster_id, sim_mode_, sim_warmup)
             elif workload == None and subsuite != None:
                 for workload_ in workloads_data[suite][subsuite].keys():
-                    if workload_.startswith("_"):  # skip metadata keys (e.g. _scarab_sim_githash)
+                    if not isinstance(workloads_data[suite][subsuite][workload_], dict):
                         continue
                     sim_mode_ = sim_mode
                     if sim_mode_ == None:
@@ -324,8 +322,6 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
             elif workload != None and subsuite == None:
                 found = False
                 for subsuite_ in workloads_data[suite].keys():
-                    if subsuite_.startswith("_"):  # skip metadata keys (e.g. _scarab_sim_githash)
-                        continue
                     if not workload in workloads_data[suite][subsuite_].keys():
                         continue
                     found = True
