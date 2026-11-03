@@ -206,7 +206,7 @@ def parse_top_simpoint(value):
 # Simulations the manual workload manager runs at once when a descriptor leaves
 # `max_parallel` null. Each simulation holds its own trace and model state in DRAM, so
 # filling every hardware thread of a large host can exhaust memory before it runs out of cores.
-DEFAULT_MAX_PARALLEL = 128
+DEFAULT_MAX_PARALLEL = 192
 
 def parse_max_parallel(value):
     """Validate a descriptor's `max_parallel` field.
