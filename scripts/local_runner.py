@@ -7,6 +7,7 @@ import subprocess
 import psutil
 import signal
 import re
+import time
 import traceback
 from .utilities import (
     confirm_kill,
@@ -260,6 +261,10 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                                 if handle:
                                     handle.close()
                                 break # Exit the loop after removing one process
+                        else:
+                            # Nothing has finished yet. Simulations run for minutes to hours,
+                            # so poll once a second instead of spinning a core at 100%.
+                            time.sleep(1)
         except Exception as e:
             raise e
 
