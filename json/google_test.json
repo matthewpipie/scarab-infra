@@ -18,7 +18,7 @@
   "_traces_dir": "The local directory containing all simpointed traces. Resolved as <traces_dir>/<suite>/<subsuite>/<workload>. shanen's google traces are world-readable and are bind-mounted read-only, so they are used in place rather than copied.",
   "traces_dir": "/mnt/storage/traces/shanen/",
   "_top_simpoint": "Top 24 simpoints per workload.",
-  "top_simpoint": 24,
+  "top_simpoint": 6,
   "_simulations": "See _experiment.",
   "simulations": [
     {
