@@ -8,7 +8,9 @@ import psutil
 import signal
 import re
 import time
+import heapq
 import traceback
+from pathlib import Path
 from .utilities import (
     confirm_kill,
         err,
@@ -33,47 +35,68 @@ from .utilities import (
         require_aslr_disabled,
         use_apptainer,
         resolve_max_parallel,
+        experiment_name_regex,
+        pool_name_regex,
+        pool_eligible,
+        pool_container_name,
+        remove_pool_containers,
+        remove_tmp_run_scripts,
         )
 from .image_identity import image_tag_for
 
 # Check if a container is running on local
 # Inputs: docker_prefix, job_name, user,
 # Output: list of containers
-def check_docker_container_running(docker_prefix_list, job_name, user, dbg_lvl):
-    if use_apptainer():
-        # No containers to list; a running sim is a `bash <container_name>_tmp_run.sh` process.
-        running = set()
-        for proc in psutil.process_iter(attrs=['cmdline']):
-            for arg in proc.info.get('cmdline') or []:
-                name = os.path.basename(arg)
-                if name.endswith("_tmp_run.sh"):
-                    name = name[:-len("_tmp_run.sh")]
-                    if any(re.match(fr"^{p}_.*_{job_name}.*_.*_{user}$", name) for p in docker_prefix_list):
-                        running.add(name)
+def check_docker_container_running(docker_prefix_list, job_name, user, dbg_lvl, configs=None):
+    """Names of the experiment's running simulations.
+
+    A sim counts as running while its job script (`bash <name>_tmp_run.sh`) is alive, or while
+    its own container is up. The script is what matters: with container_reuse a sim has no
+    container of its own, and without it a sim whose `docker run` is still queued behind the
+    docker daemon has no running container yet, and used to be reported as failed.
+    """
+    pattern = experiment_name_regex(docker_prefix_list, job_name, user, configs)
+    pool_pattern = pool_name_regex(docker_prefix_list, job_name, user)
+    running = set()
+    for proc in psutil.process_iter(attrs=['cmdline']):
+        for arg in proc.info.get('cmdline') or []:
+            name = os.path.basename(arg)
+            if name.endswith("_tmp_run.sh"):
+                name = name[:-len("_tmp_run.sh")]
+                if pattern.match(name):
+                    running.add(name)
+    if use_apptainer():  # no containers to list
         return sorted(running)
     try:
-        matching_containers = []
-        for docker_prefix in docker_prefix_list:
-            pattern = re.compile(fr"^{docker_prefix}_.*_{job_name}.*_.*_{user}$")
-            dockers = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
-            lines = dockers.stdout.strip().split("\n") if dockers.stdout else []
-            for line in lines:
-                if pattern.match(line):
-                    matching_containers.append(line)
-        return matching_containers
+        dockers = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
     except Exception as e:
-        err(f"Error while checking a running docker container named {docker_prefix}_.*_{job_name}_.*_.*_{user} on node {node}", dbg_lvl)
+        err(f"Error while listing running docker containers for {job_name}", dbg_lvl)
         raise e
+    for line in dockers.stdout.split():
+        if pattern.match(line) and not pool_pattern.match(line):
+            running.add(line)
+    return sorted(running)
+
+def running_pool_containers(docker_prefix_list, job_name, user):
+    if use_apptainer():
+        return []
+    pattern = pool_name_regex(docker_prefix_list, job_name, user)
+    dockers = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=False)
+    return sorted(n for n in dockers.stdout.split() if pattern.match(n))
 
 # Print info/status of running experiment and available cores
 def print_status(user, job_name, docker_prefix_list, descriptor_data=None, workloads_data=None, dbg_lvl = 2):
-    docker_running = check_docker_container_running(docker_prefix_list, job_name, user, dbg_lvl)
+    configs = list(descriptor_data["configurations"]) if descriptor_data else None
+    docker_running = check_docker_container_running(docker_prefix_list, job_name, user, dbg_lvl, configs)
+    pools = running_pool_containers(docker_prefix_list, job_name, user)
     if len(docker_running) > 0:
         print(f"\033[92mRUNNING:     local\033[0m")
         for docker in docker_running:
-            print(f"\033[92m    CONTAINER: {docker}\033[0m")
+            print(f"\033[92m    SIMULATION: {docker}\033[0m")
     else:
         print(f"\033[31mNOT RUNNING: local\033[0m")
+    if pools:
+        print(f"    Reused containers (container_reuse): {len(pools)}")
 
     if descriptor_data is None or workloads_data is None:
         return
@@ -91,33 +114,62 @@ def print_status(user, job_name, docker_prefix_list, descriptor_data=None, workl
         prep_failed_label="Failed - Prep",
     )
 
-def kill_jobs(user, job_type, job_name, docker_prefix_list, infra_dir, dbg_lvl):
+def kill_jobs(user, job_type, job_name, docker_prefix_list, infra_dir, dbg_lvl, configs=None):
     # Define the process name pattern
     if job_type == "simulation":
         pattern = re.compile(f"python3 -m scripts.run_simulation -dbg 3 -d {infra_dir}/json/{job_name}.json")
+        sci_action = "--sim"
     elif job_type == "trace":
         pattern = re.compile(f"python3 -m scripts.run_trace -dbg 3 -d {infra_dir}/json/{job_name}.json")
+        sci_action = "--trace"
+    script_pattern = experiment_name_regex(docker_prefix_list, job_name, user, configs, suffix="_tmp_run.sh")
+    # Never this process or the sci that started it (an exception in run_simulation lands here).
+    me = {os.getpid()} | {p.pid for p in psutil.Process().parents()}
+
+    def is_sci_runner(cmdline):
+        # `./sci --sim <descriptor>` and the conda python it re-executes itself under.
+        if not any(os.path.basename(a) == "sci" for a in cmdline[:2]):
+            return False
+        return any(a == sci_action and (b == job_name or (b.endswith(".json") and Path(b).stem == job_name))
+                   for a, b in zip(cmdline, cmdline[1:]))
 
     # Iterate over all processes
     found_process = []
+    job_scripts = []
     for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']):
         try:
             # Ensure 'cmdline' exists and is iterable
             cmdline = proc.info.get('cmdline', [])
+            if proc.info.get('pid') in me or proc.info.get('username') != user:
+                continue
             # Check if the process name matches the pattern and is run by the specified user
             if cmdline and isinstance(cmdline, list):
                 cmdline_str = " ".join(cmdline)
-                if pattern.match(cmdline_str) and proc.info.get('username') == user:
+                if pattern.match(cmdline_str) or is_sci_runner(cmdline):
                     found_process.append(proc)
-                    print(f"Found process {proc.info.get('name')} with PID {proc.info.get('pid')} running by {user}")
+                    print(f"Found process {proc.info.get('name')} with PID {proc.info.get('pid')} running by {user}: {cmdline_str}")
+                elif any(script_pattern.match(os.path.basename(a)) for a in cmdline):
+                    job_scripts.append(proc)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle processes that may have been terminated or we don't have permission to access
             continue
 
+    # A job script left by a runner killed earlier keeps its sim going, and with container_reuse
+    # it would start its slot's container again after the cleanup below.
+    runner_children = set()
+    for proc in found_process:
+        try:
+            runner_children.update(c.pid for c in proc.children(recursive=True))
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    orphans = [p for p in job_scripts if p.pid not in runner_children]
+    if orphans:
+        print(f"Found {len(orphans)} job script(s) of {job_name} with no runner")
+
     print(str(len(found_process)) + "found.")
     if confirm_kill("Do you want to kill these processes?"):
         # Iterate over found processes
-        for proc in found_process:
+        for proc in found_process + orphans:
             try:
                 # Kill the process and all its child processes
                 for child in proc.children(recursive=True):
@@ -139,10 +191,10 @@ def kill_jobs(user, job_type, job_name, docker_prefix_list, infra_dir, dbg_lvl):
         print("Operation canceled.")
 
     info(f"Clean up docker containers..", dbg_lvl)
-    remove_docker_containers(docker_prefix_list, job_name, user, dbg_lvl)
+    remove_docker_containers(docker_prefix_list, job_name, user, dbg_lvl, configs)
 
     info(f"Removing temporary run scripts..", dbg_lvl)
-    os.system(f"rm *_{job_name}_*_{user}_tmp_run.sh")
+    remove_tmp_run_scripts(os.getcwd(), job_name, user, dbg_lvl, configs)
 
 def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_path, dbg_lvl = 1):
     architecture = descriptor_data["architecture"]
@@ -159,6 +211,14 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
 
     max_processes = resolve_max_parallel(descriptor_data)
     info(f"Running at most {max_processes} simulations at once (max_parallel; host has {os.cpu_count()} logical CPUs)", dbg_lvl)
+    # container_reuse: each of the max_processes slots keeps one container and runs its sims in
+    # it one after another (see POOL_SIM_MODES in utilities.py). A process holds its slot from
+    # launch until it is reaped, so a slot's container never has two job scripts.
+    container_reuse = bool(descriptor_data.get("container_reuse", False))
+    if container_reuse:
+        info("container_reuse: trace sims run in one reused container per slot", dbg_lvl)
+    free_slots = list(range(max_processes))
+    process_slot = {}
     processes = set()
     process_logs = {}
     tmp_files = set()
@@ -228,11 +288,16 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                         continue
 
                     workload_home = f"{suite}/{subsuite}/{workload}"
+                    slot = heapq.heappop(free_slots)
+                    pool_container = None
+                    if container_reuse and pool_eligible(sim_mode, docker_prefix, infra_dir):
+                        pool_container = pool_container_name(docker_prefix, slot, experiment_name, user)
                     write_docker_command_to_file(user, local_uid, local_gid, workload, workload_home, experiment_name,
                                                  docker_prefix, docker_container_name, traces_dir,
                                                  docker_home, config_key, config, sim_mode, scarab_binary,
                                                  seg_size, architecture, cluster_id, warmup, trace_warmup, trace_type,
-                                                 trace_file, env_vars, bincmd, client_bincmd, filename, infra_dir, application_dir, perf_stat=bool(descriptor_data.get("perf_stat", False)))
+                                                 trace_file, env_vars, bincmd, client_bincmd, filename, infra_dir, application_dir, perf_stat=bool(descriptor_data.get("perf_stat", False)),
+                                                 pool_container=pool_container)
                     tmp_files.add(filename)
                     command = '/bin/bash ' + filename
                     remove_jobs.add((config_key, suite, subsuite, workload, cluster_id))
@@ -251,6 +316,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                     )
                     processes.add(process)
                     process_logs[process] = log_handle
+                    process_slot[process] = slot
                     info(f"Running command '{command}'", dbg_lvl)
                     while len(processes) >= max_processes:
                         # Loop through the processes and wait for one to finish
@@ -258,6 +324,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                             if p.poll() is not None: # This process has finished
                                 p.wait() # Make sure it's really finished
                                 processes.remove(p) # Remove from set of active processes
+                                heapq.heappush(free_slots, process_slot.pop(p))
                                 handle = process_logs.pop(p, None)
                                 if handle:
                                     handle.close()
@@ -287,6 +354,10 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
             # This error prints a message. Now stop execution
             return
         os.makedirs(os.path.join(docker_home, "simulations", experiment_name, "logs"), exist_ok=True)
+
+        # Reused containers of an earlier run of this experiment whose runner is gone, and any
+        # sim still running in one: it would write to a simpoint this run may redo.
+        remove_pool_containers(docker_prefix_list, experiment_name, user, dbg_lvl, stale=True)
 
         # Collect old job logs before submitting new jobs
         experiment_dir = f"{descriptor_data['root_dir']}/simulations/{experiment_name}"
@@ -351,6 +422,9 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
         for p in processes:
             p.wait()
 
+        if container_reuse:
+            remove_pool_containers(docker_prefix_list, experiment_name, user, dbg_lvl, runner_pid=os.getpid())
+
         for p in processes:
             log_handle = process_logs.get(p)
             if log_handle:
@@ -383,7 +457,13 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
 
         infra_dir = subprocess.check_output(["pwd"]).decode("utf-8").split("\n")[0]
         print(infra_dir)
-        kill_jobs(user, "simulation", experiment_name, docker_prefix_list, infra_dir, dbg_lvl)
+        kill_jobs(user, "simulation", experiment_name, docker_prefix_list, infra_dir, dbg_lvl,
+                  list(configs))
+    finally:
+        # Ctrl-C reaches the job scripts too, and each takes its slot's container down, but idle
+        # slots' containers would stay. Normal exits removed them above; this finds none then.
+        if container_reuse:
+            remove_pool_containers(docker_prefix_list, experiment_name, user, dbg_lvl, runner_pid=os.getpid())
 
 def run_tracing(user, descriptor_data, workload_db_path, infra_dir, dbg_lvl = 2):
     trace_name = descriptor_data["trace_name"]

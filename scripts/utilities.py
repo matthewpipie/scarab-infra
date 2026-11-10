@@ -1822,7 +1822,12 @@ def write_docker_command_to_file(user, local_uid, local_gid, workload, workload_
                                  docker_home, config_key, config, scarab_mode, scarab_binary,
                                  seg_size, architecture, cluster_id, warmup, trace_warmup, trace_type,
                                  trace_file, env_vars, bincmd, client_bincmd, filename, infra_dir, application_dir, slurm=False,
-                                 perf_stat=False):
+                                 perf_stat=False, pool_container=None):
+    """Write the job script for one simulation.
+
+    pool_container (manual runs with container_reuse; see POOL_SIM_MODES) runs the sim in that
+    long-lived container instead of a container of its own, starting it first if it is not up.
+    """
     try:
         scarab_cmd = generate_single_scarab_run_command(user, workload_home, experiment_name, config_key, config,
                                                         scarab_mode, seg_size, architecture, scarab_binary, cluster_id,
@@ -1849,6 +1854,11 @@ def write_docker_command_to_file(user, local_uid, local_gid, workload, workload_
                         f"/bin/bash -c \"{setup} && cd /home/{user} && {scarab_cmd}\" "
                         f"|| {{ echo \"Scarab error detected\"; RC=1; }}\n")
                 f.write(f"echo \"Completed Simulation\"\nsync {docker_home}/simulations/{experiment_name}/logs || true\nexit $RC\n")
+                return
+            if pool_container is not None:
+                assert not slurm and scarab_mode in POOL_SIM_MODES, "container reuse is for local trace sims"
+                _write_pooled_docker_command(f, user, local_uid, local_gid, workload, experiment_name, docker_prefix,
+                                             pool_container, traces_dir, docker_home, infra_dir, scarab_cmd)
                 return
             app_mount = ""
             if scarab_mode == "exec": 
@@ -1930,6 +1940,81 @@ def write_docker_command_to_file(user, local_uid, local_gid, workload, workload_
             f.write("exit $RC\n")
     except Exception as e:
         raise e
+
+
+def _write_pooled_docker_command(f, user, local_uid, local_gid, workload, experiment_name, docker_prefix,
+                                 pool_container, traces_dir, docker_home, infra_dir, scarab_cmd):
+    """Body of a job script that runs its sim in the slot's reused container.
+
+    The runner gives a slot to one job script at a time, so nothing else starts or uses this
+    container while the script runs. The log markers are the per-sim path's, so --status reads
+    both the same way.
+    """
+    ready = pool_ready_file(pool_container)
+    image = image_tag_for(docker_prefix, infra_dir)
+    f.write(f"POOL={pool_container}\n")
+    f.write(f"READY={ready}\n")
+    f.write("remove_pool() {\n")
+    f.write("    docker rm -f \"$POOL\" >/dev/null 2>&1 || true\n")
+    f.write("    rm -f \"$READY\"\n")
+    f.write("}\n")
+    # A normal exit leaves the container to the slot's next sim. A signal takes it down: killing
+    # the docker exec client below would leave the sim running inside, holding the slot.
+    f.write("trap 'remove_pool; exit 130' INT\n")
+    f.write("trap 'remove_pool; exit 143' TERM\n")
+    f.write("trap 'remove_pool; exit 129' HUP\n")
+    f.write(f"cd {infra_dir}\n")
+    f.write(f"if ! python -m scripts.prepare_docker_image --docker-prefix {docker_prefix}; then\n")
+    f.write(f"    echo \"ERROR: prepare_docker_image failed for {docker_prefix}\"\n")
+    f.write("    exit 1\n")
+    f.write("fi\n")
+    f.write("cd -\n")
+    # Ready means running and set up by root_entrypoint.sh, recorded by container id: a script
+    # killed partway through setup leaves a running container that is not ready.
+    f.write("if [ \"$(docker inspect -f '{{.State.Running}} {{.Id}}' \"$POOL\" 2>/dev/null)\" = "
+            "\"true $(cat \"$READY\" 2>/dev/null)\" ]; then\n")
+    f.write("    echo \"Reusing container $POOL\"\n")
+    f.write("else\n")
+    f.write("    echo \"Starting container $POOL\"\n")
+    f.write("    remove_pool\n")
+    f.write("    if ! docker run --privileged"
+            f" -e user_id={local_uid}"
+            f" -e group_id={local_gid}"
+            f" -e username={user}"
+            f" -e HOME=/home/{user}"
+            f" -e APP_GROUPNAME={docker_prefix}"
+            " -dit --rm --name \"$POOL\""
+            f" --mount type=bind,source={traces_dir},target=/simpoint_traces,readonly=true"
+            f" --mount type=bind,source={docker_home},target=/home/{user},readonly=false"
+            f" --mount {infra_mount_arg(infra_dir)}"
+            f" {image} /bin/bash; then\n")
+    f.write("        echo \"ERROR: docker run failed for $POOL\"\n")
+    f.write("        remove_pool\n")
+    f.write("        exit 1\n")
+    f.write("    fi\n")
+    f.write("    if ! docker inspect -f '{{.State.Running}}' \"$POOL\" 2>/dev/null | grep -q true; then\n")
+    f.write("        echo \"ERROR: container $POOL is not running after docker run\"\n")
+    f.write("        remove_pool\n")
+    f.write("        exit 1\n")
+    f.write("    fi\n")
+    f.write(f"    if ! docker exec --privileged \"$POOL\" /bin/bash -c '{ROOT_ENTRYPOINT}'; then\n")
+    f.write("        echo \"ERROR: root_entrypoint.sh failed in $POOL\"\n")
+    f.write("        remove_pool\n")
+    f.write("        exit 1\n")
+    f.write("    fi\n")
+    f.write("    docker inspect -f '{{.Id}}' \"$POOL\" > \"$READY\"\n")
+    f.write("fi\n")
+    f.write("RC=0\n")
+    # In the background so a signal interrupts `wait` and runs the trap now; bash runs traps only
+    # after a foreground command ends, which here is the whole sim. APPNAME is per container in
+    # the per-sim path, so it is passed per sim here.
+    f.write(f"docker exec --user={user} -e APPNAME={workload} \"$POOL\" /bin/bash -c "
+            f"\"source /usr/local/bin/user_entrypoint.sh && {scarab_cmd}\" &\n")
+    f.write("wait $! || { echo \"Scarab error detected\"; RC=1; }\n")
+    f.write("echo \"Completed Simulation\"\n")
+    f.write(f"sync {docker_home}/simulations/{experiment_name}/logs || true\n")
+    f.write("exit $RC\n")
+
 
 def generate_single_trace_run_command(user, workload, image_name, trace_name, binary_cmd, client_bincmd, simpoint_mode, drio_args, clustering_k, segment_id=None, cluster_id=None):
     command = ""
@@ -2848,28 +2933,152 @@ def print_simulation_status_summary(
         print("If jobs haven't run yet, set 'memory_overhead_mb' in the config entry within the descriptor to add a fixed overhead on top of the auto-scheduled base memory.")
         print("OOM Killed Configs:\n", "\n".join(oom_killed), "\033[0m", sep='')
 
-def remove_docker_containers(docker_prefix_list, job_name, user, dbg_lvl):
+def experiment_name_regex(docker_prefix_list, experiment, user, configs=None, suffix=""):
+    """Match the container names (or, with suffix "_tmp_run.sh", job script names) of one experiment.
+
+    A simulation is named <prefix>_<suite>_<subsuite>_<workload>_<experiment>_<config>_<cluster>_<mode>_<user>,
+    and a pooled container (container_reuse) <prefix>_pool<slot>_<experiment>_<runner pid>_<user>.
+    Workloads and configs contain underscores, so the old `_<experiment>.*` also matched every
+    experiment whose name starts with "<experiment>_": `--status x` counted x_incl's running sims,
+    and `--kill x`, `--clean x` and the `--sim x` preflight removed or refused on x_incl's containers.
+    Given the descriptor's config names, the experiment is anchored on both sides. Names stay
+    ambiguous only if one experiment plus a config spells another experiment plus a config
+    (x + incl_a vs x_incl + a). Without configs (trace descriptors) this is the old loose match.
+    """
+    if not docker_prefix_list:
+        return re.compile(r"(?!)")
+    prefixes = "|".join(re.escape(p) for p in docker_prefix_list)
+    exp, usr = re.escape(experiment), re.escape(user)
+    if configs:
+        cfgs = "|".join(re.escape(c.replace("/", "-")) for c in configs)
+        sim = fr"_.+_{exp}_(?:{cfgs})_\d+_[a-z]+_{usr}"
+    else:
+        sim = fr"_.*_{exp}.*_.*_{usr}"
+    pool = fr"_pool\d+_{exp}_\d+_{usr}"
+    return re.compile(fr"^(?:{prefixes})(?:{sim}|{pool}){re.escape(suffix)}$")
+
+
+# Container reuse (descriptor key container_reuse, manual workload manager only).
+#
+# Without it, every simulation creates a container, runs root_entrypoint.sh in it (groupadd,
+# useradd, symlinks), runs one sim and removes the container. Docker's create, start, overlay
+# copy-up and remove all write to the disk that holds its data root, and with a few hundred
+# sims in flight they queue there: on a 512-core host at max_parallel 256, about two thirds
+# of the slots were waiting on docker rather than simulating.
+#
+# With it, the runner gives each of its max_parallel slots one long-lived container, and each
+# sim in that slot is a `docker exec` into it. That is equivalent to a fresh container only
+# when nothing a sim does depends on the container it ran in:
+# - trace modes only (memtrace, pt). exec-mode workloads start servers and edit files in the
+#   container per workload.
+# - no workload entrypoints. workload_root_entrypoint.sh (sysbench starts MySQL, spec* set up
+#   their install) runs once per container with that container's APPNAME, so it would be
+#   wrong for the next workload; workload_user_entrypoint.sh is excluded to stay on the safe side.
+# root_entrypoint.sh itself is idempotent, each sim gets a fresh shell with APPNAME passed to
+# its exec, and sims write only to the bind-mounted home, so a sim cannot tell the difference.
+POOL_SIM_MODES = ("memtrace", "pt")
+
+
+def pool_eligible(sim_mode, docker_prefix, infra_dir):
+    """Whether a simulation may run in a reused container (see POOL_SIM_MODES)."""
+    if use_apptainer() or sim_mode not in POOL_SIM_MODES:
+        return False
+    workload_dir = os.path.join(infra_dir, "workloads", docker_prefix)
+    return not any(os.path.exists(os.path.join(workload_dir, f))
+                   for f in ("workload_root_entrypoint.sh", "workload_user_entrypoint.sh"))
+
+
+def pool_container_name(docker_prefix, slot, experiment, user, runner_pid=None):
+    """The reused container of one slot. The runner's pid marks containers whose run is gone."""
+    pid = os.getpid() if runner_pid is None else runner_pid
+    return f"{docker_prefix}_pool{slot:03d}_{experiment}_{pid}_{user}"
+
+
+def pool_ready_file(pool_container):
+    """Holds the id of the pool container once root_entrypoint.sh has finished in it."""
+    return f"/tmp/{pool_container}.ready"
+
+
+def _pid_alive(pid):
+    try:
+        os.kill(pid, 0)
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def pool_name_regex(docker_prefix_list, experiment, user):
+    """Match the experiment's pooled containers; group 1 is the runner pid."""
+    if not docker_prefix_list:
+        return re.compile(r"(?!)")
+    prefixes = "|".join(re.escape(p) for p in docker_prefix_list)
+    return re.compile(fr"^(?:{prefixes})_pool\d+_{re.escape(experiment)}_(\d+)_{re.escape(user)}$")
+
+
+def remove_pool_containers(docker_prefix_list, experiment, user, dbg_lvl, runner_pid=None, stale=False):
+    """Remove pooled containers of an experiment: one runner's (runner_pid), or every one whose
+    runner is gone (stale=True). A runner killed without its cleanup leaves its pool behind, and
+    a sim orphaned in it would keep writing to the simpoint a new run is about to redo."""
+    if use_apptainer() or not docker_prefix_list:
+        return
+    pattern = pool_name_regex(docker_prefix_list, experiment, user)
+    try:
+        names = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}"],
+                               capture_output=True, text=True, check=True).stdout.split()
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        warn(f"Could not list containers to remove pooled ones: {e}", dbg_lvl)
+        return
+    doomed = []
+    for name in names:
+        m = pattern.match(name)
+        if not m:
+            continue
+        pid = int(m.group(1))
+        if (runner_pid is not None and pid == runner_pid) or (stale and not _pid_alive(pid)):
+            doomed.append(name)
+    _remove_containers(doomed, dbg_lvl)
+
+
+def _remove_containers(names, dbg_lvl):
+    """docker rm -f in one call: the CLI removes them concurrently, which matters when the disk
+    under docker's data root is busy and there are hundreds of them."""
+    if not names:
+        return
+    result = subprocess.run(["docker", "rm", "-f", *names], capture_output=True, text=True, check=False)
+    for name in names:
+        try:
+            os.remove(pool_ready_file(name))
+        except OSError:
+            pass
+    if result.returncode != 0:
+        warn(f"docker rm -f failed for some of {len(names)} containers: {result.stderr.strip()}", dbg_lvl)
+    else:
+        info(f"Removed {len(names)} container(s): {', '.join(names[:4])}{' ...' if len(names) > 4 else ''}", dbg_lvl)
+
+
+def remove_docker_containers(docker_prefix_list, job_name, user, dbg_lvl, configs=None):
     if use_apptainer():  # apptainer leaves no containers behind
         return
+    pattern = experiment_name_regex(docker_prefix_list, job_name, user, configs)
     try:
-        for docker_prefix in docker_prefix_list:
-            pattern = re.compile(fr"^{docker_prefix}_.*_{job_name}.*_.*_{user}$")
-            dockers = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
-            lines = dockers.stdout.strip().split("\n") if dockers.stdout else []
-            matching_containers = [line for line in lines if pattern.match(line)]
-
-            if matching_containers:
-                for container in matching_containers:
-                    subprocess.run(["docker", "rm", "-f", container], check=True)
-                    info(f"Removed container: {container}", dbg_lvl)
-            else:
-                info("No containers found.", dbg_lvl)
+        dockers = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
     except subprocess.CalledProcessError as e:
-        err(f"Error while removing containers: {e}")
+        err(f"Error while listing containers: {e}", dbg_lvl)
         raise e
+    matching_containers = [line for line in dockers.stdout.split() if pattern.match(line)]
+    if matching_containers:
+        _remove_containers(matching_containers, dbg_lvl)
+    else:
+        info("No containers found.", dbg_lvl)
 
-def remove_tmp_run_scripts(base_path, job_name, user, dbg_lvl):
-    pattern = re.compile(rf".*_{re.escape(job_name)}_.*_{re.escape(user)}_tmp_run\.sh$")
+def remove_tmp_run_scripts(base_path, job_name, user, dbg_lvl, configs=None):
+    if configs:
+        cfgs = "|".join(re.escape(c.replace("/", "-")) for c in configs)
+        pattern = re.compile(rf".*_{re.escape(job_name)}_(?:{cfgs})_\d+_[a-z]+_{re.escape(user)}_tmp_run\.sh$")
+    else:
+        pattern = re.compile(rf".*_{re.escape(job_name)}_.*_{re.escape(user)}_tmp_run\.sh$")
     base = Path(base_path)
     if not base.is_dir():
         return

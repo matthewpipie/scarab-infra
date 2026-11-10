@@ -246,7 +246,7 @@ def run_trace_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
 
         if action == "info":
             if workload_manager == "manual":
-                local_runner.print_status(user, trace_name, docker_image_list, dbg_lvl)
+                local_runner.print_status(user, trace_name, docker_image_list, dbg_lvl=dbg_lvl)
             else:
                 slurm_runner.print_status(user, trace_name, docker_image_list, dbg_lvl)
             return 0
