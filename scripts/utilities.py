@@ -2654,6 +2654,14 @@ def print_simulation_status_summary(
     # log_count_offset and strict_log_count are calibrated against this value.
     total_log_count = len(latest_logs) + len(_unparseable)
 
+    # A callable is evaluated only now, after the logs are listed. Evaluated first, a sim
+    # launched between it and the listing would have a log with no Completed marker and not
+    # be running, so it showed as failed; on a busy run a sim starts every second or so. In
+    # this order, a sim that ends in between has its marker, and one that starts later has
+    # no log yet.
+    if callable(running_sims):
+        running_sims = running_sims()
+
     error_runs = set()
     sim_log_to_job_log = {}
     skipped = 0

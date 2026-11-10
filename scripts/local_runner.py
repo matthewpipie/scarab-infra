@@ -105,7 +105,7 @@ def print_status(user, job_name, docker_prefix_list, descriptor_data=None, workl
         workloads_data,
         docker_prefix_list,
         user,
-        docker_running,
+        lambda: check_docker_container_running(docker_prefix_list, job_name, user, dbg_lvl, configs),
         [],
         dbg_lvl=dbg_lvl,
         log_file_count_buffer=0,
