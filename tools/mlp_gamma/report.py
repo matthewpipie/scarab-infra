@@ -25,6 +25,7 @@ suite-best and cross-suite-best configs' IPC), per_workload.csv, grid.csv, ipc_l
 """
 
 import argparse
+import io
 import json
 import math
 import os
@@ -80,7 +81,12 @@ def load_long(desc):
     csv = resolve(desc["root_dir"]) / "simulations" / desc["experiment"] / "collected_stats.csv"
     if not csv.is_file():
         sys.exit(f"{desc['_name']}: no collected stats ({csv}). Run ./sci --collect-stats {desc['_name']}.")
-    df = pd.read_csv(csv, low_memory=False).set_index("stats")
+    # The CSV has one row per stat and one column per simpoint run, so a full sweep's file runs to
+    # gigabytes; parse only the header and the rows used here.
+    wanted = {s + "," for s in META + list(STATS.values())}
+    with open(csv) as f:
+        lines = [next(f)] + [line for line in f if line[:line.find(",") + 1] in wanted]
+    df = pd.read_csv(io.StringIO("".join(lines)), low_memory=False).set_index("stats")
     df = df[~df.index.duplicated(keep="first")]
     df = df[[c for c in df.columns if c not in ("write_protect", "groups")]]
     missing = [s for s in META + [STATS["inst"], STATS["cycles"]] if s not in df.index]
