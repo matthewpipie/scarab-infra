@@ -27,7 +27,7 @@ scarab-infra is a set of tools that automate the execution of Scarab simulations
    ```
    ./sci --sim <descriptor>
    ```
-Launches the simulations defined in `json/<descriptor>.json`. Scarab runs in parallel across simpoints (under `"workload_manager": "manual"`, at most `max_parallel` at once: 192 by default, or 90% of the logical CPUs if that is fewer) and reports status/logs under `<root_dir>/simulations/<descriptor>/` (with `root_dir` taken from the descriptor). Each simulation normally gets its own container. With `"container_reuse": true`, trace simulations (memtrace, pt) instead run in one long-lived container per parallel slot, which helps when per-sim container creation and removal can't keep up with `max_parallel`; see `_container_reuse` in `json/exp.json`.
+Launches the simulations defined in `json/<descriptor>.json`. Scarab runs in parallel across simpoints (under `"workload_manager": "manual"`, at most `max_parallel` at once: 192 by default, or 90% of the logical CPUs if that is fewer) and reports status/logs under `<root_dir>/simulations/<descriptor>/` (with `root_dir` taken from the descriptor). Trace simulations (memtrace, pt) run in one long-lived container per parallel slot, so docker creates `max_parallel` containers rather than one per simulation; `"container_reuse": false` gives every simulation its own (see `_container_reuse` in `json/exp.json`).
 
 You only need additional steps if you want to inspect workloads, collect traces, or manage jobs manually. The sections below cover those workflows in more detail.
 

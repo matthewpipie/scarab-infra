@@ -214,7 +214,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
     # container_reuse: each of the max_processes slots keeps one container and runs its sims in
     # it one after another (see POOL_SIM_MODES in utilities.py). A process holds its slot from
     # launch until it is reaped, so a slot's container never has two job scripts.
-    container_reuse = bool(descriptor_data.get("container_reuse", False))
+    container_reuse = bool(descriptor_data.get("container_reuse", True))
     if container_reuse:
         info("container_reuse: trace sims run in one reused container per slot", dbg_lvl)
     free_slots = list(range(max_processes))
