@@ -131,6 +131,8 @@ def descriptor(name, arch, suite, cfg, binary, top_simpoint, pairs, with_lru, pu
         "workload_manager": "manual",
         "_max_parallel": "256 is the most pakuchi should run at once; check idle cores (uptime vs nproc) and lower it if other runs are going. tools/mlp_gamma/run_sweep.sh runs one descriptor at a time, so this is the total.",
         "max_parallel": 256,
+        "_container_reuse": "One reused container per slot instead of one per sim. With 256 per-sim containers, docker's create and remove queued on the storage drive and left about two thirds of the slots idle.",
+        "container_reuse": True,
         "_root_dir": "Mounted as the container home; output goes to <root_dir>/simulations/<experiment>. On the storage drive, since the root disk holding /home is nearly full.",
         "root_dir": root_dir,
         "_application_dir": "The path to the benchmark application directory used for tracing or simulation.",

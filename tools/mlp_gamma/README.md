@@ -41,6 +41,8 @@ python tools/mlp_gamma/report.py --all
 
 Check idle cores before launching (`uptime` against `nproc`) and lower `max_parallel` in the descriptors if other runs are going.
 
+The descriptors set `container_reuse`, so each of the 256 slots runs its sims in one long-lived container. Without it, sci creates and removes a container per sim, and on pakuchi those docker operations queue on the storage drive: google_small took 130 minutes for 71 minutes' worth of simulation at 256 slots. It needs a scarab-infra with `container_reuse` support; an older one ignores the key.
+
 ## Report
 
 For each architecture and suite (`--group subsuite` splits SPEC int and fp), `report.py` prints:
