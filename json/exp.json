@@ -9,6 +9,8 @@
   "workload_manager":"manual",
   "_max_parallel":"Most simulations the manual workload manager runs at once on this machine. null uses min(192, 90% of the host's logical CPUs). Size it so max_parallel times the memory each simpoint needs fits in DRAM. Ignored under slurm, which schedules by --mem.",
   "max_parallel":null,
+  "_container_reuse":"manual only. true (the default): trace simulations (memtrace, pt) of images without per-workload entrypoints run in one reused container per max_parallel slot, instead of a new container per simulation. Creating and removing a container per sim queues on the disk under docker's data root and can leave much of max_parallel waiting on docker. false gives every simulation its own container. Other simulations, and slurm, always get their own.",
+  "container_reuse":true,
   "_root_dir":"Root directory mounted into the docker container home, for instance, the user's home directory",
   "root_dir":"/home/$USER",
   "_application_dir":"The path to the benchmark application directory used for tracing or simulation. This directory replaces ISO-based setups by mounting a local application folder (e.g., SPEC CPU2017) into the container during image build or runtime.",

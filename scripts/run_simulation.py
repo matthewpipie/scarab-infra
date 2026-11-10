@@ -32,6 +32,7 @@ from .utilities import (
     infra_mount_arg,
     ROOT_ENTRYPOINT,
     use_apptainer,
+    experiment_name_regex,
 )
 from .image_identity import image_tag_for
 from . import slurm_runner, local_runner
@@ -303,16 +304,13 @@ def open_interactive_shell(user, descriptor_name, descriptor_data, workloads_dat
         raise e
 
 
-def find_conflicting_containers(workload_manager, docker_prefix_list, experiment_name, user, dbg_lvl=2):
+def find_conflicting_containers(workload_manager, docker_prefix_list, experiment_name, user, dbg_lvl=2, configs=None):
     if use_apptainer():
         return {}, {}
     if not docker_prefix_list:
         return {}, {}
 
-    patterns = [
-        re.compile(fr"^{re.escape(docker_prefix)}_.*_{re.escape(experiment_name)}.*_.*_{re.escape(user)}$")
-        for docker_prefix in docker_prefix_list
-    ]
+    patterns = [experiment_name_regex(docker_prefix_list, experiment_name, user, configs)]
     active_job_names: Set[str] = set()
     stale_conflicts: Dict[str, List[str]] = {}
     active_conflicts: Dict[str, List[str]] = {}
@@ -475,6 +473,9 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
     simulations = descriptor_data.get("simulations") or []
 
     docker_image_list = get_image_list(simulations, workloads_data)
+    # Config names pin down which containers and job scripts are this experiment's; see
+    # experiment_name_regex.
+    configs = list(descriptor_data.get("configurations") or {}) or None
 
     try:
         if action == "kill":
@@ -483,7 +484,7 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
             except SystemExit as exc:
                 return 1
             if workload_manager == "manual":
-                local_runner.kill_jobs(user, "simulation", experiment_name, docker_image_list, infra_dir, dbg_lvl)
+                local_runner.kill_jobs(user, "simulation", experiment_name, docker_image_list, infra_dir, dbg_lvl, configs)
             else:
                 should_clean = slurm_runner.kill_jobs(user, experiment_name, docker_image_list, dbg_lvl)
                 if not should_clean:
@@ -491,9 +492,9 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
                 slurm_runner.clean_containers(user, experiment_name, docker_image_list, dbg_lvl)
                 descriptor_root = Path(descriptor_data["root_dir"])
                 experiment_dir = descriptor_root / "simulations" / experiment_name
-                remove_tmp_run_scripts(Path(infra_dir), experiment_name, user, dbg_lvl)
-                remove_tmp_run_scripts(experiment_dir, experiment_name, user, dbg_lvl)
-            remove_docker_containers(docker_image_list, experiment_name, user, dbg_lvl)
+                remove_tmp_run_scripts(Path(infra_dir), experiment_name, user, dbg_lvl, configs)
+                remove_tmp_run_scripts(experiment_dir, experiment_name, user, dbg_lvl, configs)
+            remove_docker_containers(docker_image_list, experiment_name, user, dbg_lvl, configs)
             return 0
 
         if action == "info":
@@ -520,9 +521,9 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
                 slurm_runner.clean_containers(user, experiment_name, docker_image_list, dbg_lvl)
                 descriptor_root = Path(descriptor_data["root_dir"])
                 experiment_dir = descriptor_root / "simulations" / experiment_name
-                remove_tmp_run_scripts(Path(infra_dir), experiment_name, user, dbg_lvl)
-                remove_tmp_run_scripts(experiment_dir, experiment_name, user, dbg_lvl)
-            remove_docker_containers(docker_image_list, experiment_name, user, dbg_lvl)
+                remove_tmp_run_scripts(Path(infra_dir), experiment_name, user, dbg_lvl, configs)
+                remove_tmp_run_scripts(experiment_dir, experiment_name, user, dbg_lvl, configs)
+            remove_docker_containers(docker_image_list, experiment_name, user, dbg_lvl, configs)
             return 0
 
         # default: run simulation
@@ -533,6 +534,7 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
             experiment_name,
             user,
             dbg_lvl,
+            configs,
         )
         if stale_conflicts:
             print(f"Found existing stale containers for experiment '{experiment_name}'. Refusing to launch simulations.")
