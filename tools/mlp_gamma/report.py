@@ -228,9 +228,9 @@ class Report:
         wl_oracle = geomean(speedup.max(axis=1))
 
         self.out(f"### {arch} / {name}\n")
-        self.out(self.describe(arch, name, grid))
+        self.out(self.describe(arch, name, grid) + "\n")
         if dropped:
-            self.out(f"\n- Dropped {len(dropped)} simpoints that failed or are missing under some config: "
+            self.out(f"- Dropped {len(dropped)} simpoints that failed or are missing under some config: "
                      + ", ".join(f"{wl.split('/')[-1]}:{c}" for _, wl, c in dropped[:12])
                      + (" ..." if len(dropped) > 12 else ""))
         self.lru_check(part)
@@ -284,9 +284,13 @@ class Report:
         best_pooled = best_of(pooled, gammas)
         self.out(f"### {arch} / across suites\n")
         self.out(f"Suites weighted equally (geomean of suite geomeans): {', '.join(r['name'] for r in results)}.\n")
-        self.out(f"- **Cross-suite best: {best}**, {pct(score[best]):+.2f}% (equal-suite); "
-                 f"pooling all {len(pooled_sp)} workloads instead picks {best_pooled} "
-                 f"({pct(pooled[best_pooled]):+.2f}%; {best} {pct(pooled[best]):+.2f}%).\n")
+        if best_pooled == best:
+            pooled_text = f"pooling all {len(pooled_sp)} workloads picks it too ({pct(pooled[best]):+.2f}%)"
+        else:
+            pooled_text = (f"pooling all {len(pooled_sp)} workloads instead picks {best_pooled} "
+                           f"({pct(pooled[best_pooled]):+.2f}%, against {pct(pooled[best]):+.2f}% for {best})")
+        self.out(f"- **Cross-suite best: {best}**, {pct(score[best]):+.2f}% with suites weighted equally; "
+                 f"{pooled_text}.\n")
         rows = []
         for r in results:
             rb = r["best"]
