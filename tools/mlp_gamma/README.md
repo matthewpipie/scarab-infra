@@ -19,8 +19,11 @@ Finds the best instruction and data gammas for Scarab's REPL_MLP L2 policy (`--m
 | spec2006 | 55 | 294 | 10M warmup + 10M |
 | spec2017 | 36 | 168 | 10M warmup + 10M |
 | geekbench | 13 | 78 | 10M warmup + 10M |
+| spec2026 | 92 | 532 | 10M warmup + 10M |
 
-That is 639 simpoints, or 23,004 simulations per architecture. spec2026 and dcperf have no traces on pakuchi (`./sci --list-traces`); add them to `SUITES` in `make_descriptors.py` once fetched.
+The first five suites are 639 simpoints, or 23,004 simulations per architecture; spec2026 adds 19,152 more. spec2026's traces came from `trace_home=/mnt/storage/traces/scarab ./sci --fetch-traces spec2026`. dcperf is also downloadable but not in the sweep; add it to `SUITES` in `make_descriptors.py` after fetching it the same way.
+
+Output goes to `/mnt/storage/mgiordan/simulations/<experiment>` (`root_dir` in the descriptors, `--root-dir` in `make_descriptors.py`). The sweep writes about 3 MB per simulation plus a copy of the binary per experiment, about 150 GB for the first five suites, which the root disk holding `/home` cannot spare.
 
 ## Running
 
@@ -30,8 +33,11 @@ tools/mlp_gamma/run_sweep.sh --check
 python tools/mlp_gamma/report.py --check --marks
 
 tools/mlp_gamma/run_sweep.sh
+tools/mlp_gamma/run_sweep.sh mlp_gamma_spec2026_small mlp_gamma_spec2026_small_incl
 python tools/mlp_gamma/report.py --all
 ```
+
+`run_sweep.sh` with no arguments runs the first five suites.
 
 Check idle cores before launching (`uptime` against `nproc`) and lower `max_parallel` in the descriptors if other runs are going.
 

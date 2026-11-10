@@ -20,6 +20,9 @@ GAMMAS = [0, 1, 4, 16, 64, 256]
 ARCHS = {"small": "golden_small", "small_incl": "golden_small_incl"}
 DEFAULT_BINARY = "scarab_f1fce3c"
 SCARAB_PATH = "/home/mgiordan/carp/scarab-gamma/"
+# Output goes to <ROOT_DIR>/simulations/<experiment>. The sweep writes ~150 GB, so it lives on the
+# storage drive rather than the nearly full root disk that holds /home.
+ROOT_DIR = "/mnt/storage/mgiordan/"
 WARMUP = 10_000_000
 
 # Suites with traces on this machine. inst_limit caps warmup + measured instructions; without it
@@ -54,6 +57,12 @@ SUITES = {
         "inst_limit": None,
         "workloads": None,
         "note": "All 13 geekbench single_core workloads.",
+    },
+    "spec2026": {
+        "traces_dir": "/mnt/storage/traces/scarab/",
+        "inst_limit": None,
+        "workloads": None,
+        "note": "All spec2026 workloads (rate_int and rate_fp).",
     },
 }
 
@@ -110,7 +119,7 @@ def configurations(binary, inst_limit, pairs, with_lru):
     return configs
 
 
-def descriptor(name, arch, suite, cfg, binary, top_simpoint, pairs, with_lru, purpose):
+def descriptor(name, arch, suite, cfg, binary, top_simpoint, pairs, with_lru, purpose, root_dir):
     return {
         "_descriptor_type": "A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
         "descriptor_type": "simulation",
@@ -122,8 +131,8 @@ def descriptor(name, arch, suite, cfg, binary, top_simpoint, pairs, with_lru, pu
         "workload_manager": "manual",
         "_max_parallel": "256 is the most pakuchi should run at once; check idle cores (uptime vs nproc) and lower it if other runs are going. tools/mlp_gamma/run_sweep.sh runs one descriptor at a time, so this is the total.",
         "max_parallel": 256,
-        "_root_dir": "Root directory mounted into the docker container home",
-        "root_dir": "/home/mgiordan/",
+        "_root_dir": "Mounted as the container home; output goes to <root_dir>/simulations/<experiment>. On the storage drive, since the root disk holding /home is nearly full.",
+        "root_dir": root_dir,
         "_application_dir": "The path to the benchmark application directory used for tracing or simulation.",
         "application_dir": "/home/mgiordan/carp/applications",
         "_scarab_path": "A private clone at matthewpipie/scarab main, so sci's in-place hash checkout cannot disturb a working checkout.",
@@ -172,6 +181,10 @@ def write(name, desc):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--binary", default=DEFAULT_BINARY, help=f"scarab_<githash> to run (default {DEFAULT_BINARY})")
+    ap.add_argument("--root-dir", default=ROOT_DIR,
+                    help=f"output root; runs go to <root>/simulations/<experiment> (default {ROOT_DIR})")
+    ap.add_argument("--suites", nargs="+", choices=list(SUITES), default=list(SUITES),
+                    help="suites to write sweep descriptors for (default all)")
     ap.add_argument("--top-simpoint", type=int, default=6, help="simpoints per workload (default 6)")
     ap.add_argument("--check", action="store_true",
                     help="write the smoke-test descriptors instead: gammas {0,64}x{0,16} plus plain LRU, "
@@ -184,18 +197,21 @@ def main():
                 name = f"mlp_gamma_check_{suite}_{tag}"
                 purpose = (f"Smoke test for the REPL_MLP gamma sweep on {arch}: gammas {{0,64}} x {{0,16}} and plain LRU, "
                            "top simpoint. Checks gi0_gd0 == lru and that both boosts mark lines at once.")
-                desc = descriptor(name, arch, suite, SUITES[suite], args.binary, 1, CHECK_PAIRS, True, purpose)
+                desc = descriptor(name, arch, suite, SUITES[suite], args.binary, 1, CHECK_PAIRS, True, purpose,
+                                  args.root_dir)
                 desc["max_parallel"] = 128
                 desc["_max_parallel"] = "Smoke test: 128 at a time."
                 write(name, desc)
         return
 
-    for suite, cfg in SUITES.items():
+    for suite in args.suites:
+        cfg = SUITES[suite]
         for tag, arch in ARCHS.items():
             name = f"mlp_gamma_{suite}_{tag}"
             purpose = (f"REPL_MLP gamma sweep on {arch}, {suite}: instruction gamma x data gamma over "
                        f"{GAMMAS}, fill-counted boost.")
-            write(name, descriptor(name, arch, suite, cfg, args.binary, args.top_simpoint, grid(GAMMAS), False, purpose))
+            write(name, descriptor(name, arch, suite, cfg, args.binary, args.top_simpoint, grid(GAMMAS), False, purpose,
+                                   args.root_dir))
 
 
 if __name__ == "__main__":
