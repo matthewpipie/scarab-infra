@@ -355,8 +355,8 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
             return
         os.makedirs(os.path.join(docker_home, "simulations", experiment_name, "logs"), exist_ok=True)
 
-        # Reused containers of an earlier run of this experiment whose runner is gone, and any
-        # sim still running in one: it would write to a simpoint this run may redo.
+        # Reused containers left by an earlier run of this experiment whose runner was killed,
+        # except those a surviving job script is still running its sim in.
         remove_pool_containers(docker_prefix_list, experiment_name, user, dbg_lvl, stale=True)
 
         # Collect old job logs before submitting new jobs

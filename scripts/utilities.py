@@ -2013,6 +2013,9 @@ def _write_pooled_docker_command(f, user, local_uid, local_gid, workload, experi
     f.write("wait $! || { echo \"Scarab error detected\"; RC=1; }\n")
     f.write("echo \"Completed Simulation\"\n")
     f.write(f"sync {docker_home}/simulations/{experiment_name}/logs || true\n")
+    # The runner gives the container to the slot's next sim and removes it at the end. A runner
+    # that was killed does neither, so the last script to use the container removes it.
+    f.write("kill -0 $PPID 2>/dev/null || remove_pool\n")
     f.write("exit $RC\n")
 
 
@@ -3017,10 +3020,34 @@ def pool_name_regex(docker_prefix_list, experiment, user):
     return re.compile(fr"^(?:{prefixes})_pool\d+_{re.escape(experiment)}_(\d+)_{re.escape(user)}$")
 
 
+def _pools_in_use():
+    """Pool containers named by a live job script (its POOL= line)."""
+    import psutil  # here, not at the top: job scripts import this module through prepare_docker_image
+    in_use = set()
+    for proc in psutil.process_iter(attrs=['cmdline']):
+        for arg in proc.info.get('cmdline') or []:
+            if not arg.endswith("_tmp_run.sh"):
+                continue
+            try:
+                path = arg if os.path.isabs(arg) else os.path.join(proc.cwd(), arg)
+                with open(path) as script:
+                    m = re.search(r"^POOL=(\S+)$", script.read(), re.M)
+            except (OSError, psutil.Error):
+                continue
+            if m:
+                in_use.add(m.group(1))
+    return in_use
+
+
 def remove_pool_containers(docker_prefix_list, experiment, user, dbg_lvl, runner_pid=None, stale=False):
     """Remove pooled containers of an experiment: one runner's (runner_pid), or every one whose
-    runner is gone (stale=True). A runner killed without its cleanup leaves its pool behind, and
-    a sim orphaned in it would keep writing to the simpoint a new run is about to redo."""
+    runner is gone (stale=True).
+
+    A killed runner leaves its pool behind. A job script that outlived it is still running its
+    sim, which finishes as it would have in a container of its own, and that script removes the
+    container when done; so stale=True spares containers a live job script names. What remains
+    is idle, or holds a sim whose job script was killed too, which the next run may redo.
+    """
     if use_apptainer() or not docker_prefix_list:
         return
     pattern = pool_name_regex(docker_prefix_list, experiment, user)
@@ -3031,13 +3058,21 @@ def remove_pool_containers(docker_prefix_list, experiment, user, dbg_lvl, runner
         warn(f"Could not list containers to remove pooled ones: {e}", dbg_lvl)
         return
     doomed = []
+    in_use = None
     for name in names:
         m = pattern.match(name)
         if not m:
             continue
         pid = int(m.group(1))
-        if (runner_pid is not None and pid == runner_pid) or (stale and not _pid_alive(pid)):
+        if runner_pid is not None and pid == runner_pid:
             doomed.append(name)
+        elif stale and not _pid_alive(pid):
+            if in_use is None:
+                in_use = _pools_in_use()
+            if name in in_use:
+                info(f"Leaving {name}: a job script of a killed run is still using it", dbg_lvl)
+            else:
+                doomed.append(name)
     _remove_containers(doomed, dbg_lvl)
 
 
