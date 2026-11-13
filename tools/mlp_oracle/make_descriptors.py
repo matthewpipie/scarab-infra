@@ -30,13 +30,13 @@ from pathlib import Path
 INFRA = Path(__file__).resolve().parents[2]
 USER = getpass.getuser()
 
-# scarab PR #36 (mlp_oracle) merged with main 03c737d: the oracle records main's mark, so the
-# default marking is main's (data: no-issue ROB-head stalls, --mlp_data_bound 3
-# --mlp_data_bound_min 16 --mlp_lin_data_thresh 0; instruction: --mlp_instr_mark 2
-# --mlp_instr_starve 2). A build with a different marking must contain both the mlp_oracle code
-# and that marking. The baseline study (baseline/mlp_oracle_google_t3) ran on c8bb06d, with the
-# 0.7 ratio data marking.
-DEFAULT_BINARY = "scarab_e812674"
+# scarab PR #36 (mlp_oracle) merged with main 03c737d, plus the reuse stats' control and
+# instruction-prefetch kinds (REF_RD needs them): the oracle records main's mark, so the default
+# marking is main's (data: no-issue ROB-head stalls, --mlp_data_bound 3 --mlp_data_bound_min 16
+# --mlp_lin_data_thresh 0; instruction: --mlp_instr_mark 2 --mlp_instr_starve 2). A build with a
+# different marking must contain both the mlp_oracle code and that marking. The baseline study
+# (baseline/mlp_oracle_google_t3) ran on c8bb06d, with the 0.7 ratio data marking.
+DEFAULT_BINARY = "scarab_f17e3f5"
 
 # Google "simpoints" are whole cores of equal weight, so a workload's first three by index are as
 # good as any three. Cores whose trace holds under 560M instructions are swapped for the next ones
@@ -53,6 +53,9 @@ CHECK_PICKS = {"delta": [0]}
 SIDES = {"i": (1, "instruction"), "d": (2, "data"), "b": (3, "both sides")}
 LRU = "--mlc_cache_repl_policy 0"
 REPLAY_MEM_MB = 1024  # a replay run holds the whole reference in memory
+# The reference's reuse-distance stats (MLP_RD*, stats only), as report.py --reuse reads them: a line
+# counts as marked once any of its fills was, and a control of as many lines, matched in reuses.
+REF_RD = "--mlp_rd_sticky 1 --mlp_rd_ctrl 8"
 
 
 def parse_args():
@@ -68,6 +71,9 @@ def parse_args():
     p.add_argument("--variants", action="store_true",
                    help="also run no-reinstall oracle and control and a misses-only control (both sides)")
     p.add_argument("--seeds", type=int, default=0, help="extra independent control draws per side (default 0)")
+    p.add_argument("--ref-params", default="",
+                   help="extra Scarab flags for the reference only, stats-only ones such as "
+                        f'"--mlp_rd_iprf_reuse 1" (it always gets {REF_RD})')
     p.add_argument("--no-replay-check", action="store_true",
                    help="skip replay_check, which replays the reference forcing nothing and must equal lru")
     p.add_argument("--warmup", type=int, default=50_000_000)
@@ -95,6 +101,8 @@ def parse_args():
         p.error("--marking takes Scarab flags, e.g. \"--mlp_data_bound_min 8\"")
     if re.search(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit)\b", a.marking):
         p.error("--marking must not set mlp_oracle*, mlc_cache_repl_policy or inst_limit; the generator sets those")
+    if re.search(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit)\b", a.ref_params):
+        p.error("--ref-params must not set mlp_oracle*, mlc_cache_repl_policy or inst_limit; the generator sets those")
     a.pairs = []
     for pair in filter(None, (s.strip() for s in a.repl_mlp.split(","))):
         gi, _, gd = pair.partition(":")
@@ -240,8 +248,9 @@ def main():
     marking = a.marking or "REPL_MLP's default marking"
     ref_cfg = {"track": config(
         a, "LRU, tracking both sides, writing every MLC miss and its mark to mlp_oracle_misses.<core>.bin "
-           "in the simpoint's directory, for the replay runs to read.",
-        f"--mlp_oracle 1 --mlp_oracle_side 3 --mlp_oracle_record 1 {LRU}")}
+           "in the simpoint's directory, for the replay runs to read. Its MLP_RD* stats (report.py --reuse) "
+           "count a line as marked once any of its fills was, and keep a control of as many lines.",
+        f"--mlp_oracle 1 --mlp_oracle_side 3 --mlp_oracle_record 1 {REF_RD} {a.ref_params} {LRU}")}
     ref = descriptor(a, ref_exp, f"mlp_oracle reference for {exp} ({marking}).", ref_cfg, a.max_parallel)
     replay = descriptor(a, exp, f"mlp_oracle replay runs ({marking}); they read {ref_exp}/track's records, "
                                 f"so run them after it completes.", replay_configs(a, ref_exp), a.max_parallel)

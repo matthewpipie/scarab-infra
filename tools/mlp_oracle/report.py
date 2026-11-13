@@ -12,6 +12,10 @@ also force cold misses, which no replacement policy can save; they are skipped u
     python tools/mlp_oracle/report.py mlp_oracle_google_t3
     python tools/mlp_oracle/report.py mlp_oracle_google_t3 mlp_oracle_google_dmin8 --ceilings-from mlp_oracle_google_t3
     python tools/mlp_oracle/report.py mlp_oracle_google_dmin8 --workloads --out oracle_report/
+    python tools/mlp_oracle/report.py --reuse mlp_oracle_google_dmin8_ref
+
+--reuse reads a reference's MLP_RD1_* / MLP_RDN_* stats, which need a Scarab with the IPRF and
+control kinds (scarab f17e3f5 on); references from before them (c8bb06d) are not supported.
 
 Method, as ./sci --visualize: a workload's IPC is its simpoints' weighted measured instructions
 over their weighted measured cycles (Periodic_Instructions / Periodic_Cycles), over the simpoints
@@ -293,16 +297,200 @@ def per_workload(studies):
     return out
 
 
+REUSE_CLASSES = {"MARKED": "marked", "UNMARKED": "unmarked", "CTRL": "control"}
+# Scarab's MLP_RD kinds behind each side's classes (memory.c, mlp_rd_fill): unmarked lines are those
+# a demand waited on unmarked and, on the instruction side, those an instruction prefetch brought in
+# with no demand waiting (IPRF); on the data side, stores, writebacks and data prefetches (OTHER).
+REUSE_KINDS = {
+    "I": {"MARKED": ["IMARK"], "UNMARKED": ["INOMARK", "IPRF"], "CTRL": ["ICTRL"]},
+    "D": {"MARKED": ["DMARK"], "UNMARKED": ["DNOMARK", "OTHER"], "CTRL": ["DCTRL"]},
+}
+REUSE_BUCKETS = 16  # MLP_RD*_LOG2_k: k 0 is distance 0, k covers [2^(k-1), 2^k - 1], and 15 is 2^14 and up
+LRU_WAYS = 16
+
+
+def bucket_label(b):
+    if b == 0:
+        return "0"
+    lo, hi = 2 ** (b - 1), 2 ** b - 1
+    if b == REUSE_BUCKETS - 1:
+        return f"≥{lo:,}"
+    return f"{lo:,}" if lo == hi else f"{lo:,}–{hi:,}"
+
+
+class Reuse:
+    """A reference run's reuse distances (Scarab's MLP_RD1_* and MLP_RDN_*, kept under plain LRU): per side
+    and class, the distance of each reuse of a line, in fills into its MLC set since its previous reuse (or
+    since its first fill, for the first), as a log2 histogram. MARKED and UNMARKED are the line's class at
+    the reuse and together cover every reuse; CTRL is the control's lines, counted in one of the two as
+    well. How lines are classed comes from the reference's flags (make_descriptors.py sets
+    --mlp_rd_sticky 1 --mlp_rd_ctrl 8). Each workload weighs the same: its counts are divided by its total
+    reuses (marked + unmarked) of that side, then averaged over workloads."""
+
+    def __init__(self, name):
+        self.desc = load_descriptor(name)
+        self.name = self.desc["_name"]
+        self.arch = self.desc.get("architecture", "?")
+        params = " ".join(c.get("params", "") for c in self.desc["configurations"].values())
+        self.sticky = on(flag(params, "mlp_rd_sticky", "0"))
+        self.ctrl = int(flag(params, "mlp_rd_ctrl", "0") or 0) > 0
+        self.iprf_reuse = on(flag(params, "mlp_rd_iprf_reuse", "0"))
+        kinds = sorted({k for side in REUSE_KINDS.values() for ks in side.values() for k in ks})
+        stats = {}
+        for k in kinds:
+            for rd in ("RD1", "RDN"):
+                stats[f"{rd}_{k}_HIT"] = f"MLP_{rd}_{k}_HIT_count"
+                for b in range(REUSE_BUCKETS):
+                    stats[f"{rd}_{k}_{b}"] = f"MLP_{rd}_{k}_LOG2_{b}_count"
+        csv = Path(self.desc["root_dir"]) / "simulations" / self.desc["experiment"] / "collected_stats.csv"
+        if not csv.is_file():
+            sys.exit(f"{self.name}: no {csv}. Run ./sci --collect-stats {self.name}.")
+        wanted = {s + "," for s in META + list(stats.values())}
+        with open(csv) as f:
+            lines = [next(f)] + [line for line in f if line[:line.find(",") + 1] in wanted]
+        t = pd.read_csv(io.StringIO("".join(lines)), low_memory=False).set_index("stats")
+        t = t[~t.index.duplicated(keep="first")]
+        t = t[[c for c in t.columns if c not in ("write_protect", "groups")]].T
+        missing = [v for v in stats.values() if v not in t]
+        if missing:
+            sys.exit(f"{self.name}: no {missing[0]} (…): run with a Scarab that has the IPRF and control kinds")
+        raw = pd.DataFrame({k: pd.to_numeric(t[v], errors="coerce").fillna(0).values for k, v in stats.items()})
+        cols = {}
+        for s in "ID":  # sum RD1 and RDN, and the kinds behind each class
+            for cls, ks in REUSE_KINDS[s].items():
+                cols[f"{s}_{cls}_HIT"] = sum(raw[f"{rd}_{k}_HIT"] for rd in ("RD1", "RDN") for k in ks)
+                for b in range(REUSE_BUCKETS):
+                    cols[f"{s}_{cls}_{b}"] = sum(raw[f"{rd}_{k}_{b}"] for rd in ("RD1", "RDN") for k in ks)
+                cols[f"{s}_{cls}_N"] = sum(cols[f"{s}_{cls}_{b}"] for b in range(REUSE_BUCKETS))
+        cols["workload"] = t["Workload"].str.split("/").str[-1].values
+        cols["weight"] = pd.to_numeric(t["Weight"], errors="coerce").fillna(1.0).values
+        cols["failed"] = t["Collect Failed"].astype(str).str.strip().str.lower().eq("true").values
+        df = pd.DataFrame(cols)
+        df = df[~df["failed"]]
+        self.n_sp = len(df)
+        num = [c for c in df.columns if c not in ("workload", "weight", "failed")]
+        self.per_wl = df[num].mul(df["weight"], axis=0).groupby(df["workload"]).sum()
+        self.workloads = list(self.per_wl.index)
+        self.classes = [c for c in REUSE_CLASSES if c != "CTRL" or self.ctrl]
+        self.frac = {}  # side -> DataFrame, index = class, columns = bucket, average workload's share of all reuses
+        for s in "ID":
+            total = self.per_wl[f"{s}_MARKED_N"] + self.per_wl[f"{s}_UNMARKED_N"]
+            ok = total > 0
+            rows = {}
+            for cls in self.classes:
+                cols = [f"{s}_{cls}_{b}" for b in range(REUSE_BUCKETS)]
+                share = self.per_wl.loc[ok, cols].div(total[ok], axis=0).mean()
+                share.index = range(REUSE_BUCKETS)
+                rows[cls] = share
+            self.frac[s] = pd.DataFrame(rows).T
+
+    def hit_rate(self, s, cls, w=None):
+        g = self.per_wl if w is None else self.per_wl.loc[[w]]
+        n = g[f"{s}_{cls}_N"]
+        return ((g[f"{s}_{cls}_HIT"] / n)[n > 0]).mean() if w is None else float((g[f"{s}_{cls}_HIT"] / n).iloc[0])
+
+    def side_summary(self, s):
+        """The histogram of one side as plain numbers: buckets (the last ones folded into one), each
+        class's share of its own reuses per bucket, marked's share of all reuses per bucket, and totals."""
+        fr = self.frac[s]
+        dist = fr.div(fr.sum(axis=1), axis=0)  # each class's own distribution
+        last = max(b for b in range(REUSE_BUCKETS) if (dist[b] >= 0.0005).any())
+        buckets = []
+        for b in range(last + 1):
+            tail = b == last and last < REUSE_BUCKETS - 1
+            cols = list(range(b, REUSE_BUCKETS)) if tail else [b]
+            m, u = fr.loc["MARKED", cols].sum(), fr.loc["UNMARKED", cols].sum()
+            buckets.append({
+                "label": f"≥{2 ** (b - 1):,}" if tail and b else bucket_label(b),
+                "from": 0 if b == 0 else 2 ** (b - 1),
+                **{REUSE_CLASSES[c]: float(dist.loc[c, cols].sum()) for c in self.classes},
+                "marked_share": float(m / (m + u)) if m + u > 0 else None,
+            })
+        return {
+            "buckets": buckets,
+            "within15": {REUSE_CLASSES[c]: float(dist.loc[c, :4].sum()) for c in self.classes},
+            "hit_rate": {REUSE_CLASSES[c]: float(self.hit_rate(s, c)) for c in self.classes},
+            "median": {REUSE_CLASSES[c]: self.median(dist.loc[c]) for c in self.classes},
+            "marked_share": float(fr.loc["MARKED"].sum() / (fr.loc["MARKED"].sum() + fr.loc["UNMARKED"].sum())),
+        }
+
+    def table(self, s):
+        sm = self.side_summary(s)
+        side = SIDE_NAME[s.lower()]
+        names = [REUSE_CLASSES[c] for c in self.classes]
+        head = ["Fills since previous reuse"] + names + ["marked / unmarked", "marked share of reuses"]
+        out = [f"#### {side.capitalize()}", "", "| " + " | ".join(head) + " |", "|---" * len(head) + "|"]
+        for bk in sm["buckets"]:
+            ratio = f"{bk['marked'] / bk['unmarked']:.2f}" if bk["unmarked"] > 0 else "–"
+            share = f"{bk['marked_share']:.1%}" if bk["marked_share"] is not None else "–"
+            out.append(f"| {bk['label']} | " + " | ".join(f"{bk[c]:.1%}" for c in names) + f" | {ratio} | {share} |")
+            if bk["from"] == 8:  # 8–15: the last bucket a 16-way LRU set can still hit in
+                out.append("| *within 15 fills* | " + " | ".join(f"*{sm['within15'][c]:.1%}*" for c in names) + " | | |")
+        out.append("| *LRU hit rate* | " + " | ".join(f"*{sm['hit_rate'][c]:.1%}*" for c in names) + " | | |")
+        out.append("| *median* | " + " | ".join(sm["median"][c] for c in names) + " | | |")
+        out += ["", f"Marked lines take {sm['marked_share']:.1%} of all {side} reuses."]
+        return out
+
+    @staticmethod
+    def median(dist):
+        c = dist.cumsum()
+        b = int((c >= 0.5).idxmax())
+        return bucket_label(b)
+
+    def summary(self):
+        cls_rule = ("marked once any of its fills was marked" if self.sticky
+                    else "classed by its first fill for the whole run")
+        reuse_rule = ("a demand or instruction-prefetch lookup" if self.iprf_reuse else "a demand lookup")
+        ctrl_rule = ("; control lines are counted in one of the two as well" if self.ctrl
+                     else "; no control (--mlp_rd_ctrl 0)")
+        out = [f"## Reuse distance, {self.name}", "",
+               f"{self.arch} · {len(self.workloads)} workloads, {self.n_sp} simpoints · plain LRU (the reference run)", "",
+               f"A reuse is {reuse_rule} at the MLC of a line filled before. Its distance is the fills into the "
+               "line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has "
+               f"evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse ({cls_rule})"
+               f"{ctrl_rule}. Unmarked instruction lines include those an instruction prefetch brought in with no "
+               "demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give "
+               "each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. "
+               "Every workload weighs the same.", ""]
+        for s in "ID":
+            out += self.table(s) + [""]
+        return out
+
+    def per_workload(self):
+        out = ["### Reuse per workload: share within 15 fills, and LRU hit rate", "",
+               "| Workload | I marked | I unmarked | D marked | D unmarked |", "|---|---|---|---|---|"]
+        for w in self.workloads:
+            cells = []
+            for s in "ID":
+                for cls in ("MARKED", "UNMARKED"):
+                    row = self.per_wl.loc[w]
+                    n = sum(row[f"{s}_{cls}_{b}"] for b in range(REUSE_BUCKETS))
+                    near = sum(row[f"{s}_{cls}_{b}"] for b in range(5))
+                    cells.append(f"{near / n:.0%} / {self.hit_rate(s, cls, w):.0%}" if n else "–")
+            out.append(f"| {w} | " + " | ".join(cells) + " |")
+        return out
+
+    def rows(self):
+        return [{"study": self.name, "workload": w, "side": s, "class": REUSE_CLASSES[cls], "bucket": b,
+                 "fills_from": 0 if b == 0 else 2 ** (b - 1), "count": self.per_wl.loc[w, f"{s}_{cls}_{b}"]}
+                for w in self.workloads for s in "ID" for cls in self.classes for b in range(REUSE_BUCKETS)]
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("descriptors", nargs="+", help="descriptor names (json/<name>.json) or paths")
+    p.add_argument("descriptors", nargs="*", help="descriptor names (json/<name>.json) or paths")
+    p.add_argument("--reuse", nargs="+", default=[], metavar="REF",
+                   help="reference descriptors (mlp_oracle_google_<tag>_ref) whose reuse-distance histograms to report")
     p.add_argument("--ceilings-from", help="take missing ceilings from this descriptor (same simpoints and lengths)")
     p.add_argument("--workloads", action="store_true", help="also print per-workload tables")
     p.add_argument("--include-cold", action="store_true", help="also report oracle/control configs that force cold misses")
     p.add_argument("--out", help="directory for per_workload.csv (every role's gain per workload) and ipc.csv")
     a = p.parse_args()
+    if not a.descriptors and not a.reuse:
+        p.error("give a study descriptor, or --reuse with a reference descriptor")
 
     studies = [Study(n, a.include_cold) for n in a.descriptors]
+    reuses = [Reuse(n) for n in a.reuse]
     if a.ceilings_from:
         src = next((st for st in studies if st.name == Path(a.ceilings_from).stem), None) or Study(a.ceilings_from, False)
         for st in studies:
@@ -312,9 +500,19 @@ def main():
         out += summary(st) + [""]
     if a.workloads:
         out += per_workload(studies)
+    for r in reuses:
+        out += [""] + r.summary() + (r.per_workload() if a.workloads else [])
     print("\n".join(out))
     if a.out:
         Path(a.out).mkdir(parents=True, exist_ok=True)
+        if reuses:
+            pd.DataFrame([row for r in reuses for row in r.rows()]).to_csv(Path(a.out) / "reuse.csv", index=False)
+            summ = {r.name: {"architecture": r.arch, "workloads": len(r.workloads), "simpoints": r.n_sp,
+                             **{SIDE_NAME[s.lower()]: r.side_summary(s) for s in "ID"}} for r in reuses}
+            (Path(a.out) / "reuse_summary.json").write_text(json.dumps(summ, indent=1, ensure_ascii=False) + "\n")
+            print(f"\nWrote reuse.csv (per workload and bucket) and reuse_summary.json in {a.out}")
+        if not studies:
+            return
         rows = [{"study": st.name, "role": r, "config": st.roles[r], "workload": w, "gain_pct": pct(v)}
                 for st in studies for r, ser in st.gain.items() for w, v in ser.items()]
         pd.DataFrame(rows).to_csv(Path(a.out) / "per_workload.csv", index=False)

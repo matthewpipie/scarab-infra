@@ -31,7 +31,7 @@ anyway, so REPL_MLP runs with the same marking.
 |---|---|
 | `make_descriptors.py` | Writes `json/mlp_oracle_google_<tag>_ref.json` and `json/mlp_oracle_google_<tag>.json` for one marking. |
 | `run_study.sh` | Builds the binary, runs the reference, checks that every simpoint recorded, runs the replay configs, and collects stats. Each step waits for room on the machine. |
-| `report.py` | For each study: the marked share, the ceiling, oracle and control gains per side, REPL_MLP, the variants, and the checks. It also compares several studies. |
+| `report.py` | For each study: the marked share, the ceiling, oracle and control gains per side, REPL_MLP, the variants, and the checks. It also compares several studies, and with `--reuse` gives the reference's reuse distances of marked, unmarked and control lines. |
 | `baseline/` | The descriptors of the ratio-marking study already run on pakuchi (`mlp_oracle_google_t3`), so you can report it and borrow its ceilings. |
 
 ## Rerunning with a different marking
@@ -39,14 +39,16 @@ anyway, so REPL_MLP runs with the same marking.
 ### 1. Get a binary with the marking
 
 - **The marking is a flag that already exists** (for example a different `--mlp_data_bound_min`):
-  use the default binary, `scarab_e812674`. It is the oracle code (matthewpipie/scarab PR #36,
+  use the default binary, `scarab_f17e3f5`. It is the oracle code (matthewpipie/scarab PR #36,
   branch `mlp-oracle`) merged with main as of 03c737d, and the oracle records the same mark
   REPL_MLP uses. Its default data marking is no-issue ROB-head stalls
   (`--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0`), each request waiting on a
   fill judged by its own counts. Its instruction marking is
-  `--mlp_instr_mark 2 --mlp_instr_starve 2`. The old 0.7 ratio is close to
-  `--mlp_data_bound 0 --mlp_data_bound_min 0 --mlp_lin_data_thresh 0.7`, except that joined
-  requests are now judged too. Once #36 is on main, any later main hash works.
+  `--mlp_instr_mark 2 --mlp_instr_starve 2`. The old 0.7 ratio is
+  `--mlp_data_bound 0 --mlp_data_bound_min 0 --mlp_lin_data_thresh 0.7`: with it, the reference
+  recorded the same misses and marks as c8bb06d's, byte for byte, on all 35 simpoints at 1M + 10M,
+  and lru, the oracle, the control and the ceiling had the same IPC. Once #36 is on main, any later
+  main hash works.
 - **The marking is new code:** commit a branch that has both it and the oracle, and pass
   `--binary scarab_<hash>`.
 
@@ -118,6 +120,24 @@ To compare markings, look at:
   many misses on as many lines. This is the number to compare.
 - **Oracle against the ceiling:** how much of the possible gain the marked misses hold.
 - **REPL_MLP against the oracle:** how much of it a real policy gets.
+
+### Reuse distances
+
+```
+python tools/mlp_oracle/report.py --reuse mlp_oracle_google_dmin8_ref --workloads --out oracle_report/
+```
+
+The reference's `MLP_RD1_*` / `MLP_RDN_*` stats, per side, as log2 histograms of each reuse's
+distance in fills into the line's set: for marked lines, unmarked lines, and a random control of as
+many lines matched in reuses. `make_descriptors.py` gives the reference `--mlp_rd_sticky 1` (a line
+counts as marked once any of its fills was, as the oracle forces marked misses) and
+`--mlp_rd_ctrl 8` (the control). Unmarked instruction lines include the ones FDIP prefetched in
+time (Scarab's `IPRF` kind); unmarked data lines include the ones a store or writeback brought in
+(`OTHER`). A reuse is a demand lookup; to count instruction-prefetch lookups too, as the reuse
+stats before the merge with main did, generate the study with
+`--ref-params "--mlp_rd_iprf_reuse 1"`. The header of each table says which definitions the
+reference ran with. `--out` also writes `reuse.csv` (per workload and bucket) and
+`reuse_summary.json`.
 
 ## Baseline: the ratio marking (`mlp_oracle_google_t3`)
 
