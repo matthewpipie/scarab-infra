@@ -1063,14 +1063,16 @@ TRACE_URL = os.environ.get("SCI_TRACE_URL", "https://scarab.phd/traces")
 CI_TRACE = "spec2017.rate_int_v2.perlbench_r.109678"
 
 
-def trace_source() -> str:
-    """The rclone remote traces are read from.
+def trace_source() -> List[str]:
+    """The rclone remote traces are read from, and the flag that points it at the bucket.
 
-    The bucket is served publicly, so reading needs no credentials: an rclone
-    connection string wraps the URL, and nothing has to be configured on the
-    machine. Writing still needs a token, which is sync_traces_r2.sh's business.
+    The bucket is served publicly, so reading needs no credentials: an on-the-fly
+    :http: remote takes the URL as a flag, and nothing has to be configured on the
+    machine. A connection string (":http,url=...:") would do the same but needs
+    rclone 1.55 or later, and distro packages still ship 1.53. Writing still needs a
+    token, which is sync_traces_r2.sh's business.
     """
-    return f":http,url='{TRACE_URL}':"
+    return [":http:", "--http-url", TRACE_URL]
 
 
 def load_trace_manifest():
@@ -1212,7 +1214,7 @@ def download_files(paths: List[str], trace_home: Path) -> Tuple[int, str]:
     listing = Path(tempfile.mkstemp(prefix="sci_traces_")[1])
     listing.write_text("\n".join(paths) + "\n", encoding="utf-8")
     cmd = [
-        "rclone", "copy", trace_source(), str(trace_home),
+        "rclone", "copy", *trace_source(), str(trace_home),
         "--files-from", str(listing),
         "--transfers", "16",
         "--checkers", "16",
