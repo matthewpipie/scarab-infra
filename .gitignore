@@ -10,3 +10,4 @@ __pycache__/
 *~
 # (escaped: an unescaped leading '#' would make this line a comment)
 \#*#
+mlp_gamma_report/
