@@ -13,8 +13,8 @@ Everything that changes what counts as marked goes in --marking. Those flags rea
 (where the marks are recorded) and every replay config, including REPL_MLP's.
 
     python tools/mlp_oracle/make_descriptors.py --tag base
-    python tools/mlp_oracle/make_descriptors.py --tag dthresh05 --marking "--mlp_lin_data_thresh 0.5" --sides d,b
-    python tools/mlp_oracle/make_descriptors.py --tag dthresh05 --marking "--mlp_lin_data_thresh 0.5" --check
+    python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --sides d,b
+    python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --check
 
 Then run both with tools/mlp_oracle/run_study.sh mlp_oracle_google_<tag> and read the results with
 tools/mlp_oracle/report.py. See tools/mlp_oracle/README.md.
@@ -30,9 +30,13 @@ from pathlib import Path
 INFRA = Path(__file__).resolve().parents[2]
 USER = getpass.getuser()
 
-# The first build with --mlp_oracle_reuse_only. A build with a different marking must contain
-# both the mlp_oracle code and that marking.
-DEFAULT_BINARY = "scarab_c8bb06d"
+# scarab PR #36 (mlp_oracle) merged with main 03c737d: the oracle records main's mark, so the
+# default marking is main's (data: no-issue ROB-head stalls, --mlp_data_bound 3
+# --mlp_data_bound_min 16 --mlp_lin_data_thresh 0; instruction: --mlp_instr_mark 2
+# --mlp_instr_starve 2). A build with a different marking must contain both the mlp_oracle code
+# and that marking. The baseline study (baseline/mlp_oracle_google_t3) ran on c8bb06d, with the
+# 0.7 ratio data marking.
+DEFAULT_BINARY = "scarab_e812674"
 
 # Google "simpoints" are whole cores of equal weight, so a workload's first three by index are as
 # good as any three. Cores whose trace holds under 560M instructions are swapped for the next ones
@@ -54,7 +58,7 @@ REPLAY_MEM_MB = 1024  # a replay run holds the whole reference in memory
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--tag", required=True, help="names the study: mlp_oracle_google_<tag> and mlp_oracle_google_<tag>_ref")
-    p.add_argument("--marking", default="", help='Scarab flags that change the marking, e.g. "--mlp_lin_data_thresh 0.5"')
+    p.add_argument("--marking", default="", help='Scarab flags that change the marking, e.g. "--mlp_data_bound_min 8"')
     p.add_argument("--binary", default=DEFAULT_BINARY, help=f"scarab_<hash> for every config (default {DEFAULT_BINARY})")
     p.add_argument("--sides", default="i,d,b", help="sides that get an oracle and a control: i, d, b (both), comma-separated")
     p.add_argument("--repl-mlp", default="64:0,64:16",
@@ -88,7 +92,7 @@ def parse_args():
         p.error("--variants needs side b")
     toks = a.marking.split()
     if toks and not toks[0].startswith("--"):
-        p.error("--marking takes Scarab flags, e.g. \"--mlp_lin_data_thresh 0.5\"")
+        p.error("--marking takes Scarab flags, e.g. \"--mlp_data_bound_min 8\"")
     if re.search(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit)\b", a.marking):
         p.error("--marking must not set mlp_oracle*, mlc_cache_repl_policy or inst_limit; the generator sets those")
     a.pairs = []

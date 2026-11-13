@@ -32,34 +32,37 @@ anyway, so REPL_MLP runs with the same marking.
 | `make_descriptors.py` | Writes `json/mlp_oracle_google_<tag>_ref.json` and `json/mlp_oracle_google_<tag>.json` for one marking. |
 | `run_study.sh` | Builds the binary, runs the reference, checks that every simpoint recorded, runs the replay configs, and collects stats. Each step waits for room on the machine. |
 | `report.py` | For each study: the marked share, the ceiling, oracle and control gains per side, REPL_MLP, the variants, and the checks. It also compares several studies. |
-| `baseline/` | The descriptors of the default-marking study already run on pakuchi (`mlp_oracle_google_t3`), so you can report it and borrow its ceilings. |
+| `baseline/` | The descriptors of the ratio-marking study already run on pakuchi (`mlp_oracle_google_t3`), so you can report it and borrow its ceilings. |
 
 ## Rerunning with a different marking
 
 ### 1. Get a binary with the marking
 
-- **The marking is a flag that already exists** (for example a different `--mlp_lin_data_thresh`):
-  use the default binary, `scarab_c8bb06d`. It is the oracle code (matthewpipie/scarab PR #36,
-  branch `mlp-oracle`) on main as of f1fce3c. Its data marking is the 0.7 ratio and its
-  instruction marking is `--mlp_instr_mark 2 --mlp_instr_starve 2`.
-- **The marking is new code** (for example scarab PR #35's ROB-head stall count): commit a branch
-  that merges both, and pass `--binary scarab_<hash>`. For #35 that is
-  `--marking "--mlp_data_bound 2 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0"`. Once both are
-  on main, any later main hash works.
+- **The marking is a flag that already exists** (for example a different `--mlp_data_bound_min`):
+  use the default binary, `scarab_e812674`. It is the oracle code (matthewpipie/scarab PR #36,
+  branch `mlp-oracle`) merged with main as of 03c737d, and the oracle records the same mark
+  REPL_MLP uses. Its default data marking is no-issue ROB-head stalls
+  (`--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0`), each request waiting on a
+  fill judged by its own counts. Its instruction marking is
+  `--mlp_instr_mark 2 --mlp_instr_starve 2`. The old 0.7 ratio is close to
+  `--mlp_data_bound 0 --mlp_data_bound_min 0 --mlp_lin_data_thresh 0.7`, except that joined
+  requests are now judged too. Once #36 is on main, any later main hash works.
+- **The marking is new code:** commit a branch that has both it and the oracle, and pass
+  `--binary scarab_<hash>`.
 
 `scarab_path` (`--scarab-path`, default `/home/$USER/carp/scarab-oracle/`) must be a private clone
 that has the commit. sci checks hashes out in it in place, which would disturb a checkout you are
 working in.
 
-Pass every flag of the marking you want, not just the ones you change. PR #35 changes the default
-data marking, so "the defaults" mean different things on different builds.
+Pass every flag of the marking you want, not just the ones you change. The default data marking
+changed with scarab #35 and #42, so "the defaults" mean different things on different builds.
 
 ### 2. Smoke test (a few minutes)
 
 ```
-python tools/mlp_oracle/make_descriptors.py --tag dthresh05 --marking "--mlp_lin_data_thresh 0.5" --check
-tools/mlp_oracle/run_study.sh mlp_oracle_check_dthresh05
-python tools/mlp_oracle/report.py mlp_oracle_check_dthresh05
+python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --check
+tools/mlp_oracle/run_study.sh mlp_oracle_check_dmin8
+python tools/mlp_oracle/report.py mlp_oracle_check_dmin8
 ```
 
 `--check` runs every config on delta core 0 for 1M warmup + 3M measured instructions. At that
@@ -71,8 +74,8 @@ length most misses are cold, so the gains say nothing. Check these instead:
 ### 3. The full study
 
 ```
-python tools/mlp_oracle/make_descriptors.py --tag dthresh05 --marking "--mlp_lin_data_thresh 0.5" --sides d,b
-tools/mlp_oracle/run_study.sh mlp_oracle_google_dthresh05
+python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --sides d,b
+tools/mlp_oracle/run_study.sh mlp_oracle_google_dmin8
 ```
 
 By default the replay descriptor holds `lru`, `replay_check`, REPL_MLP at γi 64 with γd 0 and 16,
@@ -101,7 +104,7 @@ If a run is killed, rerun the same command. sci skips the simpoints that already
 ### 4. Report
 
 ```
-python tools/mlp_oracle/report.py tools/mlp_oracle/baseline/mlp_oracle_google_t3.json mlp_oracle_google_dthresh05 \
+python tools/mlp_oracle/report.py tools/mlp_oracle/baseline/mlp_oracle_google_t3.json mlp_oracle_google_dmin8 \
     --ceilings-from tools/mlp_oracle/baseline/mlp_oracle_google_t3.json --workloads --out oracle_report/
 ```
 
@@ -116,11 +119,13 @@ To compare markings, look at:
 - **Oracle against the ceiling:** how much of the possible gain the marked misses hold.
 - **REPL_MLP against the oracle:** how much of it a real policy gets.
 
-## Baseline: the default marking (`mlp_oracle_google_t3`)
+## Baseline: the ratio marking (`mlp_oracle_google_t3`)
 
-Data marking ratio > 0.7, instruction `--mlp_instr_mark 2 --mlp_instr_starve 2`, binary c8bb06d
-(and 5f06591 for lru, the ceilings and REPL_MLP, which are identical with the new flag off).
-The numbers are geomean gains over LRU in %.
+Data marking ratio > 0.7 (the default before scarab #35 and #42), instruction
+`--mlp_instr_mark 2 --mlp_instr_starve 2`, binary c8bb06d (and 5f06591 for lru, the ceilings and
+REPL_MLP, which are identical with the new flag off). It has not been rerun on the current marking.
+Its lru and ceilings come from those binaries: before borrowing its ceilings for a study on a newer
+binary, check that the two studies' lru IPCs match. The numbers are geomean gains over LRU in %.
 
 | Side | Marked | Ceiling | Oracle | Control | Oracle − control |
 |---|---|---|---|---|---|
@@ -135,8 +140,9 @@ The numbers are geomean gains over LRU in %.
   - Control matched on misses only: +8.85.
 - **Replay check:** `replay_check` equals lru on all 35 simpoints.
 
-On the data side the marking selects weakly: random reuse misses already get two thirds of the
-oracle's gain. That is what a different data marking would try to improve.
+On the data side the ratio marking selected weakly: random reuse misses already got two thirds of
+the oracle's gain. That is what the current data marking, and any later one, should be measured
+against.
 
 The descriptor also holds 11 superseded configs, run before `--mlp_oracle_reuse_only` existed,
 which forced cold misses as well. `report.py` skips them.

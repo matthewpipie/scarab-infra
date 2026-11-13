@@ -10,8 +10,8 @@ also force cold misses, which no replacement policy can save; they are skipped u
 --include-cold.
 
     python tools/mlp_oracle/report.py mlp_oracle_google_t3
-    python tools/mlp_oracle/report.py mlp_oracle_google_t3 mlp_oracle_google_dthresh05 --ceilings-from mlp_oracle_google_t3
-    python tools/mlp_oracle/report.py mlp_oracle_google_dthresh05 --workloads --out oracle_report/
+    python tools/mlp_oracle/report.py mlp_oracle_google_t3 mlp_oracle_google_dmin8 --ceilings-from mlp_oracle_google_t3
+    python tools/mlp_oracle/report.py mlp_oracle_google_dmin8 --workloads --out oracle_report/
 
 Method, as ./sci --visualize: a workload's IPC is its simpoints' weighted measured instructions
 over their weighted measured cycles (Periodic_Instructions / Periodic_Cycles), over the simpoints
