@@ -41,12 +41,12 @@ Coding agents reliably reinvent what `sci` already does: counting `squeue` lines
 
 | denied | use instead |
 | --- | --- |
-| `squeue` / `sacct` filtered on `exp_*` | `sci_status` |
-| python/awk/perl or glob aggregation over `stats.out`, `/simulations/`, `collected_stats.csv` | `sci_collect_stats` |
-| `make ... scarab` | `sci_build_scarab` |
-| direct `scarab_<hash>.opt` launch | `sci_sim` |
+| `squeue` / `sacct` filtered on `exp_*` or `-u`, counted, or polled in a loop | `sci_status` (`./sci --status`) |
+| python/awk/perl/ruby run on raw sim output (a sim directory, `stats.out`, `*.stat.<n>.out`), or a glob, `find` or loop over stat files | `sci_collect_stats` (`./sci --collect-stats`) |
+| `make ... scarab` | `sci_build_scarab` (`./sci --build-scarab`) |
+| direct `scarab_<hash>.opt` launch, or a `git checkout` + `--build-scarab` loop | `sci_sim` (`./sci --sim`) |
 
-Anything beginning `./sci` is always allowed, and so is `cat` or `grep` on a **single** `stats.out` — blocking that would stop you debugging one simpoint. Aggregation is what gets caught, not inspection.
+Anything beginning `./sci` is always allowed, and so is `cat` or `grep` on a **single** `stats.out` — blocking that would stop you debugging one simpoint. Aggregation is what gets caught, not inspection. Results sci has already collected (`collected_stats.csv`, `aggregates.json` and the other files at the top of an experiment directory) are SimPoint-weighted, so analysing them further is not blocked. The interpreter has to be the command being run and the raw path one of its own arguments, so mentioning them in a heredoc, a commit message or a PR description does not trip the hook.
 
 ### Install
 
@@ -94,7 +94,7 @@ The MCP server is protocol-standard, so Codex and Gemini CLI can both consume it
 
 ### Limits
 
-A hook denial is a strong nudge, not a sandbox. The agent is told "use `sci_status`" and could in principle rephrase around the pattern, so the deny message instructs it to raise the gap with you rather than work around it. Making it airtight would need `deny` permission rules on `Bash(python3:*)` and friends, which blocks far too much legitimate work.
+A hook denial is a strong nudge, not a sandbox. The agent is told "use `sci_status`" (or `./sci --status` where the MCP server is not loaded) and could in principle rephrase around the pattern, so the deny message instructs it to raise the gap with you rather than work around it. When you agree that sci cannot do what is needed, the agent reruns the command with a trailing `# sci-hook-ok: <reason>` comment, which the hook lets through; the exception and its reason stay visible in the transcript instead of being hidden in a script file. Making it airtight would need `deny` permission rules on `Bash(python3:*)` and friends, which blocks far too much legitimate work.
 
 ## Additional Workflows
 

@@ -24,13 +24,34 @@ CASES = [
     ('sinfo -o "%.14N %.9P %.7t %.5D %.6c"', None),
     ("scontrol show job 1795748", None),
     ('squeue -o "%.10i %.10T %.20R"', None),
-    # stat aggregation
+    # stat aggregation: an interpreter run on raw sim output, or a glob/find/loop over stat files
     ("grep IPC /home/me/simulations/exp_sw620/*/stats.out", "sci_collect_stats"),
     ("for f in /home/me/simulations/exp/*/*/stats.out; do awk '/IPC/{print $2}' $f; done", "sci_collect_stats"),
     ("python3 /tmp/myparse.py /home/me/simulations/exp_sw619/base_stock", "sci_collect_stats"),
-    # already collected: aggregating or plotting it again is visualize's job
-    ('python3 -c "import csv; csv.reader(open(\'collected_stats.csv\'))"', "sci_visualize"),
-    ("awk -F, '{print $3}' /home/me/simulations/exp_sw620/collected_stats.csv", "sci_visualize"),
+    ("cd /tmp && ~/miniconda3/envs/x/bin/python p.py ~/simulations/exp/lru/spec2006/", "sci_collect_stats"),
+    ("nice -n 10 python3 p.py /home/me/simulations/exp/lru", "sci_collect_stats"),
+    ("awk '/IPC/' /home/me/simulations/exp/lru/spec2006/rate_int/mcf/1/core.stat.0.out", "sci_collect_stats"),
+    ("cat ~/simulations/exp/lru/*/*/*/*/core.stat.0.out | python3 sum.py", "sci_collect_stats"),
+    ("find ~/simulations/exp -name stats.out | xargs awk '/IPC/'", "sci_collect_stats"),
+    ("for e in a b; do\n  python3 parse.py ~/simulations/$e/lru\ndone", "sci_collect_stats"),
+    ("for c in lru drrip; do grep IPC ~/simulations/exp/$c/x/1/stats.out; done", "sci_collect_stats"),
+    # allowed: collected results are already SimPoint-weighted; analyzing them is ordinary work
+    ('python3 -c "import csv; csv.reader(open(\'collected_stats.csv\'))"', None),
+    ("awk -F, '{print $3}' /home/me/simulations/exp_sw620/collected_stats.csv", None),
+    ("~/miniconda3/envs/x/bin/python cmp.py ~/simulations/exp/collected_stats.csv lru drrip", None),
+    ("python3 -m json.tool /home/me/simulations/exp/aggregates.json", None),
+    ("jq '.aggregates.IPC' ~/simulations/exp/aggregates.json", None),
+    # allowed: the words appear, but nothing runs an interpreter on raw output
+    ("mkdir -p ~/simulations/t && cp ~/simulations/exp/collected_stats.csv ~/simulations/t/", None),
+    ("for e in a b; do mkdir -p ~/simulations/$e && cp ~/simulations/x/collected_stats.csv ~/simulations/$e/; done", None),
+    ("rm -rf ~/simulations/aggtest_*", None),
+    ("python3 -I - <<'EOF'\nimport json\nprint(1)\nEOF\nmkdir -p ~/simulations/aggtest", None),
+    ("gh pr create --title t --body 'run python on aggregates.json, not on /simulations/x/y'", None),
+    ("git commit -m 'python3 reads aggregates.json now'", None),
+    ("ls ~/simulations/exp/lru/spec2006/rate_int/mcf/1/", None),
+    # allowed: the user approved going around sci for this one command
+    ("python3 p.py /home/me/simulations/exp/lru  # sci-hook-ok: one-off per-simpoint dump", None),
+    ("python3 p.py /home/me/simulations/exp/lru  # sci-hook-ok:", "sci_collect_stats"),
     # build
     ("make -j32 scarab", "sci_build_scarab"),
     # running the simulator
@@ -63,14 +84,30 @@ CASES = [
 ]
 
 
-def verdict(command):
+# (command, text the denial must contain): the CLI fallback for sessions without the
+# MCP server, and the way to record an approved exception.
+REASON_CASES = [
+    ("squeue -u me | wc -l", "./sci --status <descriptor>"),
+    ("python3 p.py /home/me/simulations/exp/lru", "./sci --collect-stats <descriptor>"),
+    ("make -j32 scarab", "# sci-hook-ok: <reason>"),
+    ("git checkout abc1234 && ./sci --build-scarab b", "./sci --sim <descriptor>"),
+]
+
+
+def reason_for(command):
     payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})
     out = subprocess.run(
         [sys.executable, str(HOOK)], input=payload, capture_output=True, text=True
     ).stdout.strip()
     if not out:
         return None
-    reason = json.loads(out)["hookSpecificOutput"]["permissionDecisionReason"]
+    return json.loads(out)["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def verdict(command):
+    reason = reason_for(command)
+    if reason is None:
+        return None
     return reason.split("Use the MCP tool `")[1].split("`")[0]
 
 
@@ -82,8 +119,14 @@ def main():
         failures += not ok
         label = "ok  " if ok else "FAIL"
         want = expected or "allow"
-        print(f"[{label}] {want:<18} {'' if ok else f'(got {got or 'allow'}) '}{command[:64]}")
-    print(f"\n{len(CASES) - failures}/{len(CASES)} passed")
+        shown = command.replace("\n", "\\n")[:64]
+        print(f"[{label}] {want:<18} {'' if ok else f'(got {got or 'allow'}) '}{shown}")
+    for command, text in REASON_CASES:
+        ok = text in (reason_for(command) or "")
+        failures += not ok
+        print(f"[{'ok  ' if ok else 'FAIL'}] reason has {text!r}: {command[:40]}")
+    total = len(CASES) + len(REASON_CASES)
+    print(f"\n{total - failures}/{total} passed")
     return 1 if failures else 0
 
 
