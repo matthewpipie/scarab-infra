@@ -38,7 +38,6 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 INFRA = HERE.parents[1]
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(INFRA / "workloads"))
 import report as R  # noqa: E402
 
 INSTR_FLAG = re.compile(r"--mlp_lin_instr_lambda[ =]\S+")
@@ -103,14 +102,10 @@ def write(name, desc, note):
 
 
 def workloads_db(desc):
-    """The workload DB sci runs desc against (utilities.load_workloads_for_descriptor)."""
-    import extract_top_simpoints
-    top = desc.get("top_simpoint")
-    top_n = None if top in (None, False) else True if top is True else int(top)
-    db = json.load(open(INFRA / "workloads" / ("workloads_top_simp.json" if top_n is True else "workloads_db.json")))
-    if top_n not in (None, True):
-        extract_top_simpoints.modify_simpoints_in_place(db, top_n)
-    return db
+    """The workload DB sci runs desc against (top_simpoint, simpoint_coverage)."""
+    sys.path.insert(0, str(INFRA))
+    from scripts.utilities import load_workloads_for_descriptor
+    return load_workloads_for_descriptor(desc, INFRA, dbg_lvl=0)
 
 
 def simpoints(desc):

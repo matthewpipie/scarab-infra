@@ -26,15 +26,40 @@ def process_simpoints(simpoints, n=DEFAULT_TOP_N):
     simpoints = sorted(simpoints, key=lambda x: x['weight'], reverse=True)[:n]
     return normalize_weights(simpoints)
 
-def modify_simpoints_in_place(d, n=DEFAULT_TOP_N):
+def process_simpoints_coverage(simpoints, coverage):
+    """Keep the heaviest simpoints until they hold at least `coverage` (0-1] of the
+    workload's total weight, then renormalize the kept weights to sum to 1.
+
+    The total is the sum of the workload's own weights (some sum to 0.99, not 1), so
+    coverage 1.0 keeps every simpoint. Ties keep workloads_db.json order, as top-N does.
+    """
+    simpoints = [sp for sp in simpoints if sp.get('weight') is not None]
+    simpoints = sorted(simpoints, key=lambda x: x['weight'], reverse=True)
+    # The relative slack absorbs float rounding in the running sum.
+    target = coverage * sum(sp['weight'] for sp in simpoints) * (1 - 1e-9)
+    kept, covered = [], 0.0
+    for sp in simpoints:
+        kept.append(sp)
+        covered += sp['weight']
+        if covered >= target:
+            break
+    return normalize_weights(kept)
+
+def _map_simpoints(d, fn):
     if isinstance(d, dict):
         if 'simpoints' in d and isinstance(d['simpoints'], list):
-            d['simpoints'] = process_simpoints(d['simpoints'], n)
+            d['simpoints'] = fn(d['simpoints'])
         for v in d.values():
-            modify_simpoints_in_place(v, n)
+            _map_simpoints(v, fn)
     elif isinstance(d, list):
         for item in d:
-            modify_simpoints_in_place(item, n)
+            _map_simpoints(item, fn)
+
+def modify_simpoints_in_place(d, n=DEFAULT_TOP_N):
+    _map_simpoints(d, lambda simpoints: process_simpoints(simpoints, n))
+
+def modify_simpoints_coverage_in_place(d, coverage):
+    _map_simpoints(d, lambda simpoints: process_simpoints_coverage(simpoints, coverage))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract the top simpoints and recompute their weights')
