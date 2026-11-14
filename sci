@@ -2898,6 +2898,16 @@ def run_visualize(descriptor_name: str) -> int:
         print(exc)
         return 1
 
+    from scarab_stats.aggregation import Hierarchy, uses_geomean
+
+    # Rows are workloads (a benchmark's inputs combined), then suites, then Avg; see
+    # scarab_stats/aggregation.py. visualize.per_input lists the inputs instead.
+    per_input = descriptor["visualize"].get("per_input", False)
+    if not isinstance(per_input, bool):
+        print("Descriptor field 'visualize.per_input' must be true or false; using false.")
+        per_input = False
+    hierarchy = Hierarchy(workloads)
+
     def normalize_counter_entry(entry: object) -> Optional[Dict[str, object]]:
         """
         Convert visualize_counters entries into a normalized plot request.
@@ -2966,32 +2976,35 @@ def run_visualize(descriptor_name: str) -> int:
         formatted = formatted.rstrip("0").rstrip(".")
         return f"{formatted}%" if as_percent else formatted
 
-    # {stat: {config: {workload: value, ..., "Avg": value}}}, emitted as JSON below.
+    # {stat: {config: {input: value, ..., "Avg": value}}}, emitted as JSON below, plus the
+    # same values one and two levels up: {stat: {config: {workload or suite: value}}}.
     aggregates: Dict[str, Dict[str, Dict[str, Optional[float]]]] = {}
+    workload_aggregates: Dict[str, Dict[str, Dict[str, Optional[float]]]] = {}
+    suite_aggregates: Dict[str, Dict[str, Dict[str, Optional[float]]]] = {}
 
     def print_markdown_table(stat_name: str, *, display_name: Optional[str] = None) -> None:
         """
         Render a markdown table for the given stat across workloads/configs, including speedup vs baseline.
 
-        Also records the values into `aggregates` for the JSON emit.
+        Rows are the workloads with their inputs combined, then the suites (when there are
+        several), then Avg, all from `hierarchy`; speedups are each row's value over the
+        baseline's. Also records the values into the aggregates dicts for the JSON emit.
         """
         label = display_name or stat_name
         all_data = experiment.retrieve_stats(configs, [stat_name], workloads)
         if all_data is None:
             return
-        recorded = aggregates.setdefault(stat_name, {})
+        geometric = uses_geomean(stat_name)
+        per_config = {
+            cfg: {wl: all_data.get(f"{cfg} {wl} {stat_name}") for wl in workloads}
+            for cfg in configs
+        }
+        for cfg in configs:
+            levels = hierarchy.aggregate(per_config[cfg], geometric)
+            aggregates.setdefault(stat_name, {})[cfg] = {**per_config[cfg], "Avg": levels["Avg"]}
+            workload_aggregates.setdefault(stat_name, {})[cfg] = levels["workloads"]
+            suite_aggregates.setdefault(stat_name, {})[cfg] = levels["suites"]
 
-        def average(values: List[float], *, use_geomean: bool) -> Optional[float]:
-            if not values:
-                return None
-            if use_geomean:
-                product = 1.0
-                for val in values:
-                    product *= val
-                return product ** (1 / len(values))
-            return sum(values) / len(values)
-
-        mean_type_geomean = stat_name.split("_")[-1] == "pct"
         configs_ordered = [baseline] + [cfg for cfg in configs if cfg != baseline]
         non_baseline_configs = [cfg for cfg in configs_ordered if cfg != baseline]
 
@@ -3007,44 +3020,14 @@ def run_visualize(descriptor_name: str) -> int:
             return (cur / base - 1.0) * 100.0
 
         rows: List[List[str]] = []
-        workloads_for_table = workloads + ["Avg"]
-
-        baseline_values = {
-            wl: all_data.get(f"{baseline} {wl} {stat_name}") for wl in workloads
-        }
-        baseline_avg = average(
-            [val for val in baseline_values.values() if val is not None],
-            use_geomean=mean_type_geomean,
-        )
-
-        for wl in workloads_for_table:
-            row: List[str] = [wl]
-            base_val = baseline_avg if wl == "Avg" else baseline_values.get(wl)
-
-            row.append(format_numeric(base_val))
-            recorded.setdefault(baseline, {})[wl] = base_val
-
-            values_by_cfg: Dict[str, Optional[float]] = {}
+        for table_row in hierarchy.rows(per_config, geometric, per_input=per_input):
+            values_by_cfg: Dict[str, Optional[float]] = table_row["values"]  # type: ignore[assignment]
+            base_val = values_by_cfg.get(baseline)
+            row: List[str] = [str(table_row["label"]), format_numeric(base_val)]
             for cfg in non_baseline_configs:
-                if wl == "Avg":
-                    cfg_values = [
-                        all_data.get(f"{cfg} {workload} {stat_name}")
-                        for workload in workloads
-                    ]
-                    value = average(
-                        [val for val in cfg_values if val is not None],
-                        use_geomean=mean_type_geomean,
-                    )
-                else:
-                    value = all_data.get(f"{cfg} {wl} {stat_name}")
-
-                values_by_cfg[cfg] = value
-                recorded.setdefault(cfg, {})[wl] = value
-                row.append(format_numeric(value))
-
+                row.append(format_numeric(values_by_cfg.get(cfg)))
             for cfg in non_baseline_configs:
                 row.append(format_numeric(speedup(values_by_cfg.get(cfg), base_val), as_percent=True))
-
             rows.append(row)
 
         dividers = ["---"] * len(headers)
@@ -3056,6 +3039,7 @@ def run_visualize(descriptor_name: str) -> int:
             table_lines.append("| " + " | ".join(row) + " |")
 
         print(f"\nMarkdown table for {label}:")
+        print(("Rows are inputs; " if per_input else "") + hierarchy.describe(geometric))
         for line in table_lines:
             print(line)
 
@@ -3152,6 +3136,7 @@ def run_visualize(descriptor_name: str) -> int:
                 x_label="Workloads",
                 average=True,
                 plot_name=str(ipc_output),
+                per_input=per_input,
             )
             aggregator.plot_workloads_speedup(
                 experiment,
@@ -3164,6 +3149,7 @@ def run_visualize(descriptor_name: str) -> int:
                 x_label="Workloads",
                 average=True,
                 plot_name=str(speedup_output),
+                per_input=per_input,
             )
         except Exception as exc:  # pragma: no cover - matplotlib backend dependent
             print(f"Failed to generate plots for '{stat_name}': {exc}")
@@ -3222,6 +3208,8 @@ def run_visualize(descriptor_name: str) -> int:
 
     # For consumers tracking numbers over time (scripts/weekly_perf_sweep.py);
     # reuses this function's weighting instead of re-deriving it.
+    # "workloads"/"aggregates" are per input (sci's workload list) plus "Avg"; the
+    # combined levels sit beside them, keyed by the names in "groups".
     if aggregates:
         aggregates_path = stats_path.with_name("aggregates.json")
         payload = {
@@ -3231,6 +3219,13 @@ def run_visualize(descriptor_name: str) -> int:
             "configs": list(configs),
             "workloads": list(workloads),
             "aggregates": aggregates,
+            "workload_aggregates": workload_aggregates,
+            "suite_aggregates": suite_aggregates,
+            "groups": {"workloads": hierarchy.workloads, "suites": hierarchy.suites},
+            "averaging": (
+                "simpoints -> input: cycle-weighted; input -> workload -> suite -> Avg: "
+                "geomean for IPC/IPC_total/*_pct stats, arithmetic mean otherwise"
+            ),
         }
         try:
             with aggregates_path.open("w", encoding="utf-8") as fh:
@@ -3364,10 +3359,21 @@ def run_perf_analyze(descriptor_name: str) -> int:
             return None
         return (cur / base - 1.0) * 100.0
 
-    def average(values: List[float]) -> Optional[float]:
-        if not values:
-            return None
-        return sum(values) / len(values)
+    from scarab_stats.aggregation import Hierarchy, uses_geomean
+
+    hierarchy = Hierarchy(workloads)
+
+    def average(deltas: Dict[str, Optional[float]], stat: str) -> Optional[float]:
+        """Avg of per-input % deltas, nested input -> workload -> suite like --visualize.
+
+        Geomean stats (IPC, *_pct) average the ratios geometrically, so the result is the
+        speedup of the nested geomean; other stats average the deltas arithmetically.
+        """
+        if uses_geomean(stat):
+            ratios = {wl: None if d is None else 1.0 + d / 100.0 for wl, d in deltas.items()}
+            avg_ratio = hierarchy.aggregate(ratios, geometric=True)["Avg"]
+            return None if avg_ratio is None else (avg_ratio - 1.0) * 100.0
+        return hierarchy.aggregate(deltas, geometric=False)["Avg"]
 
     resolved_counters: List[Tuple[str, str]] = []
     for requested in requested_counters:
@@ -3776,16 +3782,15 @@ def run_perf_analyze(descriptor_name: str) -> int:
         if resolved == trigger_resolved_counter:
             trigger_counter_processed = True
         for cfg in non_baseline_configs:
-            deltas: List[float] = []
+            deltas: Dict[str, Optional[float]] = {}
             for workload in workloads:
                 base_val = baseline_values.get(workload)
                 cfg_val = cfg_values[cfg].get(workload)
                 delta = pct_delta(cfg_val, base_val)
                 if resolved == trigger_resolved_counter:
                     trigger_workload_delta_by_config[cfg][workload] = delta
-                if delta is not None:
-                    deltas.append(delta)
-            aggregate_delta_by_config[cfg][requested] = average(deltas)
+                deltas[workload] = delta
+            aggregate_delta_by_config[cfg][requested] = average(deltas, resolved)
 
     if skipped_non_numeric_stats:
         print(

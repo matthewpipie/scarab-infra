@@ -77,7 +77,7 @@
   "collect_stats":{
     "configs":null
   },
-  "_visualize":"Visualization settings for ./sci --visualize. Configure baseline and counters.",
+  "_visualize":"Visualization settings for ./sci --visualize. Configure baseline and counters. Tables and plots list workloads, then suites, then Avg: a workload combines its inputs (spec2006 gcc, gcc_2, ... gcc_9), a suite combines its workloads, Avg combines the suites, using a geomean for IPC and *_pct stats and an arithmetic mean otherwise. Set per_input to true to list each input instead (suites and Avg are unchanged).",
   "visualize":{
     "baseline":"icache_32k",
     "configs":[
@@ -100,7 +100,8 @@
           "ICACHE_MISS"
         ]
       }
-    ]
+    ],
+    "per_input":false
   },
   "_mem":"Memory scheduling and collection settings for Slurm jobs. collection_baseline specifies which config's MaxRSS is recorded in the mode-specific base_memory_mb_by_mode fields by ./sci --collect-mem (defaults to visualize.baseline). fallback_mb is the --mem limit used for workloads or simpoints that have no measured base_memory for the requested simulation mode yet; set it conservatively high to avoid OOM kills on the first run.",
   "mem":{

@@ -42,6 +42,11 @@ from pathlib import Path
 from scripts import utilities  # Descriptor parsing + simpoint metadata helpers
 from scripts.utilities import normalize_simulations
 
+try:
+    from .aggregation import Hierarchy, uses_geomean
+except ImportError:  # loaded as a top-level module with scarab_stats/ on sys.path
+    from aggregation import Hierarchy, uses_geomean
+
 def _cleanup_shared_memory(name: str) -> None:
     """Best-effort cleanup for SharedMemory segments (avoids resource_tracker warnings on crashes)."""
     try:
@@ -163,8 +168,10 @@ class Experiment:
                             results[f"{c} {w} {sp} {stat}"] = self.data[col][self.data["stats"] == stat].iloc[0]
 
         elif aggregation_level == "Config":
+            # Geomean, nested: inputs -> workload -> suite -> one value (see aggregation.py).
+            hierarchy = Hierarchy(workload)
             for c in config:
-                config_data = {stat:[] for stat in stats}
+                config_data = {stat: {} for stat in stats}
                 for w in workload:
                     selected_simpoints = [col for col in self.data.columns if col.startswith(f"{c} {w} ")]
 
@@ -173,11 +180,10 @@ class Experiment:
                         weights = list(self.data[selected_simpoints][self.data["stats"] == "Weight"].iloc[0])
                         values = list(map(float, values))
                         weights = list(map(float, weights))
-                        config_data[stat].append(_weighted_mean(values, weights))
+                        config_data[stat][w] = _weighted_mean(values, weights)
 
-                #print(config_data)
-                for stat, val in config_data.items():
-                    results[F"{c} {stat}"] = reduce(lambda x,y: x*y, val) ** (1/len(val))
+                for stat, per_input in config_data.items():
+                    results[F"{c} {stat}"] = hierarchy.aggregate(per_input, geometric=True)["Avg"]
 
         else:
             print(f"ERROR: Invalid aggreagation level {aggregation_level}.")
@@ -1616,13 +1622,15 @@ class stat_aggregator:
                                 configs: List[str], speedup_baseline: str = None, title: str = "", x_label: str = "",
                                 y_label: str= "", logscale: bool = False, bar_width:float = 0.2,
                                 bar_spacing:float = 0.05, workload_spacing:float = 0.3, average: bool = False,
-                                colors = None, plot_name = None, ylim = None):
+                                colors = None, plot_name = None, ylim = None, per_input: bool = False):
         """Plot percentage speedup over a baseline across workloads.
 
         Steps:
-          1) Aggregate each requested stat for each (config, workload) using simpoint weights.
-          2) Compute speedup relative to `speedup_baseline` (baseline value / config value).
-          3) Plot a grouped bar chart, optionally with an average bar.
+          1) Aggregate each requested stat for each (config, input) using simpoint weights.
+          2) Combine inputs into workloads, workloads into suites, suites into Avg
+             (aggregation.Hierarchy; geomean for IPC and *_pct stats).
+          3) Plot each row's value relative to `speedup_baseline`'s, so the bars match
+             the --visualize table. With per_input=True the bars are the inputs.
         """
         if len(stats) > 1:
             print("WARN: This API is for only one stats.")
@@ -1632,41 +1640,21 @@ class stat_aggregator:
         # Get all data with structure all_data[f"{config} {wl} {stat}"]
         configs_to_load = configs + [speedup_baseline]
         all_data = experiment.retrieve_stats(configs_to_load, stats, workloads)
-        workloads_to_plot = workloads.copy()
 
-        mean_type = 1 # geomean
-        stat_tokens = stat.split('_')
-        if stat_tokens[-1] != 'pct':
-            mean_type = 0 # arithmetic mean
+        per_config = {conf: {wl: all_data[f"{conf} {wl} {stat}"] for wl in workloads}
+                      for conf in dict.fromkeys(configs_to_load)}
+        rows = Hierarchy(workloads).rows(per_config, uses_geomean(stat), per_input=per_input)
+        if not average:
+            rows = [row for row in rows if row["level"] in ("workload", "input")]
 
-        data_to_plot = {}
-        for conf in configs:
-            if mean_type == 1:
-                avg_config = 1.0
-            else:
-                avg_config = 0.0
-            data_config = []
-            for wl_number, wl in enumerate(workloads_to_plot):
-                data = all_data[f"{conf} {wl} {stat}"]/all_data[f"{speedup_baseline} {wl} {stat}"]
-                data_config.append(100.0*data - 100.0)
-                if mean_type == 1:
-                    avg_config *= data
-                else:
-                    avg_config += data
+        def pct(cur, base):
+            if cur is None or base is None or base == 0:
+                return float('NaN')
+            return 100.0 * cur / base - 100.0
 
-            num_workloads = len(workloads_to_plot)
-            if mean_type == 1:
-                avg_config = avg_config**(num_workloads**-1)
-            else:
-                avg_config = avg_config/num_workloads
-            if average:
-                data_config.append(100.0*avg_config - 100.0)
-            data_to_plot[conf] = data_config
-
-        if average:
-            benchmarks_to_plot = workloads_to_plot + ["Avg"]
-        else:
-            benchmarks_to_plot = workloads_to_plot
+        data_to_plot = {conf: [pct(row["values"][conf], row["values"][speedup_baseline]) for row in rows]
+                        for conf in configs}
+        benchmarks_to_plot = [row["label"] for row in rows]
 
         fig, ax = plt.subplots(figsize=(6+len(benchmarks_to_plot)*((bar_spacing+bar_width)*len(configs)), 5))
 
@@ -1737,12 +1725,15 @@ class stat_aggregator:
                         configs: List[str], title: str = "", x_label: str = "",
                         y_label: str= "", logscale: bool = False, bar_width:float = 0.2,
                         bar_spacing:float = 0.05, workload_spacing:float = 0.3, average: bool = False,
-                        colors = None, plot_name = None, ylim = None):
+                        colors = None, plot_name = None, ylim = None, per_input: bool = False):
         """Plot one or more stats across multiple workloads (grouped bars).
 
         Steps:
-          1) Use `Experiment.retrieve_stats(..., aggregation_level="Workload")` to get weighted values.
-          2) Reformat into a per-config series.
+          1) Use `Experiment.retrieve_stats(..., aggregation_level="Workload")` to get
+             weighted values per input.
+          2) Combine inputs into workloads, workloads into suites, suites into Avg
+             (aggregation.Hierarchy; geomean for IPC and *_pct stats). With
+             per_input=True the bars are the inputs and only suites/Avg are combined.
           3) Render a grouped bar chart with optional log scale / colors / y-limits.
         """
         if len(stats) > 1:
@@ -1762,41 +1753,15 @@ class stat_aggregator:
             print("3. The dataframe doesn't contain the expected 'Workload' or 'Configuration' rows")
             return
 
-        workloads_to_plot = workloads.copy()
+        per_config = {conf: {wl: all_data[f"{conf} {wl} {stat}"] for wl in workloads} for conf in configs}
+        rows = Hierarchy(workloads).rows(per_config, uses_geomean(stat), per_input=per_input)
+        if not average:
+            rows = [row for row in rows if row["level"] in ("workload", "input")]
 
-        mean_type = 1 # geomean
-        stat_tokens = stat.split('_')
-        if stat_tokens[-1] != 'pct':
-            mean_type = 0 # arithmetic mean
-
-        data_to_plot = {}
-        for conf in configs:
-            if mean_type == 1:
-                avg_config = 1.0
-            else:
-                avg_config = 0.0
-            data_config = []
-            for wl_number, wl in enumerate(workloads_to_plot):
-                data = all_data[f"{conf} {wl} {stat}"]
-                data_config.append(data)
-                if mean_type == 1:
-                    avg_config *= data
-                else:
-                    avg_config += data
-
-            num_workloads = len(workloads_to_plot)
-            if mean_type == 1:
-                avg_config = avg_config**(num_workloads**-1)
-            else:
-                avg_config = avg_config/num_workloads
-            if average:
-                data_config.append(avg_config)
-            data_to_plot[conf] = data_config
-
-        if average:
-            benchmarks_to_plot = workloads_to_plot + ["Avg"]
-        else:
-            benchmarks_to_plot = workloads_to_plot
+        data_to_plot = {conf: [float('NaN') if row["values"][conf] is None else row["values"][conf]
+                               for row in rows]
+                        for conf in configs}
+        benchmarks_to_plot = [row["label"] for row in rows]
 
         fig, ax = plt.subplots(figsize=(6+len(benchmarks_to_plot)*((bar_spacing+bar_width)*len(configs)), 5))
 
