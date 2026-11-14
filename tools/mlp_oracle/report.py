@@ -56,6 +56,10 @@ SIDE_NAME = {"i": "instruction", "d": "data", "b": "both"}
 # Flags that set up the study rather than the marking.
 STUDY_FLAGS = re.compile(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit|mlp_boost_in_fills|mlp_lin_instr_lambda|"
                          r"mlp_lin_data_lambda)[ =]\S+")
+# Flags that decide which fills are marked (make_descriptors.py's MARKING_PARAMS); the rest of a config's
+# flags, beyond the study's own, describe the machine.
+MARKING_FLAGS = re.compile(r"--(mlp_data_bound|mlp_data_bound_min|mlp_lin_data_thresh|mlp_instr_mark|"
+                           r"mlp_lin_instr_thresh|mlp_instr_starve|mlp_instr_starve_min)[ =]\S+")
 
 
 def flag(params, name, default=None):
@@ -193,10 +197,13 @@ class Study:
         self.arch = self.desc.get("architecture", "?")
 
     def _marking(self):
+        """The oracle's marking flags, and any other flags beyond the study's own (the machine), as text."""
         for role, c in self.roles.items():
             if role.startswith("oracle_"):
-                rest = STUDY_FLAGS.sub("", self.desc["configurations"][c]["params"]).split()
-                return " ".join(rest) or "REPL_MLP defaults"
+                params = STUDY_FLAGS.sub("", self.desc["configurations"][c]["params"])
+                marking = " ".join(m.group(0) for m in MARKING_FLAGS.finditer(params))
+                machine = " ".join(MARKING_FLAGS.sub("", params).split())
+                return (marking or "the binary's defaults") + (f"` · other flags: `{machine}" if machine else "")
         return "n/a"
 
     def geo(self, role):
@@ -289,17 +296,24 @@ def match_table(st):
 
 
 def borrow_ceilings(study, source):
-    """Ceilings do not depend on the marking: take them from another study of the same simpoints."""
+    """Ceilings do not depend on the marking: take them from another study of the same simpoints, binary
+    behavior, machine and length. LRU does not depend on the marking either, so the two studies' lru IPCs
+    must match exactly; the workloads where they don't are returned with the borrow, for the warning."""
     if source.name == study.name:
         return
     same = set(map(tuple, study.rows[["workload", "cluster"]].drop_duplicates().values)) == \
         set(map(tuple, source.rows[["workload", "cluster"]].drop_duplicates().values))
+    mine, theirs = study.ipc[study.roles["lru"]], source.ipc[source.roles["lru"]]
+    lru_differs = [w for w in mine.index if w not in theirs.index or abs(mine[w] / theirs[w] - 1) > 1e-9]
+    took = False
     for s in "idb":
         role = f"ceiling_{s}"
         if role in source.gain and role not in study.gain:
             study.gain[role] = source.gain[role]
             study.roles[role] = f"{source.name}/{source.roles[role]}"
-    study.borrowed = (source.name, same)
+            took = True
+    if took:
+        study.borrowed = (source.name, same, lru_differs)
 
 
 def summary(st):
@@ -309,8 +323,12 @@ def summary(st):
         out.append(f"Dropped {len(st.dropped)} simpoints that did not finish under every config: "
                    + ", ".join(f"{w}/{c}" for w, c in st.dropped[:8]) + (" …" if len(st.dropped) > 8 else ""))
     if getattr(st, "borrowed", None):
-        src, same = st.borrowed
-        out.append(f"Ceilings from {src}" + ("" if same else " (WARNING: different simpoints)"))
+        src, same, lru_differs = st.borrowed
+        warn = [] if same else ["different simpoints"]
+        if lru_differs:
+            warn.append(f"lru differs on {len(lru_differs)} of {len(st.workloads)} workloads, so the binary, machine "
+                        "or length differs and its ceilings do not apply here; run --ceilings")
+        out.append(f"Ceilings from {src}" + (f" (WARNING: {'; '.join(warn)})" if warn else ""))
     out += ["", "Gain over lru in %, geomean over workloads.", "",
             "| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |",
             "|---|---|---|---|---|---|---|---|"]

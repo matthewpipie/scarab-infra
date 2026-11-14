@@ -9,12 +9,19 @@ lines (the control), per side. Both leave each line's first miss alone (--mlp_or
 since no replacement policy can save a cold miss. LRU is the baseline, and REPL_MLP itself and the
 ceilings (every non-cold miss forced) can run alongside.
 
-Everything that changes what counts as marked goes in --marking. Those flags reach the reference
-(where the marks are recorded) and every replay config, including REPL_MLP's.
+--binary is a commit of a private scarab clone (--scarab-path) that has the oracle (scarab #36): a git
+ref such as origin/main (the default, fetched first) or a scarab_<hash>. The descriptors pin its hash.
+The marking is that commit's, with --marking on top: every marking flag (MARKING_PARAMS) is written out
+into every config, at the commit's default unless --marking sets it, so a study's marking is explicit
+whatever main's defaults become. --architecture picks the core (src/PARAMS.<architecture>) and --params
+adds machine flags; both reach every config too, as the reference and the replays must run the same
+machine. Every flag is checked against the commit's *.param.def before anything is written.
 
     python tools/mlp_oracle/make_descriptors.py --tag base
     python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --sides d,b
     python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --check
+    python tools/mlp_oracle/make_descriptors.py --tag incl --architecture golden_small_incl --ceilings
+    python tools/mlp_oracle/make_descriptors.py --tag l2_1m --params "--mlc_size 1048576" --ceilings
 
 Then run both with tools/mlp_oracle/run_study.sh mlp_oracle_google_<tag> and read the results with
 tools/mlp_oracle/report.py. See tools/mlp_oracle/README.md.
@@ -24,19 +31,28 @@ import argparse
 import getpass
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 INFRA = Path(__file__).resolve().parents[2]
 USER = getpass.getuser()
 
-# scarab PR #36 (mlp_oracle) merged with main 03c737d, plus the instruction-prefetch kind, sticky
-# marks and the forced misses' reuse distances (RD needs them): the oracle records main's mark, so the default
-# marking is main's (data: no-issue ROB-head stalls, --mlp_data_bound 3 --mlp_data_bound_min 16
-# --mlp_lin_data_thresh 0; instruction: --mlp_instr_mark 2 --mlp_instr_starve 2). A build with a
-# different marking must contain both the mlp_oracle code and that marking. The baseline study
-# (baseline/mlp_oracle_google_t3) ran on c8bb06d, with the 0.7 ratio data marking.
-DEFAULT_BINARY = "scarab_b30d6c1"
+# The newest main of the scarab clone: once scarab #36 is merged, it has the oracle and main's current
+# marking. Until then, origin/mlp-oracle (#36's branch, b30d6c1: main 03c737d plus the oracle and the
+# reuse stats) is the commit to pass. The baseline study (baseline/mlp_oracle_google_t3) ran on
+# c8bb06d, with the 0.7 ratio data marking, before the oracle used main's marking.
+DEFAULT_BINARY = "origin/main"
+
+# The flags that decide which fills are marked (scarab src/memory/memory.param.def), data side, then
+# instruction side. The oracle records the mark the MLC gives a fill under any replacement policy,
+# the one REPL_MLP boosts, so these are what a study's oracle bounds. A marking flag Scarab adds later
+# belongs here; until then, --marking passes it through as it is.
+MARKING_PARAMS = ["mlp_data_bound", "mlp_data_bound_min", "mlp_lin_data_thresh",
+                  "mlp_instr_mark", "mlp_lin_instr_thresh", "mlp_instr_starve", "mlp_instr_starve_min"]
+# Flags the generator sets per config, so neither --marking nor --params may.
+STUDY_FLAGS = re.compile(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit|mlp_lin_data_lambda|mlp_lin_instr_lambda|"
+                         r"mlp_boost_in_fills)\b")
 
 # Google "simpoints" are whole cores of equal weight, so a workload's first three by index are as
 # good as any three. Cores whose trace holds under 560M instructions are swapped for the next ones
@@ -58,13 +74,19 @@ REPLAY_MEM_MB = 1024  # a replay run holds the whole reference in memory
 # as it renews the line in LRU. report.py --reuse reads the reference's; --miss-reuse the record check's
 # MLP_RDMISS_*, the distances of the misses the oracle and the control force.
 RD = "--mlp_rd_sticky 1 --mlp_rd_iprf_reuse 1"
+RD_FLAGS = re.findall(r"--(\w+)", RD)
 
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--tag", required=True, help="names the study: mlp_oracle_google_<tag> and mlp_oracle_google_<tag>_ref")
-    p.add_argument("--marking", default="", help='Scarab flags that change the marking, e.g. "--mlp_data_bound_min 8"')
-    p.add_argument("--binary", default=DEFAULT_BINARY, help=f"scarab_<hash> for every config (default {DEFAULT_BINARY})")
+    p.add_argument("--marking", default="", help='Scarab flags that change the marking, e.g. "--mlp_data_bound_min 8"; '
+                   "every other marking flag takes the binary's default")
+    p.add_argument("--params", default="",
+                   help='Scarab flags that change the machine, for every config, e.g. "--mlc_size 1048576"')
+    p.add_argument("--binary", default=DEFAULT_BINARY,
+                   help="a git ref in --scarab-path (origin/... is fetched first) or scarab_<hash>, for every config "
+                        f"(default {DEFAULT_BINARY})")
     p.add_argument("--sides", default="i,d,b", help="sides that get an oracle and a control: i, d, b (both), comma-separated")
     p.add_argument("--repl-mlp", default="64:0,64:16",
                    help="REPL_MLP configs to run with the same marking, as gamma_i:gamma_d pairs; empty for none")
@@ -99,24 +121,80 @@ def parse_args():
         p.error("--sides takes i, d and b")
     if a.variants and "b" not in a.sides:
         p.error("--variants needs side b")
-    toks = a.marking.split()
-    if toks and not toks[0].startswith("--"):
-        p.error("--marking takes Scarab flags, e.g. \"--mlp_data_bound_min 8\"")
-    if re.search(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit)\b", a.marking):
-        p.error("--marking must not set mlp_oracle*, mlc_cache_repl_policy or inst_limit; the generator sets those")
-    if re.search(r"--(mlp_oracle\w*|mlc_cache_repl_policy|inst_limit)\b", a.ref_params):
-        p.error("--ref-params must not set mlp_oracle*, mlc_cache_repl_policy or inst_limit; the generator sets those")
+    a.marking_flags = flag_pairs(p, "--marking", a.marking)
+    a.params_flags = flag_pairs(p, "--params", a.params)
+    a.ref_flags = flag_pairs(p, "--ref-params", a.ref_params)
+    for opt, flags in (("--marking", a.marking_flags), ("--params", a.params_flags), ("--ref-params", a.ref_flags)):
+        bad = [f for f in flags if STUDY_FLAGS.fullmatch(f"--{f}")]
+        if bad:
+            p.error(f"{opt} must not set {', '.join(bad)}: the generator sets those per config")
+    misplaced = [f for f in a.params_flags if f in MARKING_PARAMS]
+    if misplaced:
+        p.error(f"--params sets marking flags ({', '.join(misplaced)}): put them in --marking")
     a.pairs = []
     for pair in filter(None, (s.strip() for s in a.repl_mlp.split(","))):
         gi, _, gd = pair.partition(":")
         if not (gi.isdigit() and gd.isdigit()):
             p.error(f"--repl-mlp: {pair!r} is not gamma_i:gamma_d")
         a.pairs.append((int(gi), int(gd)))
-    if not re.fullmatch(r"scarab_[0-9a-f]{7,40}", a.binary):
-        p.error("--binary takes scarab_<githash>")
     if a.check:
         a.warmup, a.measured = 1_000_000, 3_000_000
+    resolve_binary(p, a)
     return a
+
+
+def flag_pairs(p, opt, text):
+    """Scarab flags as {name: value}, in order; each flag takes one value, and a later one wins."""
+    toks = text.split()
+    if len(toks) % 2 or any(not t.startswith("--") for t in toks[::2]):
+        p.error(f'{opt} takes Scarab flags with a value each, e.g. "--mlp_data_bound_min 8"')
+    return {toks[i][2:]: toks[i + 1] for i in range(0, len(toks), 2)}
+
+
+def git(a, *args):
+    return subprocess.run(["git", "-C", a.scarab_path, *args], capture_output=True, text=True)
+
+
+def resolve_binary(p, a):
+    """Pin --binary to a commit of --scarab-path, check that it has what the study needs and that every
+    flag exists there, and write the marking out in full at its defaults (a.marking_full)."""
+    m = re.fullmatch(r"scarab_([0-9a-f]{7,40})", a.binary)
+    ref = m.group(1) if m else a.binary
+    if not m and ref.startswith("origin/"):
+        fetched = git(a, "fetch", "--quiet", "origin")
+        if fetched.returncode:
+            print(f"warning: git fetch origin failed in {a.scarab_path}; using the {ref} it has", file=sys.stderr)
+    r = git(a, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
+    if r.returncode:
+        p.error(f"--binary: {ref} is not a commit in {a.scarab_path}")
+    a.commit = r.stdout.strip()
+    a.binary = a.binary if m else f"scarab_{git(a, 'rev-parse', '--short=7', a.commit).stdout.strip()}"
+    a.commit_desc = git(a, "log", "-1", "--format=%h %cs %s", a.commit).stdout.strip()
+    if git(a, "cat-file", "-e", f"{a.commit}:src/memory/mlp_oracle.cc").returncode:
+        p.error(f"--binary: {a.commit_desc} has no mlp_oracle (scarab #36). Until #36 is on main, pass "
+                "--binary origin/mlp-oracle")
+    names = set(re.findall(r"DEF_PARAM\(\s*(\w+)", git(a, "grep", "-h", "DEF_PARAM(", a.commit, "--", "*.param.def").stdout))
+    unknown = [f for f in (*RD_FLAGS, *a.marking_flags, *a.params_flags, *a.ref_flags) if f not in names]
+    if unknown:
+        p.error(f"--binary: {a.commit_desc} has no flag {', '.join(sorted(set(unknown)))}")
+    preset = f"src/PARAMS.{a.architecture}"
+    if git(a, "cat-file", "-e", f"{a.commit}:{preset}").returncode:
+        p.error(f"--architecture: {a.commit_desc} has no {preset}")
+    if not (Path(a.scarab_path) / preset).is_file():
+        p.error(f"--architecture: sci also wants {preset} in the checkout of {a.scarab_path}")
+    # The marking at this commit: memory.param.def's defaults, under the preset's (none set any today).
+    marking = {}
+    pdef = git(a, "show", f"{a.commit}:src/memory/memory.param.def").stdout
+    for name, value in re.findall(r"DEF_PARAM\(\s*(\w+)\s*,\s*\w+\s*,\s*[\w*]+\s*,\s*\w+\s*,\s*([^,]+?)\s*,", pdef):
+        if name in MARKING_PARAMS:
+            marking[name] = value
+    for name, value in re.findall(r"^--(\w+)\s+(\S+)", git(a, "show", f"{a.commit}:{preset}").stdout, re.M):
+        if name in MARKING_PARAMS:
+            marking[name] = value
+    a.marking_defaults = dict(marking)
+    marking.update(a.marking_flags)
+    order = [n for n in MARKING_PARAMS if n in marking] + [n for n in marking if n not in MARKING_PARAMS]
+    a.marking_full = " ".join(f"--{n} {marking[n]}" for n in order)
 
 
 def names(a):
@@ -136,7 +214,7 @@ def simulations(a):
 
 
 def config(a, doc, params, mem=64):
-    params = " ".join(f"{params} {a.marking} --inst_limit {a.warmup + a.measured}".split())
+    params = " ".join(f"{params} {a.marking_full} {a.params} --inst_limit {a.warmup + a.measured}".split())
     return {"_params": doc, "params": params, "binary": a.binary, "slurm_options": "", "memory_overhead_mb": mem}
 
 
@@ -196,7 +274,7 @@ def descriptor(a, experiment, purpose, configs, max_parallel):
     return {
         "_descriptor_type": "A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
         "descriptor_type": "simulation",
-        "_architecture": "PARAMS.<architecture> in scarab_path.",
+        "_architecture": "src/PARAMS.<architecture> at the binary's commit (sci also wants it in scarab_path's checkout).",
         "architecture": a.architecture,
         "_experiment": f"{purpose} Generated by tools/mlp_oracle/make_descriptors.py; run with tools/mlp_oracle/run_study.sh.",
         "experiment": experiment,
@@ -220,8 +298,10 @@ def descriptor(a, experiment, purpose, configs, max_parallel):
         "top_simpoint": False,
         "_simulations": f"{picks}. {millions(a.warmup)} warmup + {millions(a.measured)} measured per simpoint.",
         "simulations": sims,
-        "_configurations": (f"Marking flags on every config: {a.marking or 'none (REPL_MLP defaults)'}. "
-                            "--inst_limit is warmup + measured; it overrides the run script's cap at the trace length."),
+        "_configurations": (f"Binary: {a.commit_desc}. Marking on every config: {a.marking_full} "
+                            f"(set by --marking: {a.marking or 'none'}). Machine flags on every config: "
+                            f"{a.params or 'none'}. --inst_limit is warmup + measured; it overrides the run "
+                            "script's cap at the trace length."),
         "configurations": configs,
         "_collect_stats": "Stats collection settings for ./sci --collect-stats.",
         "collect_stats": {"configs": None},
@@ -251,7 +331,7 @@ def write(path, d):
 def main():
     a = parse_args()
     exp, ref_exp = names(a)
-    marking = a.marking or "REPL_MLP's default marking"
+    marking = f"{a.marking or 'the binary’s default marking'} on {a.architecture}" + (f", {a.params}" if a.params else "")
     ref_cfg = {"track": config(
         a, "LRU, tracking both sides, writing every MLC miss and its mark to mlp_oracle_misses.<core>.bin "
            "in the simpoint's directory, for the replay runs to read. Its MLP_RD* stats (report.py --reuse) "
@@ -265,6 +345,13 @@ def main():
         write(out / f"{d['experiment']}.json", d)
     n_sims = len(replay["simulations"])
     n_cfg = len(replay["configurations"])
+    print(f"binary {a.binary}: {a.commit_desc}")
+    print(f"marking: {a.marking_full}")
+    changed = {n: v for n, v in a.marking_flags.items() if a.marking_defaults.get(n) != v}
+    if changed:
+        print("  changed from the binary's defaults: " + ", ".join(
+            f"{n} {a.marking_defaults.get(n, '(new)')} -> {v}" for n, v in changed.items()))
+    print(f"architecture: {a.architecture}" + (f", machine flags: {a.params}" if a.params else ""))
     print(f"json/{ref_exp}.json: 1 config x {n_sims} simpoints")
     print(f"json/{exp}.json: {n_cfg} configs x {n_sims} simpoints = {n_cfg * n_sims} sims")
     print(f"  {', '.join(replay['configurations'])}")
