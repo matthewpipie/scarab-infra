@@ -83,6 +83,23 @@ def get_elem(l, i):
     A small helper used by some plotting code where inputs are often lists of tuples.
     """
     return list(map(lambda x: x[i], l))
+
+
+def _weighted_mean(values, weights):
+    """A workload's value from its simpoints': their weighted mean over those that have a value.
+
+    Dividing by the summed weight of those simpoints keeps it the workload's value when only some of
+    its simpoints ran (a top_simpoint run, a hand-picked subset, a failed simpoint). A plain weighted
+    sum scales it by that summed weight instead, which cancels in a speedup but not in the value
+    itself or in an average over workloads. NaN if none has a value.
+    """
+    present = [(v, w) for v, w in zip(values, weights) if not math.isnan(v)]
+    total = sum(w for _, w in present)
+    if not present or total == 0:
+        return float('NaN')
+    return sum(v * w for v, w in present) / total
+
+
 class Experiment:
     """Read-only wrapper around a generated experiment CSV.
 
@@ -129,14 +146,7 @@ class Experiment:
                         weights = list(self.data[selected_simpoints][self.data["stats"] == "Weight"].iloc[0])
                         values = list(map(float, values))
                         weights = list(map(float, weights))
-                        n_nans = len(list(filter(math.isnan, values)))
-                        if n_nans == 0:
-                            results[f"{c} {w} {stat}"] = sum([v*w for v, w in zip(values, weights)])
-                        elif n_nans == len(values):
-                            results[f"{c} {w} {stat}"] = float('NaN')
-                        else:
-                            values = [v if not math.isnan(v) else 0 for v in values]
-                            results[f"{c} {w} {stat}"] = sum([v*w for v, w in zip(values, weights)])
+                        results[f"{c} {w} {stat}"] = _weighted_mean(values, weights)
 
         elif aggregation_level == "Simpoint":
             for c in config:
@@ -163,7 +173,7 @@ class Experiment:
                         weights = list(self.data[selected_simpoints][self.data["stats"] == "Weight"].iloc[0])
                         values = list(map(float, values))
                         weights = list(map(float, weights))
-                        config_data[stat].append(sum([v*w for v, w in zip(values, weights)]))
+                        config_data[stat].append(_weighted_mean(values, weights))
 
                 #print(config_data)
                 for stat, val in config_data.items():
@@ -2516,10 +2526,10 @@ class stat_aggregator:
         new_data = new_raw_data.drop(columns=to_drop_for_data)
 
         def weighted_avg(df: pd.DataFrame):
-            df = df*df.loc["Weight"]
-            df = df.sum(axis=1)
+            # Per stat, the weighted mean over the simpoints that have a value (see _weighted_mean).
+            weights = df.loc["Weight"]
             df = df.drop("Weight")
-            return df
+            return (df * weights).sum(axis=1) / df.notna().mul(weights).sum(axis=1)
 
         baseline_data = weighted_avg(baseline_data)
         new_data = weighted_avg(new_data)
