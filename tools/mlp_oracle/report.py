@@ -24,9 +24,9 @@ main (c8bb06d) are not supported.
 Method, as ./sci --visualize: a workload's IPC is its simpoints' weighted measured instructions
 over their weighted measured cycles (Periodic_Instructions / Periodic_Cycles), over the simpoints
 that finished under every config reported for that descriptor (others are dropped and counted).
-Per-workload gains match --visualize's. Its Avg row does not match the geomeans here: it averages
-workload IPCs that sci scales by the summed weight of the simpoints that ran (a workload with half
-its simpoints counts half), so it weighs workloads by IPC and by how many of their simpoints ran.
+Per-workload gains match --visualize's. Its Avg row does not match the geomeans here: it divides
+the mean of a config's workload IPCs by the mean of the baseline's, so it weighs workloads by IPC,
+and before scarab-infra#10 also by the share of their simpoint weight that ran.
 """
 
 import argparse

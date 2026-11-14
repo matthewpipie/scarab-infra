@@ -111,7 +111,7 @@ python tools/mlp_oracle/report.py tools/mlp_oracle/baseline/mlp_oracle_google_t3
 ```
 
 Gains are geomeans over workloads of each workload's IPC over lru's. A workload's IPC is computed
-the way sci does it, so per-workload numbers match `./sci --visualize`.
+the way sci does it, so per-workload gains match `./sci --visualize`.
 
 To compare markings, look at:
 - **Marked:** the reference's marked misses, as a share of its non-cold misses. A marking that
@@ -196,9 +196,12 @@ which forced cold misses as well. `report.py` skips them.
 - **`./sci --status` after a rerun:** it counts only the latest run's job logs, so finished
   simpoints from earlier runs show as non-existent. `report.py` and the simpoint directories are
   the truth.
-- **`./sci --visualize`'s Avg row:** it is neither a geomean nor a plain average. sci scales each
-  workload's IPC by the summed weight of the simpoints that ran, so whiskey, with both of its
-  cores in the run, counts double against workloads with 3 of 6. Use `report.py` for summaries.
+- **`./sci --visualize`'s Avg row:** it is not an average of the per-workload gains. It divides
+  the mean of a config's workload IPCs by the mean of lru's, so workloads count by IPC. Before
+  matthewpipie/scarab-infra#10, sci also printed each workload's IPC times the summed weight of
+  the simpoints that ran. A Google core weighs 1/N, with N from 2 (whiskey) to 89 (merced), so with
+  3 cores per workload whiskey, arizona, bravo.a and delta held 79% of the Avg and merced under 1%.
+  Per-workload gains are right either way. Use `report.py` for summaries.
 - **Short traces:** Google simpoints are whole cores, and a few cores' traces are shorter than
   560M instructions (charlie 0 and 1, merced 2). The generator swaps them for the next cores. A
   longer run needs that list (`GOOGLE_PICKS`) rechecked.
