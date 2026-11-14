@@ -8,6 +8,11 @@ descriptor's params, so any descriptor with gi<I>_gd<D>-style configs works.
     python tools/mlp_gamma/report.py --all                     # every mlp_gamma_* sweep descriptor
     python tools/mlp_gamma/report.py --check --marks           # the smoke test
     python tools/mlp_gamma/report.py mlp_gamma_google_small    # named descriptors
+    python tools/mlp_gamma/report.py mlp_gamma_google_small_gi # a pruned sweep (prune.py), with its column
+
+A descriptor written by prune.py rest (key gamma_prune) is read together with its column (the gamma_i=0
+configs and a probe, every simpoint): the simpoints it does not list get its gamma_i>0 cells from their
+gamma_i=0 run at the same gamma_d.
 
 Method (as sci --visualize): a simpoint's IPC is NODE_INST_COUNT / NODE_CYCLE over the measured
 region; a workload's IPC is the weight-averaged IPC of its simpoints, weights renormalized over the
@@ -115,7 +120,56 @@ def load_long(desc):
         long[key] = pd.to_numeric(t[stat], errors="coerce").values if stat in t else math.nan
     long["ipc"] = long["inst"] / long["cycles"]
     long["ok"] = ~long["failed"] & long["ipc"].gt(0) & long["ipc"].apply(math.isfinite)
+    long["filled"] = False
     return long
+
+
+def sim_key(sim):
+    return f"{sim['suite']}/{sim['subsuite']}/{sim['workload']}", str(sim["cluster_id"])
+
+
+def load_pruned(desc):
+    """A prune.py rest descriptor merged with its column, as one sweep named after it: the column's runs
+    (gamma_i=0 configs and the probe, every simpoint), the descriptor's runs of the simpoints it lists, and for
+    every other simpoint a copy of its gamma_i=0 run under each of the descriptor's configs, from the partner
+    in gamma_prune.pairs (filled = True)."""
+    gp = desc["gamma_prune"]
+    col = load_long(load_descriptor(gp["column"]))
+    kept = {sim_key(s) for s in desc["simulations"]}
+    is_kept = lambda df: [(w, c) in kept for w, c in zip(df["workload"], df["cluster"])]
+    rest = load_long(desc) if kept else col.iloc[:0]
+    rest = rest[is_kept(rest)]
+    kinds = {name: classify(cfg.get("params", "")) for name, cfg in desc["configurations"].items()}
+    pruned = col[[not k for k in is_kept(col)]]
+    fills = []
+    for cfg, partner in gp["pairs"].items():
+        f = pruned[pruned["config"] == partner].copy()
+        f["config"], f["gi"], f["gd"], f["filled"] = cfg, kinds[cfg][1], kinds[cfg][2], True
+        f[["marked_fetch", "marked_load"]] = math.nan
+        fills.append(f)
+    out = pd.concat([col, rest, *fills], ignore_index=True)
+    out["desc"] = desc["_name"]
+    return out
+
+
+def load_sweep(desc):
+    return load_pruned(desc) if "gamma_prune" in desc else load_long(desc)
+
+
+def resolve_names(names):
+    """Read each prune.py rest descriptor with its column, so drop the column and the unpruned source from
+    the list when either is named too (as --all does)."""
+    descs = [load_descriptor(n) for n in dict.fromkeys(names)]
+    drop = {}
+    for d in descs:
+        gp = d.get("gamma_prune")
+        if gp:
+            drop[Path(gp["column"]).stem] = f"read with {d['_name']}"
+            drop[Path(gp["source"]).stem] = f"its pruned copy {d['_name']} is used instead"
+    for d in descs:
+        if d["_name"] in drop:
+            print(f"{d['_name']}: skipped, {drop[d['_name']]}", file=sys.stderr)
+    return [d for d in descs if d["_name"] not in drop]
 
 
 def geomean(values):
@@ -181,7 +235,8 @@ class Report:
         good = grid[grid["ok"]].groupby(["desc", "workload", "cluster"])["config"].nunique()
         keep = good[good.values == expected.reindex(good.index.get_level_values("desc")).values].index
         all_sp = grid.groupby(["desc", "workload", "cluster"]).size().index
-        dropped = [k for k in all_sp if k not in set(keep)]
+        keep_set = set(keep)
+        dropped = [k for k in all_sp if k not in keep_set]
         mask = grid.set_index(["desc", "workload", "cluster"]).index.isin(keep)
         return grid[mask], dropped
 
@@ -240,6 +295,11 @@ class Report:
                      + ", ".join(f"{wl.split('/')[-1]}:{c}" for _, wl, c in dropped[:12])
                      + (" ..." if len(dropped) > 12 else ""))
         self.lru_check(part)
+        filled = grid[grid["filled"]].groupby(["workload", "cluster"]).ngroups
+        if filled:
+            n_sp = grid.groupby(["workload", "cluster"]).ngroups
+            self.out(f"- γi pruning (tools/mlp_gamma/prune.py): {filled} of {n_sp} simpoints skipped the γi>0 configs "
+                     "other than the probe; those cells are their γi=0 run at the same γd.")
         self.out()
 
         gis = sorted({g[0] for g in gammas.values()})
@@ -271,7 +331,8 @@ class Report:
                  + (f", {len(counts) - 8} others" if len(counts) > 8 else "") + f" (of {len(sp_best)}).")
         if self.marks:
             m = grid.groupby("config")[["marked_fetch", "marked_load"]].mean()
-            self.out("\nMean lines marked per simpoint (measured region):\n")
+            self.out("\nMean lines marked per simpoint (measured region"
+                     + ("; γi>0 rows exclude the pruned simpoints" if filled else "") + "):\n")
             self.table(["config", "fetch", "load"],
                        [[c, f"{m.at[c, 'marked_fetch']:.0f}", f"{m.at[c, 'marked_load']:.0f}"]
                         for c in sorted(m.index, key=lambda c: gammas[c])])
@@ -391,7 +452,9 @@ def main():
     if not names:
         ap.error("name descriptors, or pass --all or --check")
 
-    long = pd.concat([load_long(load_descriptor(n)) for n in names], ignore_index=True)
+    descs = resolve_names(names)
+    names = [d["_name"] for d in descs]
+    long = pd.concat([load_sweep(d) for d in descs], ignore_index=True)
     rep = Report(long, args.group, args.baseline, args.show_simpoints, args.marks)
     rep.out(f"# REPL_MLP gamma sweep: {', '.join(names)}\n")
     rep.run()
