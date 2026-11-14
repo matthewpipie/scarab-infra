@@ -232,19 +232,77 @@ def resolve_max_parallel(descriptor_data):
         return explicit
     return max(1, min(DEFAULT_MAX_PARALLEL, int((os.cpu_count() or 1) * 0.9)))
 
+def parse_simpoint_coverage(value):
+    """Validate a descriptor's `simpoint_coverage` field.
+
+    Returns None when it is null/false/missing. Otherwise returns a dict mapping a
+    suite name, or "default" for every suite not named, to a fraction in (0, 1] or
+    to None (that suite falls back to `top_simpoint`). A bare number is shorthand
+    for {"default": number}.
+    """
+    def fraction(v, where):
+        if v is None:
+            return None
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and 0 < v <= 1:
+            return float(v)
+        raise RuntimeError(
+            f"Descriptor field '{where}' must be null or a number in (0, 1] (got {v!r})."
+        )
+    if value is None or value is False:
+        return None
+    if isinstance(value, dict):
+        return {str(k): fraction(v, f"simpoint_coverage.{k}") for k, v in value.items()}
+    return {"default": fraction(value, "simpoint_coverage")}
+
 def load_workloads_for_descriptor(descriptor_data, infra_dir, dbg_lvl = 1):
     """Load the workload DB a simulation descriptor runs against.
 
     `"top_simpoint": true` reads workloads_top_simp.json as before. An integer N
     keeps the N heaviest simpoints of each workload in workloads_db.json and
     renormalizes their weights, as extract_top_simpoints does for the top-3 file.
+
+    `simpoint_coverage` instead keeps, per workload, the heaviest simpoints until
+    they hold at least that fraction of its weight (renormalized the same way). It
+    overrides `top_simpoint` for the suites it covers; the other suites keep their
+    `top_simpoint` selection.
     Returns None if the DB file cannot be read.
     """
     top_n = parse_top_simpoint(descriptor_data.get("top_simpoint"))
-    db_name = "workloads_top_simp.json" if top_n is True else "workloads_db.json"
-    workloads_data = read_descriptor_from_json(os.path.join(str(infra_dir), "workloads", db_name), dbg_lvl)
-    if workloads_data is not None and top_n is not None and top_n is not True:
-        extract_top_simpoints.modify_simpoints_in_place(workloads_data, top_n)
+    coverage = parse_simpoint_coverage(descriptor_data.get("simpoint_coverage"))
+    workloads_dir = os.path.join(str(infra_dir), "workloads")
+    if coverage is None:
+        db_name = "workloads_top_simp.json" if top_n is True else "workloads_db.json"
+        workloads_data = read_descriptor_from_json(os.path.join(workloads_dir, db_name), dbg_lvl)
+        if workloads_data is not None and top_n is not None and top_n is not True:
+            extract_top_simpoints.modify_simpoints_in_place(workloads_data, top_n)
+        return workloads_data
+
+    workloads_data = read_descriptor_from_json(os.path.join(workloads_dir, "workloads_db.json"), dbg_lvl)
+    if workloads_data is None:
+        return None
+    unknown = sorted(set(coverage) - set(workloads_data) - {"default"})
+    if unknown:
+        raise RuntimeError(
+            f"Descriptor field 'simpoint_coverage' names suites not in workloads_db.json: {unknown}. "
+            f"Use 'default' or one of {sorted(workloads_data)}."
+        )
+    top_data = None
+    for suite in list(workloads_data):
+        fraction = coverage.get(suite, coverage.get("default"))
+        if fraction is not None:
+            extract_top_simpoints.modify_simpoints_coverage_in_place(workloads_data[suite], fraction)
+        elif top_n is True:
+            # Same entries `"top_simpoint": true` reads when coverage is unset.
+            if top_data is None:
+                top_data = read_descriptor_from_json(os.path.join(workloads_dir, "workloads_top_simp.json"), dbg_lvl)
+                if top_data is None:
+                    return None
+            if suite in top_data:
+                workloads_data[suite] = top_data[suite]
+            else:
+                del workloads_data[suite]
+        elif top_n is not None:
+            extract_top_simpoints.modify_simpoints_in_place(workloads_data[suite], top_n)
     return workloads_data
 
 # json descriptor writer
