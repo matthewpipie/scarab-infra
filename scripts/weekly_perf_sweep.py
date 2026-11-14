@@ -37,6 +37,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+from scarab_stats.aggregation import Hierarchy  # noqa: E402
 
 MODES: List[Tuple[str, str]] = [
     ("weekly_spec17_memtrace_opt", "memtrace/opt"),
@@ -458,17 +460,20 @@ def derive_metrics(aggregates_path: Path) -> Dict[str, Dict[str, Optional[float]
 
     # One failed simpoint makes the aggregate's own Avg nan, which erased the
     # whole mode from the mail and the plots -- 2026-09-07 lost memtrace/dbg to
-    # a single workload (gcc_r). Fall back to the mean of the workloads that did
-    # report. Unweighted, so it is not identical to the aggregate's Avg; it is
-    # only used when that one is unusable.
+    # a single workload (gcc_r). Fall back to the same nested mean sci's Avg uses
+    # (inputs -> workload -> suite -> Avg, scarab_stats/aggregation.py) over the
+    # workloads that did report; it differs from the aggregate's Avg only by the
+    # ones it drops. Geomean for the metrics sci geomeans (IPC, *_pct stats).
+    hierarchy = Hierarchy(payload["workloads"])
     for metric in ("ipc", "mem_latency_cycles", "offpath_cycle_pct", "kips"):
         current = out["Avg"].get(metric)
         if current is not None and math.isfinite(current):
             continue
-        values = [v[metric] for w, v in out.items()
-                  if w != "Avg" and v[metric] is not None and math.isfinite(v[metric])]
+        values = {w: v[metric] for w, v in out.items()
+                  if w != "Avg" and v[metric] is not None and math.isfinite(v[metric])}
         if values:
-            out["Avg"][metric] = sum(values) / len(values)
+            geometric = metric in ("ipc", "mem_latency_cycles")
+            out["Avg"][metric] = hierarchy.aggregate(values, geometric)["Avg"]
     return out
 
 
