@@ -13,9 +13,13 @@ also force cold misses, which no replacement policy can save; they are skipped u
     python tools/mlp_oracle/report.py mlp_oracle_google_t3 mlp_oracle_google_dmin8 --ceilings-from mlp_oracle_google_t3
     python tools/mlp_oracle/report.py mlp_oracle_google_dmin8 --workloads --out oracle_report/
     python tools/mlp_oracle/report.py --reuse mlp_oracle_google_dmin8_ref
+    python tools/mlp_oracle/report.py mlp_oracle_google_dmin8 --miss-reuse
 
---reuse reads a reference's MLP_RD1_* / MLP_RDN_* stats, which need a Scarab with the IPRF and
-control kinds (scarab f17e3f5 on); references from before them (c8bb06d) are not supported.
+--reuse reads a reference's MLP_RD1_* / MLP_RDN_* stats: reuse distances of marked and unmarked
+lines. --miss-reuse reads a study's record check (replay_check), whose MLP_RDMISS_* are the reuse
+distances of exactly the misses the oracle and the control force. --reuse needs scarab f17e3f5 or
+later (the IPRF kind), --miss-reuse b30d6c1 or later (MLP_RDMISS_*); runs from before the merge with
+main (c8bb06d) are not supported.
 
 Method, as ./sci --visualize: a workload's IPC is its simpoints' weighted measured instructions
 over their weighted measured cycles (Periodic_Instructions / Periodic_Cycles), over the simpoints
@@ -39,9 +43,14 @@ INFRA = Path(__file__).resolve().parents[2]
 META = ["Configuration", "Workload", "Cluster Id", "Weight", "Collect Failed"]
 STATS = {"inst": "Periodic_Instructions", "cycles": "Periodic_Cycles"}
 for _s in "ID":
-    for _f in ("REF_MISSES", "REF_MARKED", "REF_COLD", "REF_COLD_MARKED"):
+    for _f in ("REF_MISSES", "REF_MARKED", "REF_COLD", "REF_COLD_MARKED", "REF_MARKED_LINES", "REF_CTRL",
+               "REF_CTRL_LINES", "REF_CTRL_MARKED", "FORCED", "FORCED_REF_HIT"):
+        STATS[f"{_s}_{_f}_ALL"] = f"MLP_ORACLE_{_s}_{_f}_total_count"
+    for _f in ("REF_MISSES", "REF_MARKED", "REF_COLD", "REF_COLD_MARKED", "REF_MARKED_LINES", "REF_CTRL",
+               "REF_CTRL_LINES", "REF_CTRL_MARKED"):
         STATS[f"{_s}_{_f}"] = f"MLP_ORACLE_{_s}_{_f}_total_count"
-    STATS[f"{_s}_FORCED"] = f"MLP_ORACLE_{_s}_FORCED_count"
+    for _f in ("FORCED", "FORCED_REF_HIT"):
+        STATS[f"{_s}_{_f}"] = f"MLP_ORACLE_{_s}_{_f}_count"
 SIDES = {1: "i", 2: "d", 3: "b"}
 SIDE_NAME = {"i": "instruction", "d": "data", "b": "both"}
 # Flags that set up the study rather than the marking.
@@ -94,18 +103,24 @@ def load_descriptor(name):
     return d
 
 
-def load_long(desc):
-    """One row per (config, simpoint) of a descriptor's collected stats."""
+def read_stats(desc, stats):
+    """A descriptor's collected stats, one row per (config, simpoint), with META and the given stats as
+    columns (those the CSV has)."""
     csv = Path(desc["root_dir"]) / "simulations" / desc["experiment"] / "collected_stats.csv"
     if not csv.is_file():
         sys.exit(f"{desc['_name']}: no {csv}. Run ./sci --collect-stats {desc['_name']}.")
-    wanted = {s + "," for s in META + list(STATS.values())}
+    wanted = {s + "," for s in META + list(stats)}
     with open(csv) as f:  # parse only the header and the rows used here
         lines = [next(f)] + [line for line in f if line[:line.find(",") + 1] in wanted]
     df = pd.read_csv(io.StringIO("".join(lines)), low_memory=False).set_index("stats")
     df = df[~df.index.duplicated(keep="first")]
     df = df[[c for c in df.columns if c not in ("write_protect", "groups")]]
-    t = df.T
+    return df.T
+
+
+def load_long(desc):
+    """One row per (config, simpoint) of a descriptor's collected stats."""
+    t = read_stats(desc, STATS.values())
     long = pd.DataFrame({
         "config": t["Configuration"].values,
         "workload": t["Workload"].str.split("/").str[-1].values,
@@ -210,6 +225,69 @@ class Study:
         return sum(g[f"{s}_FORCED"].sum() for s in ("ID" if side == "b" else side.upper()))
 
 
+    def match(self, role, side):
+        """How closely control config `role` matched its oracle (the one with the same install mode), per
+        simpoint: the draw (the reference's eligible marked misses and their lines against the control's,
+        over the whole reference) and the misses the replays forced over the measured region (leaving out
+        the ones mlp_oracle_install 0 forces because they hit in the reference). Returns
+        {name: (control total, oracle total, per-simpoint ratios)}."""
+        o = self.roles.get(role.replace("control", "oracle").replace("+misses", ""))
+        c = self.roles.get(role)
+        if o is None or c is None:
+            return {}
+        sides = "ID" if side == "b" else side.upper()
+        key = ["workload", "cluster"]
+        g = {cfg: self.rows[self.rows["config"] == cfg].set_index(key) for cfg in (o, c)}
+
+        def tot(cfg, k):
+            return sum(g[cfg][f"{s}_{k}"] for s in sides)
+
+        pairs = {
+            "misses drawn": (tot(c, "REF_CTRL"), tot(c, "REF_MARKED")),
+            "lines drawn": (tot(c, "REF_CTRL_LINES"), tot(c, "REF_MARKED_LINES")),
+            "forced, whole run": (tot(c, "FORCED_ALL") - tot(c, "FORCED_REF_HIT_ALL"),
+                                  tot(o, "FORCED_ALL") - tot(o, "FORCED_REF_HIT_ALL")),
+            "misses forced": (tot(c, "FORCED") - tot(c, "FORCED_REF_HIT"), tot(o, "FORCED") - tot(o, "FORCED_REF_HIT")),
+        }
+        out = {}
+        for name, (cv, ov) in pairs.items():
+            cv, ov = cv.align(ov, join="inner")
+            ok = ov > 0
+            out[name] = (float(cv.sum()), float(ov.sum()), (cv[ok] / ov[ok]))
+        drawn = tot(c, "REF_CTRL")
+        out["_marked_share"] = float(tot(c, "REF_CTRL_MARKED").sum() / drawn.sum()) if drawn.sum() else math.nan
+        return out
+
+
+def match_table(st):
+    out = [f"### Control against oracle, {st.name}", "",
+           "Control / oracle, summed over simpoints, and the range of the per-simpoint ratios. Drawn: over the "
+           "whole reference, the control's draw against the marked misses (with mlp_oracle_reuse_only, non-cold "
+           "ones) and the lines they fall on. Forced: misses the replay forced, over the whole run and over its "
+           "measured region, against the oracle with the same install mode. The draw is matched over the whole "
+           "reference, warmup included, so the measured region can hold more or fewer of the control's misses "
+           "than of the oracle's. No stat counts the distinct lines a replay forced.", "",
+           "| Config | Side | Misses drawn | Lines drawn | Forced, whole run | Forced, measured | Lowest measured | Draws that were marked |",
+           "|---|---|---|---|---|---|---|---|"]
+    for s in "idb":
+        for role in sorted(r for r in st.roles if r.startswith(f"control_{s}") and "+seed" not in r):
+            m = st.match(role, s)
+            if not m:
+                continue
+            cells = []
+            for name in ("misses drawn", "lines drawn", "forced, whole run", "misses forced"):
+                cv, ov, r = m[name]
+                cells.append(f"{cv / ov:.4f} ({r.min():.3f}–{r.max():.3f})" if ov else "n/a")
+            r = m["misses forced"][2]
+            cells.append(f"{r.idxmin()[0]}/{r.idxmin()[1]}" if len(r) else "–")
+            out.append(f"| {st.roles[role]} | {SIDE_NAME[s]} | " + " | ".join(cells) + f" | {m['_marked_share']:.1%} |")
+        m = st.match(f"control_{s}", s)
+        if m:
+            out.append(f"| *oracle_{s} totals* | | {m['misses drawn'][1]:,.0f} | {m['lines drawn'][1]:,.0f} | "
+                       f"{m['forced, whole run'][1]:,.0f} | {m['misses forced'][1]:,.0f} | | |")
+    return out
+
+
 def borrow_ceilings(study, source):
     """Ceilings do not depend on the marking: take them from another study of the same simpoints."""
     if source.name == study.name:
@@ -297,13 +375,13 @@ def per_workload(studies):
     return out
 
 
-REUSE_CLASSES = {"MARKED": "marked", "UNMARKED": "unmarked", "CTRL": "control"}
+REUSE_CLASSES = {"MARKED": "marked", "UNMARKED": "unmarked"}
 # Scarab's MLP_RD kinds behind each side's classes (memory.c, mlp_rd_fill): unmarked lines are those
 # a demand waited on unmarked and, on the instruction side, those an instruction prefetch brought in
 # with no demand waiting (IPRF); on the data side, stores, writebacks and data prefetches (OTHER).
 REUSE_KINDS = {
-    "I": {"MARKED": ["IMARK"], "UNMARKED": ["INOMARK", "IPRF"], "CTRL": ["ICTRL"]},
-    "D": {"MARKED": ["DMARK"], "UNMARKED": ["DNOMARK", "OTHER"], "CTRL": ["DCTRL"]},
+    "I": {"MARKED": ["IMARK"], "UNMARKED": ["INOMARK", "IPRF"]},
+    "D": {"MARKED": ["DMARK"], "UNMARKED": ["DNOMARK", "OTHER"]},
 }
 REUSE_BUCKETS = 16  # MLP_RD*_LOG2_k: k 0 is distance 0, k covers [2^(k-1), 2^k - 1], and 15 is 2^14 and up
 LRU_WAYS = 16
@@ -322,10 +400,11 @@ class Reuse:
     """A reference run's reuse distances (Scarab's MLP_RD1_* and MLP_RDN_*, kept under plain LRU): per side
     and class, the distance of each reuse of a line, in fills into its MLC set since its previous reuse (or
     since its first fill, for the first), as a log2 histogram. MARKED and UNMARKED are the line's class at
-    the reuse and together cover every reuse; CTRL is the control's lines, counted in one of the two as
-    well. How lines are classed comes from the reference's flags (make_descriptors.py sets
-    --mlp_rd_sticky 1 --mlp_rd_ctrl 8). Each workload weighs the same: its counts are divided by its total
-    reuses (marked + unmarked) of that side, then averaged over workloads."""
+    the reuse and together cover every reuse. How lines are classed and what counts as a reuse come from
+    the reference's flags (make_descriptors.py sets --mlp_rd_sticky 1 --mlp_rd_iprf_reuse 1). Each workload
+    weighs the same: its counts are divided by its total reuses (marked + unmarked) of that side, then
+    averaged over workloads. There is no control here: lines can't be matched to the marked ones by
+    reuses without bias, so the control's distances are per miss, in MissReuse."""
 
     def __init__(self, name):
         self.desc = load_descriptor(name)
@@ -333,7 +412,6 @@ class Reuse:
         self.arch = self.desc.get("architecture", "?")
         params = " ".join(c.get("params", "") for c in self.desc["configurations"].values())
         self.sticky = on(flag(params, "mlp_rd_sticky", "0"))
-        self.ctrl = int(flag(params, "mlp_rd_ctrl", "0") or 0) > 0
         self.iprf_reuse = on(flag(params, "mlp_rd_iprf_reuse", "0"))
         kinds = sorted({k for side in REUSE_KINDS.values() for ks in side.values() for k in ks})
         stats = {}
@@ -342,18 +420,10 @@ class Reuse:
                 stats[f"{rd}_{k}_HIT"] = f"MLP_{rd}_{k}_HIT_count"
                 for b in range(REUSE_BUCKETS):
                     stats[f"{rd}_{k}_{b}"] = f"MLP_{rd}_{k}_LOG2_{b}_count"
-        csv = Path(self.desc["root_dir"]) / "simulations" / self.desc["experiment"] / "collected_stats.csv"
-        if not csv.is_file():
-            sys.exit(f"{self.name}: no {csv}. Run ./sci --collect-stats {self.name}.")
-        wanted = {s + "," for s in META + list(stats.values())}
-        with open(csv) as f:
-            lines = [next(f)] + [line for line in f if line[:line.find(",") + 1] in wanted]
-        t = pd.read_csv(io.StringIO("".join(lines)), low_memory=False).set_index("stats")
-        t = t[~t.index.duplicated(keep="first")]
-        t = t[[c for c in t.columns if c not in ("write_protect", "groups")]].T
+        t = read_stats(self.desc, stats.values())
         missing = [v for v in stats.values() if v not in t]
         if missing:
-            sys.exit(f"{self.name}: no {missing[0]} (…): run with a Scarab that has the IPRF and control kinds")
+            sys.exit(f"{self.name}: no {missing[0]} (…): run with a Scarab that has the IPRF kind (f17e3f5 on)")
         raw = pd.DataFrame({k: pd.to_numeric(t[v], errors="coerce").fillna(0).values for k, v in stats.items()})
         cols = {}
         for s in "ID":  # sum RD1 and RDN, and the kinds behind each class
@@ -362,16 +432,17 @@ class Reuse:
                 for b in range(REUSE_BUCKETS):
                     cols[f"{s}_{cls}_{b}"] = sum(raw[f"{rd}_{k}_{b}"] for rd in ("RD1", "RDN") for k in ks)
                 cols[f"{s}_{cls}_N"] = sum(cols[f"{s}_{cls}_{b}"] for b in range(REUSE_BUCKETS))
+        cols["cluster"] = t["Cluster Id"].astype(str).values
         cols["workload"] = t["Workload"].str.split("/").str[-1].values
         cols["weight"] = pd.to_numeric(t["Weight"], errors="coerce").fillna(1.0).values
         cols["failed"] = t["Collect Failed"].astype(str).str.strip().str.lower().eq("true").values
         df = pd.DataFrame(cols)
         df = df[~df["failed"]]
         self.n_sp = len(df)
-        num = [c for c in df.columns if c not in ("workload", "weight", "failed")]
+        num = [c for c in df.columns if c not in ("workload", "cluster", "weight", "failed")]
         self.per_wl = df[num].mul(df["weight"], axis=0).groupby(df["workload"]).sum()
         self.workloads = list(self.per_wl.index)
-        self.classes = [c for c in REUSE_CLASSES if c != "CTRL" or self.ctrl]
+        self.classes = list(REUSE_CLASSES)
         self.frac = {}  # side -> DataFrame, index = class, columns = bucket, average workload's share of all reuses
         for s in "ID":
             total = self.per_wl[f"{s}_MARKED_N"] + self.per_wl[f"{s}_UNMARKED_N"]
@@ -441,17 +512,15 @@ class Reuse:
         cls_rule = ("marked once any of its fills was marked" if self.sticky
                     else "classed by its first fill for the whole run")
         reuse_rule = ("a demand or instruction-prefetch lookup" if self.iprf_reuse else "a demand lookup")
-        ctrl_rule = ("; control lines are counted in one of the two as well" if self.ctrl
-                     else "; no control (--mlp_rd_ctrl 0)")
         out = [f"## Reuse distance, {self.name}", "",
                f"{self.arch} · {len(self.workloads)} workloads, {self.n_sp} simpoints · plain LRU (the reference run)", "",
                f"A reuse is {reuse_rule} at the MLC of a line filled before. Its distance is the fills into the "
                "line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has "
-               f"evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse ({cls_rule})"
-               f"{ctrl_rule}. Unmarked instruction lines include those an instruction prefetch brought in with no "
+               f"evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse ({cls_rule})."
+               " Unmarked instruction lines include those an instruction prefetch brought in with no "
                "demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give "
                "each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. "
-               "Every workload weighs the same.", ""]
+               "Every workload weighs the same. For the control, see --miss-reuse.", ""]
         for s in "ID":
             out += self.table(s) + [""]
         return out
@@ -476,6 +545,168 @@ class Reuse:
                 for w in self.workloads for s in "ID" for cls in self.classes for b in range(REUSE_BUCKETS)]
 
 
+MISS_CLASSES = {"ALL": "all non-cold", "MARK": "marked", "CTRL": "control"}
+# What the record check must share with the control runs to draw the same control (mlp_oracle.cc, draw_ctrl).
+DRAW_FLAGS = {"mlp_oracle_reuse_only": "0", "mlp_oracle_seed": "0", "mlp_oracle_ctrl_lines": "1",
+              "mlp_oracle_ctrl_choices": "8"}
+
+
+class MissReuse:
+    """The reuse distances of the misses a study's bounds force (Scarab's MLP_RDMISS_*), from its record
+    check (replay_check: mode 1 replaying the reference, forcing nothing, so it sees the reference's own
+    misses). It draws mode 3's control as the control runs do when it has their draw flags
+    (--mlp_oracle_reuse_only above all), so per side: every non-cold reference miss (all), the marked ones
+    the oracle forces (marked), and the control's draw (control), which matches the marked ones in misses
+    and lines on every simpoint. A miss's distance is the fills into its line's MLC set since the line's
+    last reuse (or its first fill), as the reference's MLP_RD* count them. Whole run, warmup included, as
+    the draw and the forcing are; each workload weighs the same."""
+
+    def __init__(self, st):
+        self.st, self.name = st, st.name
+        self.cfg = st.roles.get("check")
+        if self.cfg is None:
+            sys.exit(f"{st.name}: --miss-reuse needs a record check (mlp_oracle 1 with --mlp_oracle_ref)")
+        cfgs = st.desc["configurations"]
+        params = cfgs[self.cfg]["params"]
+        self.iprf_reuse = on(flag(params, "mlp_rd_iprf_reuse", "0"))
+        self.ctrl_cfg = next((c for r, c in st.roles.items() if r.startswith("control_") and "+" not in r), None)
+        self.draw_diff = []
+        if self.ctrl_cfg:
+            cp = cfgs[self.ctrl_cfg]["params"]
+            self.draw_diff = [n for n, d in DRAW_FLAGS.items() if flag(params, n, d) != flag(cp, n, d)]
+        stats = {}
+        for s in "DI":
+            for cls in MISS_CLASSES:
+                for b in range(REUSE_BUCKETS):
+                    for when, suffix in (("all", "total_count"), ("meas", "count")):
+                        stats[f"{when}_{s}_{cls}_{b}"] = f"MLP_RDMISS_{s}{cls}_LOG2_{b}_{suffix}"
+        stats["no_line"] = "MLP_RDMISS_NO_LINE_total_count"
+        t = read_stats(st.desc, stats.values())
+        t = t[t["Configuration"] == self.cfg]
+        missing = [v for v in stats.values() if v not in t]
+        if missing:
+            sys.exit(f"{st.name}: no {missing[0]} (…): the record check needs scarab b30d6c1 or later")
+        df = pd.DataFrame({k: pd.to_numeric(t[v], errors="coerce").fillna(0).values for k, v in stats.items()})
+        df["workload"] = t["Workload"].str.split("/").str[-1].values
+        df["cluster"] = t["Cluster Id"].astype(str).values
+        df = df.set_index(["workload", "cluster"])
+        keep = set(map(tuple, st.rows[["workload", "cluster"]].values))  # simpoints every config finished
+        df = df.loc[[k for k in df.index if k in keep]]
+        self.n_sp = len(df)
+        for when in ("all", "meas"):
+            for s in "DI":
+                for cls in MISS_CLASSES:
+                    df[f"{when}_{s}_{cls}_N"] = sum(df[f"{when}_{s}_{cls}_{b}"] for b in range(REUSE_BUCKETS))
+        self.sp = df
+        self.per_wl = df.groupby(level="workload").sum()
+        self.workloads = list(self.per_wl.index)
+
+    def dist(self, s, cls, w=None):
+        """The class's distance histogram, as shares of its misses: of one workload, or averaged over workloads."""
+        cols = [f"all_{s}_{cls}_{b}" for b in range(REUSE_BUCKETS)]
+        g = self.per_wl if w is None else self.per_wl.loc[[w]]
+        n = g[f"all_{s}_{cls}_N"]
+        share = g.loc[n > 0, cols].div(n[n > 0], axis=0).mean()
+        share.index = range(REUSE_BUCKETS)
+        return share
+
+    def checks(self):
+        """The record check against the reference's draw: misses filed against the misses drawn, per simpoint."""
+        rows = self.st.rows[self.st.rows["config"] == self.cfg].set_index(["workload", "cluster"])
+        out = []
+        for s in "ID":
+            for cls, ref in (("MARK", "REF_MARKED"), ("CTRL", "REF_CTRL")):
+                got, want = self.sp[f"all_{s}_{cls}_N"].align(rows[f"{s}_{ref}"], join="inner")
+                out.append((s, cls, int((got == want).sum()), len(got), float(got.sum()), float(want.sum())))
+        return out
+
+    def same_draw(self):
+        """Simpoints where the record check drew the same control as the control run, by the draw's counts on
+        both sides (misses, lines, marked ones), and how many simpoints were compared."""
+        if not self.ctrl_cfg:
+            return None
+        key = ["workload", "cluster"]
+        a = self.st.rows[self.st.rows["config"] == self.cfg].set_index(key)
+        b = self.st.rows[self.st.rows["config"] == self.ctrl_cfg].set_index(key)
+        cols = [f"{s}_{k}" for s in "ID" for k in ("REF_CTRL", "REF_CTRL_LINES", "REF_CTRL_MARKED", "REF_MARKED")]
+        a, b = a[cols].align(b[cols], join="inner")
+        return int((a == b).all(axis=1).sum()), len(a)
+
+    def table(self, s):
+        side = SIDE_NAME[s.lower()]
+        d = {cls: self.dist(s, cls) for cls in MISS_CLASSES}
+        last = max(b for b in range(REUSE_BUCKETS) if any(d[c][b] >= 0.0005 for c in d))
+        first = min(b for b in range(REUSE_BUCKETS) if any(d[c][b] >= 0.0005 for c in d))
+        names = [MISS_CLASSES[c] for c in MISS_CLASSES]
+        head = ["Fills since the line's last reuse"] + names + ["marked − control"]
+        out = [f"#### {side.capitalize()}", "", "| " + " | ".join(head) + " |", "|---" * len(head) + "|"]
+        for b in range(first, last + 1):
+            lo = b == first and first > 0
+            tail = b == last and last < REUSE_BUCKETS - 1
+            cols = list(range(0, b + 1)) if lo else list(range(b, REUSE_BUCKETS)) if tail else [b]
+            label = (f"≤{2 ** b - 1:,}" if lo else f"≥{2 ** (b - 1):,}" if tail and b else bucket_label(b))
+            v = {c: float(d[c][cols].sum()) for c in d}
+            out.append(f"| {label} | " + " | ".join(f"{v[c]:.1%}" for c in MISS_CLASSES)
+                       + f" | {100 * (v['MARK'] - v['CTRL']):+.1f} pts |")
+        out.append("| *median* | " + " | ".join(Reuse.median(d[c]) for c in MISS_CLASSES) + " | |")
+        tot = {c: self.sp[f"all_{s}_{c}_N"].sum() for c in MISS_CLASSES}
+        meas = {c: self.sp[f"meas_{s}_{c}_N"].sum() for c in MISS_CLASSES}
+        out.append("| *misses, whole run* | " + " | ".join(f"{tot[c]:,.0f}" for c in MISS_CLASSES) + " | |")
+        out.append("| *misses, measured region* | " + " | ".join(f"{meas[c]:,.0f}" for c in MISS_CLASSES) + " | |")
+        rows = self.st.rows[self.st.rows["config"] == self.cfg]
+        drawn = rows[f"{s}_REF_CTRL"].sum()
+        if drawn:
+            out += ["", f"{rows[f'{s}_REF_CTRL_MARKED'].sum() / drawn:.1%} of the control's misses are marked ones."]
+        return out
+
+    def summary(self):
+        st = self.st
+        reuse_rule = "a demand or instruction-prefetch lookup" if self.iprf_reuse else "a demand lookup"
+        out = [f"## Reuse distance of the forced misses, {self.name}", "",
+               f"{st.arch} · {len(self.workloads)} workloads, {self.n_sp} simpoints · {st.length} · "
+               f"marking: `{st.marking}` · from {self.cfg}", "",
+               "The misses the oracle forces (marked) and the misses the control forces (control), with every "
+               "non-cold miss for scale, by the fills into the line's MLC set since its last reuse "
+               f"(a reuse is {reuse_rule}). Every one of them is an LRU miss, so most are past a 16-way set's reach; "
+               "the marked − control column is how the oracle's misses differ from a random sample of as many, "
+               "on as many lines. Shares of each class's own misses, whole run (warmup included, as the forcing), "
+               "every workload weighing the same.", ""]
+        if self.draw_diff:
+            out += [f"WARNING: {self.cfg} and {self.ctrl_cfg} differ in {', '.join(self.draw_diff)}, so its control "
+                    "is not the one the control runs force.", ""]
+        for s in "ID":
+            out += self.table(s) + [""]
+        cells = [f"{SIDE_NAME[s.lower()]} {'marked' if c == 'MARK' else 'control'} {ok}/{n}"
+                 + ("" if got == want else f" ({got:,.0f} filed vs {want:,.0f} drawn)")
+                 for s, c, ok, n, got, want in self.checks()]
+        no_line = int(self.sp["no_line"].sum())
+        same = self.same_draw()
+        out.append("Checks: misses filed equal the reference's draw on " + ", ".join(cells) + " simpoints"
+                   + (f"; the draw equals {self.ctrl_cfg}'s on {same[0]}/{same[1]} simpoints" if same else "")
+                   + (f"; {no_line:,} lined-up misses on lines never filled" if no_line else "") + ".")
+        return out
+
+    def per_workload(self):
+        out = ["", f"### Forced misses per workload, {self.name}: share under 32 fills, and median", "",
+               "| Workload | I marked | I control | D marked | D control |", "|---|---|---|---|---|"]
+        for w in self.workloads:
+            cells = []
+            for s in "ID":
+                for cls in ("MARK", "CTRL"):
+                    if not self.per_wl.loc[w, f"all_{s}_{cls}_N"]:
+                        cells.append("–")
+                        continue
+                    d = self.dist(s, cls, w)
+                    cells.append(f"{d.iloc[:6].sum():.0%} / {Reuse.median(d)}")
+            out.append(f"| {w} | " + " | ".join(cells) + " |")
+        return out
+
+    def rows(self):
+        return [{"study": self.name, "workload": w, "side": s, "class": MISS_CLASSES[cls], "bucket": b,
+                 "fills_from": 0 if b == 0 else 2 ** (b - 1), "count": self.per_wl.loc[w, f"all_{s}_{cls}_{b}"]}
+                for w in self.workloads for s in "ID" for cls in MISS_CLASSES for b in range(REUSE_BUCKETS)]
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("descriptors", nargs="*", help="descriptor names (json/<name>.json) or paths")
@@ -483,6 +714,11 @@ def main():
                    help="reference descriptors (mlp_oracle_google_<tag>_ref) whose reuse-distance histograms to report")
     p.add_argument("--ceilings-from", help="take missing ceilings from this descriptor (same simpoints and lengths)")
     p.add_argument("--workloads", action="store_true", help="also print per-workload tables")
+    p.add_argument("--match", action="store_true",
+                   help="also print how closely each control matched the oracle in misses and lines")
+    p.add_argument("--miss-reuse", action="store_true",
+                   help="also print the reuse distances of the misses the oracle and the control force, from each "
+                        "study's record check (replay_check)")
     p.add_argument("--include-cold", action="store_true", help="also report oracle/control configs that force cold misses")
     p.add_argument("--out", help="directory for per_workload.csv (every role's gain per workload) and ipc.csv")
     a = p.parse_args()
@@ -491,6 +727,7 @@ def main():
 
     studies = [Study(n, a.include_cold) for n in a.descriptors]
     reuses = [Reuse(n) for n in a.reuse]
+    miss_reuses = [MissReuse(st) for st in studies] if a.miss_reuse else []
     if a.ceilings_from:
         src = next((st for st in studies if st.name == Path(a.ceilings_from).stem), None) or Study(a.ceilings_from, False)
         for st in studies:
@@ -500,6 +737,11 @@ def main():
         out += summary(st) + [""]
     if a.workloads:
         out += per_workload(studies)
+    if a.match:
+        for st in studies:
+            out += [""] + match_table(st)
+    for r in miss_reuses:
+        out += [""] + r.summary() + (r.per_workload() if a.workloads else [])
     for r in reuses:
         out += [""] + r.summary() + (r.per_workload() if a.workloads else [])
     print("\n".join(out))
@@ -511,6 +753,10 @@ def main():
                              **{SIDE_NAME[s.lower()]: r.side_summary(s) for s in "ID"}} for r in reuses}
             (Path(a.out) / "reuse_summary.json").write_text(json.dumps(summ, indent=1, ensure_ascii=False) + "\n")
             print(f"\nWrote reuse.csv (per workload and bucket) and reuse_summary.json in {a.out}")
+        if miss_reuses:
+            pd.DataFrame([row for r in miss_reuses for row in r.rows()]).to_csv(Path(a.out) / "miss_reuse.csv",
+                                                                               index=False)
+            print(f"\nWrote miss_reuse.csv (per workload and bucket, whole run) in {a.out}")
         if not studies:
             return
         rows = [{"study": st.name, "role": r, "config": st.roles[r], "workload": w, "gain_pct": pct(v)}

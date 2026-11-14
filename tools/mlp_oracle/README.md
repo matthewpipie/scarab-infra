@@ -39,7 +39,7 @@ anyway, so REPL_MLP runs with the same marking.
 ### 1. Get a binary with the marking
 
 - **The marking is a flag that already exists** (for example a different `--mlp_data_bound_min`):
-  use the default binary, `scarab_f17e3f5`. It is the oracle code (matthewpipie/scarab PR #36,
+  use the default binary, `scarab_b30d6c1`. It is the oracle code (matthewpipie/scarab PR #36,
   branch `mlp-oracle`) merged with main as of 03c737d, and the oracle records the same mark
   REPL_MLP uses. Its default data marking is no-issue ROB-head stalls
   (`--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0`), each request waiting on a
@@ -121,22 +121,41 @@ To compare markings, look at:
 - **Oracle against the ceiling:** how much of the possible gain the marked misses hold.
 - **REPL_MLP against the oracle:** how much of it a real policy gets.
 
+`--match` adds how closely each control matched its oracle, per simpoint: misses and lines drawn
+(exact by construction), and misses forced over the whole run and over the measured region. The
+draw is matched over the whole reference, warmup included, so the measured region can hold more or
+fewer of the control's misses than of the oracle's.
+
 ### Reuse distances
 
 ```
+python tools/mlp_oracle/report.py mlp_oracle_google_dmin8 --miss-reuse --workloads --out oracle_report/
 python tools/mlp_oracle/report.py --reuse mlp_oracle_google_dmin8_ref --workloads --out oracle_report/
 ```
 
-The reference's `MLP_RD1_*` / `MLP_RDN_*` stats, per side, as log2 histograms of each reuse's
-distance in fills into the line's set: for marked lines, unmarked lines, and a random control of as
-many lines matched in reuses. `make_descriptors.py` gives the reference `--mlp_rd_sticky 1` (a line
-counts as marked once any of its fills was, as the oracle forces marked misses) and
-`--mlp_rd_ctrl 8` (the control). Unmarked instruction lines include the ones FDIP prefetched in
-time (Scarab's `IPRF` kind); unmarked data lines include the ones a store or writeback brought in
-(`OTHER`). A reuse is a demand lookup; to count instruction-prefetch lookups too, as the reuse
-stats before the merge with main did, generate the study with
-`--ref-params "--mlp_rd_iprf_reuse 1"`. The header of each table says which definitions the
-reference ran with. `--out` also writes `reuse.csv` (per workload and bucket) and
+`--miss-reuse` compares the misses the oracle forces with the misses the control forces. It reads
+the record check (`replay_check`), whose `MLP_RDMISS_*` file every miss that lines up with a
+non-cold reference miss by its distance: the fills into the line's set since the line's last reuse.
+Misses are filed under all, marked (what the oracle forces), and control. The record check replays
+the reference forcing nothing, so it sees the reference's own misses. It also draws the control the
+`ctrl_*_ro` runs force, since `make_descriptors.py` gives it their `--mlp_oracle_reuse_only 1`. So
+the two classes match in misses and lines on every simpoint, by construction, and the report checks
+that. Every one of these misses is an LRU miss, so the table shows how far past a 16-way set's reach
+each class's misses are. It covers the whole run, warmup included, as the draw and the forcing do.
+
+`--reuse` reads the reference's `MLP_RD1_*` / `MLP_RDN_*`, per side, as log2 histograms of every
+reuse's distance (hits included), for marked and unmarked lines. There is no control at this level.
+Unmarked instruction lines include the ones FDIP prefetched in time (Scarab's `IPRF` kind).
+Unmarked data lines include the ones a store or writeback brought in (`OTHER`).
+
+`make_descriptors.py` gives the reference and the record check
+`--mlp_rd_sticky 1 --mlp_rd_iprf_reuse 1`:
+- A line counts as marked once any of its fills was, as the oracle forces marked misses.
+- An instruction prefetch's lookup is a reuse too, since it renews the line in LRU; without it, FDIP
+  lookups make instruction lines look colder than LRU sees them.
+
+Override either flag with `--ref-params`. Each table's header says which definitions the run used.
+`--out` also writes `miss_reuse.csv`, `reuse.csv` (per workload and bucket) and
 `reuse_summary.json`.
 
 ## Baseline: the ratio marking (`mlp_oracle_google_t3`)
