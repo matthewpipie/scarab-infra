@@ -1,0 +1,162 @@
+{
+  "descriptor_type": "simulation",
+  "architecture": "golden_small",
+  "experiment": "mlp_data_bound_scope_sweep",
+  "workload_manager": "manual",
+  "root_dir": "/home/shanen/",
+  "application_dir": "/home/shanen/applications",
+  "_scarab_path": "REQUIRES a build off the mlp-data-bound-scope branch (matthewpipie/scarab) -- --mlp_data_scope and the no-issue/all_loads combinations of --mlp_data_bound do not exist before that branch. Check out or merge mlp-data-bound-scope in this scarab_path before --build-scarab.",
+  "scarab_path": "/home/shanen/samsung/scarab-mgiordan",
+  "scarab_build": "opt",
+  "traces_dir": "/mnt/storage/traces/shanen/",
+  "top_simpoint": true,
+  "_simulations": "Google traces, top simpoints, memtrace.",
+  "simulations": [
+    {
+      "suite": "google",
+      "subsuite": "google",
+      "workload": null,
+      "cluster_id": null,
+      "simulation_type": "memtrace",
+      "warmup": null
+    }
+  ],
+  "_configurations": "The 3D sweep: stall signal --mlp_data_bound {0 fu_wait, 1 no_issue} x scope --mlp_data_scope {0 rob_head, 1 all_loads} x threshold --mlp_data_bound_min {4, 8, 16, 32}, 16 arms total, each with --mlc_cache_repl_policy 9, the cheaper-hardware countdown boost (--mlp_boost_countdown 1, in place of --mlp_boost_in_fills 1), and the recommended lambdas (--mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64). mlp_lin_data_thresh is left at its default 0 (ratio gate off) so mlp_data_bound/mlp_data_scope/mlp_data_bound_min alone decide marking. mlp_instr_mark/mlp_instr_starve/mlp_instr_starve_min are left at their REPL_MLP defaults (2, 2, 1) since this sweep is data-side only. baseline is plain L2 LRU for reference.",
+  "configurations": {
+    "baseline": {
+      "params": "",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_robhead_min4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 0 --mlp_data_bound_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_robhead_min8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 0 --mlp_data_bound_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_robhead_min16": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 0 --mlp_data_bound_min 16",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_robhead_min32": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 0 --mlp_data_bound_min 32",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_allloads_min4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 1 --mlp_data_bound_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_allloads_min8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 1 --mlp_data_bound_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_allloads_min16": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 1 --mlp_data_bound_min 16",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "fuwait_allloads_min32": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 0 --mlp_data_scope 1 --mlp_data_bound_min 32",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_robhead_min4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 0 --mlp_data_bound_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_robhead_min8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 0 --mlp_data_bound_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_robhead_min16": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 0 --mlp_data_bound_min 16",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_robhead_min32": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 0 --mlp_data_bound_min 32",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_allloads_min4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 1 --mlp_data_bound_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_allloads_min8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 1 --mlp_data_bound_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_allloads_min16": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 1 --mlp_data_bound_min 16",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "noissue_allloads_min32": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_data_bound 1 --mlp_data_scope 1 --mlp_data_bound_min 32",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    }
+  },
+  "collect_stats": {
+    "configs": null
+  },
+  "_visualize": "Baseline is plain LRU. MLP_MARKED_LOAD is how many load fills get marked -- read it against IPC across the 16 arms to see where each signal x scope x min combination trades marking volume for accuracy.",
+  "visualize": {
+    "baseline": "baseline",
+    "configs": [
+      "fuwait_robhead_min4",
+      "fuwait_robhead_min8",
+      "fuwait_robhead_min16",
+      "fuwait_robhead_min32",
+      "fuwait_allloads_min4",
+      "fuwait_allloads_min8",
+      "fuwait_allloads_min16",
+      "fuwait_allloads_min32",
+      "noissue_robhead_min4",
+      "noissue_robhead_min8",
+      "noissue_robhead_min16",
+      "noissue_robhead_min32",
+      "noissue_allloads_min4",
+      "noissue_allloads_min8",
+      "noissue_allloads_min16",
+      "noissue_allloads_min32"
+    ],
+    "counters": [
+      "IPC",
+      "MLP_MARKED_LOAD"
+    ]
+  },
+  "mem": {
+    "collection_baseline": null,
+    "fallback_mb": 32768
+  }
+}
