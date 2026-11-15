@@ -31,6 +31,12 @@ import workloads.collect_trace_sizes as collect_trace_sizes
 from scripts.image_identity import image_content_hash, image_context_pathspec, image_tag_for
 
 DEFAULT_CONDA_ENV = "scarabinfra"
+# Several `./sci --sim` runners may share one experiment on a host, e.g. shards of a sweep that
+# each run part of its simpoints: job logs are uniquely named, the pre-launch container check
+# spares containers of live runners, staged binaries are replaced atomically, the last runner
+# collects stats, and a sim another runner is running is skipped. Tools that place runs (e.g.
+# cloudhost) look for this marker before co-locating runs of one experiment.
+MULTI_RUNNER_SAFE = 1
 _docker_client = None
 BASE_MEMORY_BY_MODE_KEY = "base_memory_mb_by_mode"
 VALID_SIMULATION_MODES = ("memtrace", "pt", "exec")
@@ -1764,15 +1770,9 @@ def prepare_simulation(user, scarab_path, scarab_build, docker_home, experiment_
                 dest_mode = dest_plain
             else:
                 dest_mode = dest_dir / f"{bin_name}.{build_mode}"
-            try:
-                shutil.copy2(scarab_ver, dest_plain)
-            except Exception:
-                os.system(f"cp {scarab_ver} {dest_plain}")
+            _stage_file(scarab_ver, dest_plain)
             if dest_mode != dest_plain:
-                try:
-                    shutil.copy2(scarab_ver, dest_mode)
-                except Exception:
-                    os.system(f"cp {scarab_ver} {dest_mode}")
+                _stage_file(scarab_ver, dest_mode)
 
             pin_cache_name = _cache_bin_name(f"pin_exec_{bin_name}", build_mode)
             if not pin_cache_name.endswith(".so"):
@@ -1784,12 +1784,11 @@ def prepare_simulation(user, scarab_path, scarab_build, docker_home, experiment_
             pin_dest = pin_obj_dir / f"pin_exec_{bin_name}.so"
 
             pin_src = pin_cached if os.path.isfile(pin_cached) else pin_exec_so
-            try:
-                shutil.copy2(pin_src, pin_dest)
-            except Exception:
-                os.system(f"cp {pin_src} {pin_dest}")
+            if os.path.isfile(pin_src):
+                _stage_file(pin_src, pin_dest)
 
-        os.system(f"cp {arch_params} {experiment_dir}/scarab/src")
+        if os.path.isfile(arch_params):
+            _stage_file(arch_params, Path(experiment_dir) / "scarab" / "src" / os.path.basename(arch_params))
 
         # Export hash-specific PARAMS so each scarab binary can use matching defaults.
         for bin_name in scarab_binaries:
@@ -1811,15 +1810,19 @@ def prepare_simulation(user, scarab_path, scarab_build, docker_home, experiment_
                     dbg_lvl,
                 )
                 continue
-            with open(params_target, "wb") as handle:
-                handle.write(params_blob)
+            _stage_bytes(params_blob, params_target)
 
         # Required for non mode 4. Copy launch scripts from the docker container's scarab repo.
         # NOTE: Could cause issues if a copied version of scarab is incompatible with the version of
         # the launch scripts in the docker container's repo
-        os.system(f"mkdir -p {experiment_dir}/scarab/bin/scarab_globals")
-        os.system(f"cp {scarab_path}/bin/scarab_launch.py  {experiment_dir}/scarab/bin/scarab_launch.py ")
-        os.system(f"cp {scarab_path}/bin/scarab_globals/*  {experiment_dir}/scarab/bin/scarab_globals/ ")
+        globals_dir = Path(experiment_dir) / "scarab" / "bin" / "scarab_globals"
+        globals_dir.mkdir(parents=True, exist_ok=True)
+        launch = Path(scarab_path) / "bin" / "scarab_launch.py"
+        if launch.is_file():
+            _stage_file(launch, globals_dir.parent / "scarab_launch.py")
+        for f in sorted((Path(scarab_path) / "bin" / "scarab_globals").glob("*")):
+            if f.is_file():
+                _stage_file(f, globals_dir / f.name)
 
         return scarab_githash, image_tag_list
     except subprocess.CalledProcessError as e:
@@ -1861,6 +1864,9 @@ def finish_simulation(user, docker_home, descriptor_path, root_dir, experiment_n
 
     descriptor_abs = os.path.abspath(descriptor_path)
     stats_output = os.path.join(experiment_dir, "collected_stats.csv")
+    # Collect into a temp file and rename it into place, so a runner finishing at the same time
+    # as another runner of this experiment never leaves a half-written CSV.
+    stats_tmp = os.path.join(experiment_dir, f".collected_stats.{os.getpid()}.tmp.csv")
     stat_script = os.path.join(project_root, "scarab_stats", "stat_collector.py")
 
     conda_cmd = os.environ.get("CONDA_EXE")
@@ -1924,11 +1930,12 @@ def finish_simulation(user, docker_home, descriptor_path, root_dir, experiment_n
         "-d",
         descriptor_abs,
         "-o",
-        stats_output,
+        stats_tmp,
         "--postprocess",
         "--skip-incomplete",
     ]
-    collect_stats_cmd = shlex.join(collect_parts)
+    collect_stats_cmd = (shlex.join(collect_parts)
+                         + f" && mv -f {shlex.quote(stats_tmp)} {shlex.quote(stats_output)}")
 
     if slurm_ids:
         # afterok will not run if jobs fail. afterany used with stat_collector's error checking
@@ -3191,14 +3198,19 @@ def pool_name_regex(docker_prefix_list, experiment, user):
     return re.compile(fr"^(?:{prefixes})_pool\d+_{re.escape(experiment)}_(\d+)_{re.escape(user)}$")
 
 
-def _pools_in_use():
-    """Pool containers named by a live job script (its POOL= line)."""
+def _live_job_scripts():
+    """(job script basenames, pool containers) named by live job scripts on this host.
+
+    A sim runs as `bash <container>_tmp_run.sh` for its whole life, whichever runner started
+    it and whichever checkout the script sits in; a pooled one names its container on a POOL= line.
+    """
     import psutil  # here, not at the top: job scripts import this module through prepare_docker_image
-    in_use = set()
+    scripts, pools = set(), set()
     for proc in psutil.process_iter(attrs=['cmdline']):
         for arg in proc.info.get('cmdline') or []:
             if not arg.endswith("_tmp_run.sh"):
                 continue
+            scripts.add(os.path.basename(arg))
             try:
                 path = arg if os.path.isabs(arg) else os.path.join(proc.cwd(), arg)
                 with open(path) as script:
@@ -3206,8 +3218,143 @@ def _pools_in_use():
             except (OSError, psutil.Error):
                 continue
             if m:
-                in_use.add(m.group(1))
-    return in_use
+                pools.add(m.group(1))
+    return scripts, pools
+
+
+def _pools_in_use():
+    """Pool containers named by a live job script (its POOL= line)."""
+    return _live_job_scripts()[1]
+
+
+def containers_in_use():
+    """Container names a live job script is using: its own (script name less _tmp_run.sh) or its pool's."""
+    scripts, pools = _live_job_scripts()
+    return {name[:-len("_tmp_run.sh")] for name in scripts} | pools
+
+
+def pool_runner_alive(name, docker_prefix_list, experiment, user):
+    """Is `name` a pooled container of `experiment` whose runner is still alive?"""
+    m = pool_name_regex(docker_prefix_list, experiment, user).match(name)
+    return bool(m) and _pid_alive(int(m.group(1)))
+
+
+_RUNNING_SCRIPTS = {"at": 0.0, "names": set()}
+
+
+def job_script_running(filename, max_age_s=10.0):
+    """Is a live process running this job script (by basename), e.g. another runner's?
+
+    The process scan is cached for max_age_s, since a runner asks once per sim.
+    """
+    import time
+    now = time.monotonic()
+    if now - _RUNNING_SCRIPTS["at"] > max_age_s:
+        _RUNNING_SCRIPTS["names"] = _live_job_scripts()[0]
+        _RUNNING_SCRIPTS["at"] = now
+    return os.path.basename(filename) in _RUNNING_SCRIPTS["names"]
+
+
+def open_unique_job_log(log_dir):
+    """Open a new logs/job_<id>.out that no other runner of the experiment can be writing.
+
+    The id is the start time in microseconds, created with O_EXCL: unique across runners (and
+    hosts sharing the directory) and increasing over time, so iter_latest_job_logs, which keeps the
+    highest id per sim, picks the newest log. A per-runner counter (job_0, job_1, ...) made
+    concurrent runners of one experiment overwrite each other's logs.
+    """
+    import time
+    job_id = time.time_ns() // 1000
+    while True:
+        path = os.path.join(log_dir, f"job_{job_id}.out")
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+        except FileExistsError:
+            job_id += 1
+            continue
+        return path, os.fdopen(fd, "w")
+
+
+def register_runner(experiment_dir, descriptor=""):
+    """Record this runner in <experiment>/logs/.runners/<host>.<pid>; returns the file to remove.
+
+    .runners/descriptors lists the descriptors of the current session: the runners of this
+    experiment that overlapped in time. The first runner of a session resets it.
+    """
+    import fcntl
+    import socket
+    d = Path(experiment_dir) / "logs" / ".runners"
+    d.mkdir(parents=True, exist_ok=True)
+    entry = d / f"{socket.gethostname()}.{os.getpid()}"
+    with open(d / ".lock", "a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        session = d / "descriptors"
+        fresh = not other_runners_alive(experiment_dir, me=entry)
+        names = set() if fresh or not session.exists() else set(session.read_text().split())
+        names.add(descriptor or "unnamed")
+        session.write_text("\n".join(sorted(names)) + "\n")
+        entry.write_text(descriptor)
+    return entry
+
+
+def session_descriptors(experiment_dir):
+    """Descriptors that ran this experiment in the current session (see register_runner)."""
+    f = Path(experiment_dir) / "logs" / ".runners" / "descriptors"
+    return set(f.read_text().split()) if f.exists() else set()
+
+
+def other_runners_alive(experiment_dir, me=None):
+    """Live runners of this experiment on this host other than `me` (pids), from .runners/."""
+    import socket
+    host = socket.gethostname()
+    alive = []
+    for entry in (Path(experiment_dir) / "logs" / ".runners").glob(f"{host}.*"):
+        if me is not None and entry == me:
+            continue
+        try:
+            pid = int(entry.name.rsplit(".", 1)[1])
+        except ValueError:
+            continue
+        if _pid_alive(pid):
+            alive.append(pid)
+        else:
+            try:
+                entry.unlink()          # a killed runner's leftover
+            except OSError:
+                pass
+    return alive
+
+
+def _stage_file(src, dest):
+    """Copy src to dest atomically, or leave dest alone when it already holds the same file.
+
+    Runners of one experiment share <experiment>/scarab; rewriting a binary in place could let
+    another runner's sim exec a half-written file (or fail with "Text file busy"). A rename swaps
+    the file without touching the one running sims hold open.
+    """
+    src, dest = Path(src), Path(dest)
+    try:
+        a, b = src.stat(), dest.stat()
+        if a.st_size == b.st_size and int(a.st_mtime) == int(b.st_mtime):
+            return
+    except FileNotFoundError:
+        pass
+    tmp = dest.with_name(f".{dest.name}.{os.getpid()}.tmp")
+    shutil.copy2(src, tmp)
+    os.replace(tmp, dest)
+
+
+def _stage_bytes(data, dest):
+    """Write bytes to dest atomically, unless dest already holds exactly them."""
+    dest = Path(dest)
+    try:
+        if dest.read_bytes() == data:
+            return
+    except FileNotFoundError:
+        pass
+    tmp = dest.with_name(f".{dest.name}.{os.getpid()}.tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, dest)
 
 
 def remove_pool_containers(docker_prefix_list, experiment, user, dbg_lvl, runner_pid=None, stale=False):
@@ -3781,6 +3928,14 @@ def check_can_skip (descriptor_data, config_key, suite, subsuite, workload, clus
         # Run script has generated run file, it will be run shortly.
         info(f"Run script for {config_key} for workload {workload} exists. Other script will run it.", dbg_lvl)
         return True
+    # Or another runner (perhaps from another checkout) is running it now: its sim directory has
+    # no stats yet, so the failed-run check below would wipe it mid-run.
+    try:
+        if job_script_running(filename):
+            info(f"Another runner is running {config_key} for workload {workload}. Skipping.", dbg_lvl)
+            return True
+    except Exception as exc:  # psutil missing or /proc unreadable: fall back to the old behavior
+        info(f"Could not scan for running job scripts: {exc}", dbg_lvl)
 
     # If CSV files don't exist, clean up failed run and re-run (can skip = False)
     if check_sp_failed(descriptor_data, config_key, suite, subsuite, workload, cluster_id):
