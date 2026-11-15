@@ -309,7 +309,7 @@ horizontal bracket. `--bracket none` leaves it out. `plot_markings.py` takes the
 `--side-label` names each graph's side in an outlined box in the plot's top right corner
 ("Instructions", "Data" or "Instructions & Data"), raising the y axis until no bar or bracket reaches
 under the box. `oracle_report/plots/oracle_vertical_nogeo_google_defmark_{i,d,b}.png` are the Google
-figures with `--geomean off --bracket vertical --side-label`.
+figures with `--geomean off --bracket vertical`.
 A geomean group comes last: by default the suite's, over all the study's workloads (`--geomean suite`);
 `--geomean plotted` takes it over the plotted workloads only (with the extra seeds' controls when every
 plotted workload has them), and `--geomean off` leaves it out. stderr always gives the suite geomean.
