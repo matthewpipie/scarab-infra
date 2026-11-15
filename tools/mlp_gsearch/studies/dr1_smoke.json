@@ -1,0 +1,54 @@
+{
+  "_doc":"Smoke test of study dr1: one workload per suite, top simpoint, one round, on pakuchi.",
+  "name":"dr1smoke",
+  "state_dir":"/mnt/storage/mgiordan/gsearch",
+  "variants":{
+    "small":{
+      "google":"gs_tmpl_dr1smoke_google_small",
+      "rest":"gs_tmpl_dr1smoke_rest_small"
+    }
+  },
+  "max_rounds":1,
+  "where":"local",
+  "extra_configs":{
+    "lru":"--mlc_cache_repl_policy 0",
+    "drrip":"--mlc_cache_repl_policy 18"
+  },
+  "step":[
+    4,
+    1
+  ],
+  "init":{
+    "0":[
+      0,
+      1,
+      2,
+      4,
+      8
+    ],
+    "16":[
+      0,
+      4
+    ],
+    "32":[
+      0,
+      8
+    ]
+  },
+  "max_gamma":[
+    128,
+    64
+  ],
+  "min_gain_pp":{
+    "simpoint":0.1,
+    "workload":0.1,
+    "suite":0.05
+  },
+  "gi_sensitive_pct":0.2,
+  "lookahead":2,
+  "partial_gain":0.5,
+  "max_parallel":{
+    "google":112,
+    "default":192
+  }
+}
