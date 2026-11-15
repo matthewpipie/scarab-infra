@@ -254,6 +254,109 @@ def parse_simpoint_coverage(value):
         return {str(k): fraction(v, f"simpoint_coverage.{k}") for k, v in value.items()}
     return {"default": fraction(value, "simpoint_coverage")}
 
+# A configuration's `workload_params` maps a selector to extra Scarab params for the
+# simulations it selects: "suite", "suite/subsuite", "suite/subsuite/workload" (one
+# input, e.g. spec2006/rate_int/gcc_2) or "suite/subsuite/workload:cluster_id" (one
+# simpoint).
+_WORKLOAD_SELECTOR = re.compile(r"([^/:\s]+)(?:/([^/:\s]+)(?:/([^/:\s]+)(?::(\d+))?)?)?")
+
+
+def _param_groups(params):
+    """Split a Scarab params string into [(flag, tokens)], one entry per flag.
+
+    A flag is a token starting with `--` ('--foo 1' or '--foo=1'); the tokens after
+    it, up to the next flag, are its value. Tokens before the first flag get flag None.
+    """
+    groups = []
+    for token in (params or "").split():
+        if token.startswith("--") and len(token) > 2:
+            groups.append((token[2:].split("=", 1)[0], [token]))
+        elif groups:
+            groups[-1][1].append(token)
+        else:
+            groups.append((None, [token]))
+    return groups
+
+
+def merge_params(base, *layers):
+    """`base` with each layer's flags on top, in order.
+
+    A flag that a layer sets replaces every earlier occurrence of that flag, so the
+    result names each flag once and PARAMS.out shows the value Scarab used.
+    """
+    groups = _param_groups(base)
+    for layer in layers:
+        new = _param_groups(layer)
+        names = {flag for flag, _ in new if flag is not None}
+        groups = [g for g in groups if g[0] not in names] + new
+    return " ".join(token for _, tokens in groups for token in tokens)
+
+
+def parse_workload_params(config_name, value, workloads_data=None):
+    """Validate a configuration's `workload_params` field.
+
+    Returns [((suite, subsuite, workload, cluster_id), params)] sorted from least to
+    most specific; unset levels are None. Raises RuntimeError on a malformed entry,
+    or, given workloads_data, on a suite, subsuite or workload it does not have.
+    """
+    if value is None:
+        return []
+    where = f"configurations.{config_name}.workload_params"
+    if not isinstance(value, dict):
+        raise RuntimeError(f"Descriptor field '{where}' must be an object mapping selectors to params strings "
+                           f"(got {type(value).__name__}).")
+    entries = []
+    for key, params in value.items():
+        if not isinstance(params, str):
+            raise RuntimeError(f"Descriptor field '{where}[{key!r}]' must be a params string (got {params!r}).")
+        m = _WORKLOAD_SELECTOR.fullmatch(str(key))
+        if not m:
+            raise RuntimeError(f"Descriptor field '{where}' has selector {key!r}; use 'suite', 'suite/subsuite', "
+                               "'suite/subsuite/workload' or 'suite/subsuite/workload:cluster_id'.")
+        suite, subsuite, workload, cluster = m.groups()
+        if workloads_data is not None:
+            if suite not in workloads_data:
+                raise RuntimeError(f"Descriptor field '{where}[{key!r}]': suite '{suite}' is not in the workload DB.")
+            if subsuite is not None and not isinstance(workloads_data[suite].get(subsuite), dict):
+                raise RuntimeError(f"Descriptor field '{where}[{key!r}]': subsuite '{subsuite}' is not in suite "
+                                   f"'{suite}'.")
+            if workload is not None and not isinstance(workloads_data[suite][subsuite].get(workload), dict):
+                raise RuntimeError(f"Descriptor field '{where}[{key!r}]': workload '{workload}' is not in "
+                                   f"'{suite}/{subsuite}'.")
+        entries.append(((suite, subsuite, workload, None if cluster is None else int(cluster)), params))
+    # Two selectors that both match one simulation differ in depth, so this order is total for it.
+    entries.sort(key=lambda e: sum(part is not None for part in e[0]))
+    return entries
+
+
+def unselected_workload_params(entries, workloads_data):
+    """Selectors in `entries` naming a simpoint that workloads_data does not select."""
+    out = []
+    for (suite, subsuite, workload, cluster), _ in entries:
+        if cluster is None:
+            continue
+        node = workloads_data.get(suite, {}).get(subsuite, {}).get(workload, {})
+        ids = {int(sp["cluster_id"]) for sp in node.get("simpoints", [])} if "simpoints" in node else {0}
+        if cluster not in ids:
+            out.append(f"{suite}/{subsuite}/{workload}:{cluster}")
+    return out
+
+
+def resolve_params(params, entries, suite, subsuite, workload, cluster_id):
+    """The params one simulation runs with.
+
+    `params` is the configuration's params and `entries` its parsed `workload_params`.
+    Each entry that selects this simulation is layered on top with merge_params(),
+    least specific first. With no matching entry, `params` is returned unchanged.
+    """
+    layers = [p for (s, ss, w, c), p in entries
+              if s == suite and ss in (None, subsuite) and w in (None, workload)
+              and (c is None or str(c) == str(cluster_id))]
+    if not layers:
+        return params
+    return merge_params(params, *layers)
+
+
 def load_workloads_for_descriptor(descriptor_data, infra_dir, dbg_lvl = 1):
     """Load the workload DB a simulation descriptor runs against.
 

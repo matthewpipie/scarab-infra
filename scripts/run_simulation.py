@@ -20,6 +20,8 @@ from .utilities import (
     read_descriptor_from_json,
     load_workloads_for_descriptor,
     parse_max_parallel,
+    parse_workload_params,
+    unselected_workload_params,
     remove_docker_containers,
     remove_tmp_run_scripts,
     get_image_list,
@@ -83,6 +85,20 @@ def verify_descriptor(
 
     # Check if each simulation type is valid
     validate_simulation(workloads_data, descriptor_data['simulations'])
+
+    # Check each configuration's per-workload params
+    for name, config in (descriptor_data["configurations"] or {}).items():
+        if not isinstance(config, dict):
+            continue
+        try:
+            entries = parse_workload_params(name, config.get("workload_params"), workloads_data)
+        except RuntimeError as exc:
+            err(str(exc), dbg_lvl)
+            exit(1)
+        unselected = unselected_workload_params(entries, workloads_data)
+        if unselected:
+            warn(f"Configuration '{name}': workload_params names simpoints this descriptor's simpoint selection "
+                 f"does not run, so they have no effect: {', '.join(unselected)}", dbg_lvl)
 
     # Check the workload manager
     if descriptor_data["workload_manager"] != "manual" and descriptor_data["workload_manager"] != "slurm":

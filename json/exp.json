@@ -60,7 +60,7 @@
       "warmup":null
     }
   ],
-  "_configurations":"scarab configurations to sweep. slurm_options passes extra arguments to sbatch (ignored for manual runner); '--mem' is no longer needed here as memory is scheduled per-simpoint automatically. memory_overhead_mb (optional, default 0) adds a fixed MB overhead on top of the per-simpoint base memory for configs that allocate extra Scarab structures. Options: https://slurm.schedmd.com/sbatch.html",
+  "_configurations":"scarab configurations to sweep. slurm_options passes extra arguments to sbatch (ignored for manual runner); '--mem' is no longer needed here as memory is scheduled per-simpoint automatically. memory_overhead_mb (optional, default 0) adds a fixed MB overhead on top of the per-simpoint base memory for configs that allocate extra Scarab structures. Options: https://slurm.schedmd.com/sbatch.html. workload_params (optional) maps a selector to extra params for the simulations it selects: 'suite', 'suite/subsuite', 'suite/subsuite/workload' (one input, e.g. spec2006/rate_int/gcc_2) or 'suite/subsuite/workload:cluster_id' (one simpoint). Every entry that selects a simulation is layered on top of params, least specific first, and replaces the flags it repeats, so {\"google\":\"--mlp_lin_data_lambda 24\",\"spec2006/rate_fp/wrf\":\"--mlp_lin_data_lambda 0\"} gives each its own value in one configuration. Results stay under the configuration's name, and each simpoint's PARAMS.out records the params it ran with. As with params, editing it does not rerun simulations that already completed.",
   "configurations":{
     "icache_32k":{
       "params":"--icache_size 32768",
