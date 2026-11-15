@@ -1,0 +1,146 @@
+{
+  "_descriptor_type":"A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
+  "descriptor_type":"simulation",
+  "_architecture":"PARAMS.<architecture> in scarab_path.",
+  "architecture":"golden_small_incl",
+  "_experiment":"MLC REPL_INST_PARTITION (23) way-split sweep on main a74d75f (PR #52), golden_small_incl. Every even instruction/data split of the 16-way MLC, plus unpartitioned LRU. Google top-6 simpoints, 10M warmup + 50M measured.",
+  "experiment":"instpart_google_top6_incl",
+  "workload_manager":"manual",
+  "_max_parallel":"One slot per sim.",
+  "max_parallel":192,
+  "container_reuse":true,
+  "root_dir":"/mnt/storage/mgiordan/",
+  "application_dir":"/home/mgiordan/carp/applications",
+  "_scarab_path":"Private clone of matthewpipie/scarab (branch main, a74d75f).",
+  "scarab_path":"/home/mgiordan/carp/scarab-instpart/",
+  "scarab_build":"opt",
+  "traces_dir":"/mnt/storage/traces/shanen/",
+  "_top_simpoint":"The 6 highest-weight simpoints of each workload.",
+  "top_simpoint":6,
+  "simpoint_coverage":null,
+  "_simulations":"All Google workloads.",
+  "simulations":[
+    {
+      "suite":"google",
+      "subsuite":"google",
+      "workload":null,
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":10000000
+    }
+  ],
+  "_configurations":"Default LLC policy everywhere. Config name = MLC instruction ways _ data ways.",
+  "configurations":{
+    "lru":{
+      "_params":"Default MLC policy (TRUE_LRU), no partition.",
+      "params":"--inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i0_d16":{
+      "_params":"MLC REPL_INST_PARTITION: 0 instruction ways, 16 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 0 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i2_d14":{
+      "_params":"MLC REPL_INST_PARTITION: 2 instruction ways, 14 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 2 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i4_d12":{
+      "_params":"MLC REPL_INST_PARTITION: 4 instruction ways, 12 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 4 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i6_d10":{
+      "_params":"MLC REPL_INST_PARTITION: 6 instruction ways, 10 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 6 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i8_d8":{
+      "_params":"MLC REPL_INST_PARTITION: 8 instruction ways, 8 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 8 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i10_d6":{
+      "_params":"MLC REPL_INST_PARTITION: 10 instruction ways, 6 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 10 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i12_d4":{
+      "_params":"MLC REPL_INST_PARTITION: 12 instruction ways, 4 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 12 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i14_d2":{
+      "_params":"MLC REPL_INST_PARTITION: 14 instruction ways, 2 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 14 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "i16_d0":{
+      "_params":"MLC REPL_INST_PARTITION: 16 instruction ways, 0 data ways.",
+      "params":"--mlc_cache_repl_policy 23 --mlc_inst_part_ways 16 --inst_limit 60000000",
+      "binary":"scarab_a74d75f",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    }
+  },
+  "collect_stats":{
+    "configs":null
+  },
+  "visualize":{
+    "baseline":"lru",
+    "configs":[
+      "lru",
+      "i0_d16",
+      "i2_d14",
+      "i4_d12",
+      "i6_d10",
+      "i8_d8",
+      "i10_d6",
+      "i12_d4",
+      "i14_d2",
+      "i16_d0"
+    ],
+    "counters":[
+      "IPC"
+    ]
+  },
+  "mem":{
+    "collection_baseline":null,
+    "fallback_mb":16384
+  },
+  "perf_analyze":{
+    "baseline":"lru",
+    "counters":[
+      "IPC"
+    ],
+    "stat_groups":[
+      "core",
+      "memory"
+    ],
+    "compare_all_stats":false,
+    "drift_top_workloads":5,
+    "drift_top_simpoints":5,
+    "prompt_budget_tokens":12000,
+    "threshold_pct":2.0,
+    "analyzer_cli_cmd":"codex"
+  }
+}
