@@ -1,0 +1,12 @@
+study,suite,core,side,workload,measure,gain_pct,cut
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,verilator,ceiling,159.9071,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,verilator,oracle,67.2836,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,verilator,control,53.1668,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,verilator,control_seed1,53.0771,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,xgboost,ceiling,242.0165,True
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,xgboost,oracle,139.652,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,xgboost,control,5.6116,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,xgboost,control_seed1,5.6309,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,Geomean,ceiling,36.9683,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,Geomean,oracle,22.1118,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,i,Geomean,control,7.1215,False

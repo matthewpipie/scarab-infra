@@ -1,0 +1,15 @@
+study,suite,core,side,workload,measure,ipc,cut
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,verilator,lru,0.5326,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,verilator,ceiling,1.441,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,verilator,oracle,0.8945,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,verilator,control,0.8192,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,verilator,control_seed1,0.8187,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,xgboost,lru,0.0596,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,xgboost,ceiling,0.281,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,xgboost,oracle,0.1501,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,xgboost,control,0.0654,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,xgboost,control_seed1,0.0654,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,Geomean,lru,0.8942,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,Geomean,ceiling,1.313,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,Geomean,oracle,1.1049,False
+mlp_oracle_datacenter_defmark,datacenter,golden_small,b,Geomean,control,0.9666,False

@@ -1,0 +1,438 @@
+## mlp_oracle_spec2006_defmark_berti
+
+golden_small_berti · 29 workloads (55 inputs), 163 simpoints · 50M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1`
+
+Gain over lru in %, geomean over workloads (a benchmark's inputs averaged first).
+
+| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |
+|---|---|---|---|---|---|---|---|
+| instruction | 13.2% | 65.9% | +0.00 | -0.01 | -0.00 | -0.00 | 0.971 |
+| data | 25.8% | 38.1% | +21.01 | +6.37 | +4.15 | +2.22 | 0.984 |
+| both | 25.8% | 38.3% | +21.08 | +6.40 | +4.15 | +2.26 | 0.985 |
+
+Marked: the reference's marked misses as a share of its non-cold misses. A threshold that marks more gives the oracle more to force; the control forces as many, so oracle − control is what the marking's choice of misses is worth.
+
+Checks: replay_check equals lru in cycles on 163/163 simpoints; oracle_i beats its ceiling on bzip2_6, gobmk_2, leslie3d, perlbench_2, perlbench_3, soplex, sphinx3, tonto (expected only within noise); oracle_d beats its ceiling on gobmk_3, gobmk_4, h264ref_2, tonto (expected only within noise); oracle_b beats its ceiling on gobmk_2, gobmk_4, tonto (expected only within noise).
+
+
+### Per workload, instruction
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| GemsFDTD | +0.00 | +0.00 | +0.00 |
+| astar | +0.00 | +0.00 | +0.00 |
+| astar_2 | +0.00 | +0.00 | +0.00 |
+| bwaves | +0.00 | +0.00 | +0.00 |
+| bzip2 | +0.00 | +0.00 | +0.00 |
+| bzip2_2 | +0.00 | +0.00 | +0.00 |
+| bzip2_3 | +0.00 | +0.00 | +0.00 |
+| bzip2_4 | +0.00 | +0.00 | +0.00 |
+| bzip2_5 | +0.00 | +0.00 | +0.00 |
+| bzip2_6 | -0.00 | +0.00 | +0.00 |
+| cactusADM | +0.00 | +0.00 | +0.00 |
+| calculix | +0.00 | +0.00 | +0.00 |
+| dealII | +0.00 | +0.00 | +0.00 |
+| gamess | +0.00 | +0.00 | +0.00 |
+| gamess_2 | +0.00 | +0.00 | +0.00 |
+| gamess_3 | +0.00 | +0.00 | +0.00 |
+| gcc | +0.00 | +0.00 | +0.00 |
+| gcc_2 | -0.19 | -0.21 | +0.14 |
+| gcc_3 | +0.00 | +0.00 | +0.00 |
+| gcc_4 | +0.00 | +0.00 | +0.00 |
+| gcc_5 | +0.03 | +0.01 | +0.02 |
+| gcc_6 | -0.41 | -1.14 | +0.71 |
+| gcc_7 | +0.14 | +0.04 | +0.12 |
+| gcc_8 | +0.05 | +0.01 | +0.04 |
+| gcc_9 | +0.12 | +0.10 | -0.03 |
+| gobmk | +0.00 | +0.00 | +0.00 |
+| gobmk_2 | +0.00 | +0.00 | +0.00 |
+| gobmk_3 | -0.00 | -0.00 | -0.00 |
+| gobmk_4 | +0.00 | +0.00 | +0.00 |
+| gobmk_5 | +0.00 | +0.00 | +0.00 |
+| gromacs | -0.03 | -0.08 | -0.05 |
+| h264ref | +0.13 | +0.02 | +0.00 |
+| h264ref_2 | +0.01 | -0.03 | +0.00 |
+| h264ref_3 | +0.01 | +0.01 | +0.01 |
+| hmmer | +0.04 | +0.00 | +0.01 |
+| hmmer_2 | +0.00 | +0.00 | +0.00 |
+| lbm | +0.00 | +0.00 | +0.00 |
+| leslie3d | -0.15 | -0.07 | -0.05 |
+| libquantum | +0.00 | +0.00 | +0.00 |
+| mcf | +0.00 | +0.00 | +0.00 |
+| milc | +0.00 | +0.00 | +0.00 |
+| namd | +0.00 | +0.00 | +0.00 |
+| omnetpp | +0.15 | +0.11 | +0.02 |
+| perlbench | -0.05 | -0.07 | +0.08 |
+| perlbench_2 | -0.02 | -0.02 | -0.01 |
+| perlbench_3 | +0.06 | +0.11 | +0.02 |
+| povray | +0.00 | +0.00 | +0.00 |
+| sjeng | +0.00 | +0.00 | +0.00 |
+| soplex | -0.04 | +0.01 | -0.09 |
+| soplex_2 | -0.09 | -0.10 | -0.06 |
+| sphinx3 | +0.21 | +0.23 | -0.03 |
+| tonto | +0.00 | +0.00 | +0.00 |
+| wrf | -0.00 | -0.18 | -0.15 |
+| xalancbmk | -0.03 | -0.06 | +0.05 |
+| zeusmp | +0.00 | +0.00 | +0.00 |
+| geomean | +0.00 | -0.01 | -0.00 |
+
+### Per workload, data
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| GemsFDTD | +0.39 | +0.27 | +0.28 |
+| astar | +175.84 | +76.57 | +26.18 |
+| astar_2 | +0.02 | +0.01 | +0.00 |
+| bwaves | +3.17 | +0.26 | +0.38 |
+| bzip2 | +1.24 | +0.74 | +0.24 |
+| bzip2_2 | +8.93 | +5.59 | +1.17 |
+| bzip2_3 | +3.48 | +0.66 | +0.26 |
+| bzip2_4 | +1.35 | +0.68 | +0.30 |
+| bzip2_5 | +1.72 | +0.91 | +0.37 |
+| bzip2_6 | +1.13 | +0.55 | +0.17 |
+| cactusADM | +69.69 | +36.12 | +10.94 |
+| calculix | +0.01 | +0.00 | +0.00 |
+| dealII | +0.00 | +0.00 | +0.00 |
+| gamess | +0.00 | +0.00 | +0.00 |
+| gamess_2 | +0.00 | +0.00 | +0.00 |
+| gamess_3 | +0.00 | +0.00 | +0.00 |
+| gcc | +1.03 | +0.47 | +0.37 |
+| gcc_2 | +30.26 | +19.33 | +17.03 |
+| gcc_3 | +0.83 | +0.32 | +0.15 |
+| gcc_4 | +5.30 | +2.56 | +1.41 |
+| gcc_5 | +0.40 | +0.22 | +0.16 |
+| gcc_6 | +27.06 | +6.01 | +6.81 |
+| gcc_7 | +4.05 | +0.44 | +0.25 |
+| gcc_8 | +0.54 | +0.21 | +0.16 |
+| gcc_9 | +6.43 | +3.99 | +3.50 |
+| gobmk | -0.03 | -0.05 | -0.05 |
+| gobmk_2 | -0.02 | -0.02 | +0.00 |
+| gobmk_3 | -0.04 | +0.03 | -0.00 |
+| gobmk_4 | -0.00 | +0.00 | -0.00 |
+| gobmk_5 | +0.00 | +0.00 | +0.00 |
+| gromacs | +0.10 | +0.09 | -0.08 |
+| h264ref | +0.43 | +0.30 | +0.06 |
+| h264ref_2 | -0.00 | +0.01 | -0.01 |
+| h264ref_3 | +0.01 | +0.01 | +0.01 |
+| hmmer | +0.15 | +0.11 | -0.02 |
+| hmmer_2 | +0.00 | +0.00 | +0.00 |
+| lbm | +30.44 | -0.01 | +0.14 |
+| leslie3d | +6.65 | +0.96 | +0.50 |
+| libquantum | +109.42 | +1.99 | +2.44 |
+| mcf | +113.68 | +25.76 | +29.96 |
+| milc | +1.61 | +0.33 | +0.75 |
+| namd | +0.00 | +0.00 | +0.00 |
+| omnetpp | +157.91 | +33.94 | +28.81 |
+| perlbench | +4.94 | +3.16 | +2.54 |
+| perlbench_2 | +0.80 | +0.59 | +0.28 |
+| perlbench_3 | +5.51 | +3.71 | +3.56 |
+| povray | +0.00 | +0.00 | +0.00 |
+| sjeng | +0.00 | +0.00 | +0.00 |
+| soplex | +51.28 | +12.00 | +5.25 |
+| soplex_2 | +24.26 | +0.12 | +0.68 |
+| sphinx3 | +37.50 | +13.91 | +3.28 |
+| tonto | -0.00 | +0.00 | +0.00 |
+| wrf | +7.14 | +0.14 | -0.14 |
+| xalancbmk | +118.69 | +43.81 | +31.88 |
+| zeusmp | +3.84 | +1.03 | +0.77 |
+| geomean | +21.01 | +6.37 | +4.15 |
+
+### Per workload, both
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| GemsFDTD | +0.39 | +0.27 | +0.28 |
+| astar | +175.84 | +76.57 | +26.18 |
+| astar_2 | +0.02 | +0.01 | +0.00 |
+| bwaves | +3.17 | +0.26 | +0.38 |
+| bzip2 | +1.24 | +0.74 | +0.24 |
+| bzip2_2 | +8.93 | +5.59 | +1.17 |
+| bzip2_3 | +3.48 | +0.66 | +0.26 |
+| bzip2_4 | +1.35 | +0.68 | +0.30 |
+| bzip2_5 | +1.72 | +0.91 | +0.37 |
+| bzip2_6 | +1.13 | +0.55 | +0.17 |
+| cactusADM | +69.69 | +36.12 | +10.94 |
+| calculix | +0.01 | +0.00 | +0.00 |
+| dealII | +0.00 | +0.00 | +0.00 |
+| gamess | +0.00 | +0.00 | +0.00 |
+| gamess_2 | +0.00 | +0.00 | +0.00 |
+| gamess_3 | +0.00 | +0.00 | +0.00 |
+| gcc | +1.03 | +0.47 | +0.37 |
+| gcc_2 | +30.53 | +19.89 | +17.48 |
+| gcc_3 | +0.83 | +0.32 | +0.15 |
+| gcc_4 | +5.30 | +2.56 | +1.41 |
+| gcc_5 | +0.40 | +0.24 | +0.15 |
+| gcc_6 | +27.23 | +7.09 | +1.73 |
+| gcc_7 | +4.13 | +0.43 | +0.20 |
+| gcc_8 | +0.51 | +0.23 | +0.12 |
+| gcc_9 | +6.55 | +4.06 | +3.48 |
+| gobmk | -0.03 | -0.05 | -0.05 |
+| gobmk_2 | -0.02 | -0.02 | +0.00 |
+| gobmk_3 | +0.08 | +0.03 | -0.00 |
+| gobmk_4 | -0.00 | +0.00 | -0.00 |
+| gobmk_5 | +0.00 | +0.00 | +0.00 |
+| gromacs | +0.11 | +0.08 | -0.08 |
+| h264ref | +0.53 | +0.24 | +0.11 |
+| h264ref_2 | +0.01 | +0.00 | -0.01 |
+| h264ref_3 | +0.03 | +0.01 | +0.01 |
+| hmmer | +0.15 | +0.13 | -0.01 |
+| hmmer_2 | +0.00 | +0.00 | +0.00 |
+| lbm | +30.44 | -0.01 | +0.14 |
+| leslie3d | +6.68 | +0.89 | +0.59 |
+| libquantum | +109.42 | +1.99 | +2.44 |
+| mcf | +113.68 | +25.76 | +29.96 |
+| milc | +1.61 | +0.33 | +0.75 |
+| namd | +0.00 | +0.00 | +0.00 |
+| omnetpp | +159.00 | +34.05 | +28.83 |
+| perlbench | +4.96 | +3.10 | +2.58 |
+| perlbench_2 | +0.80 | +0.59 | +0.28 |
+| perlbench_3 | +5.69 | +3.86 | +3.61 |
+| povray | +0.00 | +0.00 | +0.00 |
+| sjeng | +0.00 | +0.00 | +0.00 |
+| soplex | +50.36 | +11.89 | +5.40 |
+| soplex_2 | +24.25 | +0.15 | +0.71 |
+| sphinx3 | +37.71 | +13.94 | +3.41 |
+| tonto | +0.00 | +0.00 | +0.00 |
+| wrf | +7.26 | +0.16 | -0.05 |
+| xalancbmk | +120.61 | +44.76 | +31.78 |
+| zeusmp | +3.84 | +1.03 | +0.77 |
+| geomean | +21.08 | +6.40 | +4.15 |
+
+### Control against oracle, mlp_oracle_spec2006_defmark_berti
+
+Control / oracle, summed over simpoints, and the range of the per-simpoint ratios. Drawn: over the whole reference, the control's draw against the marked misses (with mlp_oracle_reuse_only, non-cold ones) and the lines they fall on. Forced: misses the replay forced, over the whole run and over its measured region, against the oracle with the same install mode. The draw is matched over the whole reference, warmup included, so the measured region can hold more or fewer of the control's misses than of the oracle's. No stat counts the distinct lines a replay forced.
+
+| Config | Side | Misses drawn | Lines drawn | Forced, whole run | Forced, measured | Lowest measured | Draws that were marked |
+|---|---|---|---|---|---|---|---|
+| ctrl_i_ro | instruction | 0.9999 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9990 (0.941–1.133) | 0.9712 (0.000–1.458) | gcc_8/11078 | 11.9% |
+| *oracle_i totals* | | 16,456 | 10,555 | 16,177 | 2,504 | | |
+| ctrl_d_ro | data | 0.9998 (0.222–1.000) | 1.0000 (1.000–1.000) | 0.9754 (0.222–1.644) | 0.9843 (0.000–82.136) | gcc/5867 | 39.9% |
+| *oracle_d totals* | | 6,678,154 | 2,295,326 | 6,350,141 | 1,120,384 | | |
+| ctrl_b_ro | both | 0.9998 (0.222–1.000) | 1.0000 (1.000–1.000) | 0.9771 (0.222–1.644) | 0.9848 (0.000–82.136) | zeusmp/92318 | 39.9% |
+| *oracle_b totals* | | 6,694,610 | 2,305,881 | 6,360,510 | 1,122,283 | | |
+
+## Reuse distance of the forced misses, mlp_oracle_spec2006_defmark_berti
+
+golden_small_berti · 55 workloads, 163 simpoints · 50M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1` · from replay_check
+
+The misses the oracle forces (marked) and the misses the control forces (control), with every non-cold miss for scale, by the fills into the line's MLC set since its last reuse (a reuse is a demand or instruction-prefetch lookup). Every one of them is an LRU miss, so most are past a 16-way set's reach; the marked − control column is how the oracle's misses differ from a random sample of as many, on as many lines. Shares of each class's own misses, whole run (warmup included, as the forcing), every workload weighing the same.
+
+#### Instruction
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤1 | 0.1% | 0.1% | 0.1% | +0.1 pts |
+| 2–3 | 0.5% | 0.5% | 0.5% | +0.0 pts |
+| 4–7 | 3.7% | 4.6% | 3.5% | +1.1 pts |
+| 8–15 | 23.0% | 19.7% | 28.4% | -8.7 pts |
+| 16–31 | 33.8% | 35.3% | 23.9% | +11.5 pts |
+| 32–63 | 12.9% | 14.4% | 14.7% | -0.3 pts |
+| 64–127 | 5.2% | 5.2% | 5.1% | +0.2 pts |
+| 128–255 | 11.1% | 11.4% | 12.5% | -1.1 pts |
+| 256–511 | 6.0% | 5.3% | 7.2% | -1.9 pts |
+| ≥512 | 3.7% | 3.4% | 4.2% | -0.9 pts |
+| *median* | 16–31 | 16–31 | 16–31 | |
+| *misses, whole run* | 124,443 | 16,456 | 16,455 | |
+| *misses, measured region* | 20,058 | 2,565 | 2,484 | |
+
+11.9% of the control's misses are marked ones.
+
+#### Data
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤1 | 0.0% | 0.2% | 0.0% | +0.1 pts |
+| 2–3 | 0.4% | 0.8% | 0.8% | +0.0 pts |
+| 4–7 | 5.0% | 5.6% | 4.9% | +0.7 pts |
+| 8–15 | 22.4% | 24.0% | 23.8% | +0.2 pts |
+| 16–31 | 29.0% | 19.8% | 20.7% | -0.9 pts |
+| 32–63 | 18.7% | 21.5% | 18.8% | +2.7 pts |
+| 64–127 | 11.1% | 11.2% | 12.3% | -1.1 pts |
+| 128–255 | 8.7% | 12.0% | 11.9% | +0.1 pts |
+| 256–511 | 3.8% | 4.4% | 5.3% | -0.9 pts |
+| 512–1,023 | 0.7% | 0.5% | 1.3% | -0.8 pts |
+| ≥1,024 | 0.2% | 0.1% | 0.1% | -0.0 pts |
+| *median* | 16–31 | 16–31 | 16–31 | |
+| *misses, whole run* | 25,858,927 | 6,678,154 | 6,676,742 | |
+| *misses, measured region* | 4,682,942 | 1,189,890 | 1,215,264 | |
+
+39.9% of the control's misses are marked ones.
+
+Checks: misses filed equal the reference's draw on instruction marked 163/163, instruction control 163/163, data marked 163/163, data control 163/163 simpoints; the draw equals ctrl_i_ro's on 163/163 simpoints.
+
+### Forced misses per workload, mlp_oracle_spec2006_defmark_berti: share under 32 fills, and median
+
+| Workload | I marked | I control | D marked | D control |
+|---|---|---|---|---|
+| GemsFDTD | – | – | 17% / 128–255 | 62% / 16–31 |
+| astar | – | – | 16% / 32–63 | 10% / 32–63 |
+| astar_2 | – | – | 100% / 8–15 | 100% / 8–15 |
+| bwaves | – | – | 0% / 64–127 | 1% / 128–255 |
+| bzip2 | – | – | 80% / 8–15 | 82% / 16–31 |
+| bzip2_2 | – | – | 92% / 8–15 | 64% / 16–31 |
+| bzip2_3 | – | – | 95% / 8–15 | 88% / 16–31 |
+| bzip2_4 | – | – | 88% / 8–15 | 78% / 16–31 |
+| bzip2_5 | – | – | 100% / 8–15 | 100% / 8–15 |
+| bzip2_6 | 100% / 16–31 | 0% / 32–63 | 99% / 8–15 | 97% / 8–15 |
+| cactusADM | – | – | 3% / 32–63 | 23% / 32–63 |
+| calculix | – | – | – | – |
+| dealII | – | – | – | – |
+| gamess | – | – | – | – |
+| gamess_2 | – | – | – | – |
+| gamess_3 | – | – | – | – |
+| gcc | 100% / 16–31 | 100% / 16–31 | 98% / 8–15 | 97% / 8–15 |
+| gcc_2 | 16% / 32–63 | 19% / 32–63 | 1% / 32–63 | 1% / 32–63 |
+| gcc_3 | 100% / 8–15 | 100% / 8–15 | 97% / 16–31 | 95% / 8–15 |
+| gcc_4 | 100% / 16–31 | 100% / 8–15 | 95% / 16–31 | 92% / 16–31 |
+| gcc_5 | 12% / 32–63 | 14% / 32–63 | 15% / 128–255 | 16% / 64–127 |
+| gcc_6 | 60% / 16–31 | 60% / 8–15 | 12% / 128–255 | 17% / 128–255 |
+| gcc_7 | 0% / 64–127 | 0% / 128–255 | 4% / 64–127 | 7% / 64–127 |
+| gcc_8 | 20% / 256–511 | 2% / 256–511 | 10% / 128–255 | 9% / 128–255 |
+| gcc_9 | 79% / 16–31 | 75% / 16–31 | 85% / 16–31 | 85% / 16–31 |
+| gobmk | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| gobmk_2 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| gobmk_3 | 47% / 64–127 | 47% / 64–127 | 16% / 64–127 | 16% / 64–127 |
+| gobmk_4 | 100% / 16–31 | 100% / 8–15 | 100% / 16–31 | 100% / 8–15 |
+| gobmk_5 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| gromacs | 50% / 16–31 | 75% / 16–31 | 98% / 16–31 | 91% / 16–31 |
+| h264ref | 97% / 8–15 | 97% / 8–15 | 97% / 8–15 | 98% / 16–31 |
+| h264ref_2 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| h264ref_3 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| hmmer | 86% / 16–31 | 74% / 16–31 | 99% / 16–31 | 100% / 16–31 |
+| hmmer_2 | – | – | – | – |
+| lbm | – | – | 8% / 32–63 | 0% / 32–63 |
+| leslie3d | 71% / 16–31 | 43% / 128–255 | 3% / 64–127 | 5% / 128–255 |
+| libquantum | – | – | 0% / 256–511 | 0% / 256–511 |
+| mcf | – | – | 13% / 64–127 | 15% / 64–127 |
+| milc | – | – | 6% / 128–255 | 2% / 128–255 |
+| namd | – | – | – | – |
+| omnetpp | 34% / 32–63 | 25% / 64–127 | 18% / 64–127 | 13% / 128–255 |
+| perlbench | 91% / 16–31 | 92% / 16–31 | 50% / 32–63 | 55% / 16–31 |
+| perlbench_2 | 9% / 128–255 | 7% / 128–255 | 22% / 64–127 | 20% / 64–127 |
+| perlbench_3 | 21% / 32–63 | 36% / 32–63 | 20% / 32–63 | 22% / 32–63 |
+| povray | – | – | – | – |
+| sjeng | 100% / 16–31 | 100% / 16–31 | 100% / 8–15 | 100% / 8–15 |
+| soplex | 2% / 128–255 | 1% / 128–255 | 16% / 64–127 | 10% / 128–255 |
+| soplex_2 | 0% / 256–511 | 0% / 256–511 | 6% / 64–127 | 5% / 128–255 |
+| sphinx3 | 9% / 128–255 | 7% / 256–511 | 26% / 32–63 | 14% / 64–127 |
+| tonto | 100% / 16–31 | 100% / 8–15 | – | – |
+| wrf | 5% / 128–255 | 5% / 128–255 | 7% / 32–63 | 16% / 64–127 |
+| xalancbmk | 19% / 32–63 | 24% / 32–63 | 7% / 32–63 | 5% / 32–63 |
+| zeusmp | – | – | 1% / 32–63 | 1% / 64–127 |
+
+Wrote miss_reuse.csv (per workload and bucket, whole run) in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2006_defmark_berti
+
+Wrote per_workload.csv and ipc.csv in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2006_defmark_berti
+
+
+## Reuse distance, mlp_oracle_spec2006_defmark_berti_ref
+
+golden_small_berti · 55 workloads, 163 simpoints · plain LRU (the reference run)
+
+A reuse is a demand or instruction-prefetch lookup at the MLC of a line filled before. Its distance is the fills into the line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse (marked once any of its fills was marked). Unmarked instruction lines include those an instruction prefetch brought in with no demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. Every workload weighs the same. For the control, see --miss-reuse.
+
+#### Instruction
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 67.4% | 71.4% | 0.94 | 25.5% |
+| 1 | 7.2% | 5.8% | 1.25 | 31.1% |
+| 2–3 | 3.6% | 3.2% | 1.13 | 29.0% |
+| 4–7 | 1.4% | 1.2% | 1.15 | 29.4% |
+| 8–15 | 1.6% | 1.4% | 1.14 | 29.2% |
+| *within 15 fills* | *81.1%* | *83.0%* | | |
+| 16–31 | 2.6% | 1.8% | 1.39 | 33.5% |
+| 32–63 | 6.9% | 2.3% | 2.95 | 51.7% |
+| 64–127 | 1.0% | 0.8% | 1.32 | 32.4% |
+| 128–255 | 3.4% | 2.0% | 1.68 | 37.9% |
+| 256–511 | 1.5% | 2.8% | 0.54 | 16.3% |
+| 512–1,023 | 3.5% | 7.2% | 0.49 | 15.2% |
+| ≥1,024 | 0.0% | 0.1% | 0.00 | 0.0% |
+| *LRU hit rate* | *81.3%* | *81.6%* | | |
+| *median* | 0 | 0 | | |
+
+Marked lines take 26.6% of all instruction reuses.
+
+#### Data
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 44.6% | 59.9% | 0.74 | 27.1% |
+| 1 | 11.2% | 8.9% | 1.26 | 38.7% |
+| 2–3 | 8.5% | 6.2% | 1.37 | 40.5% |
+| 4–7 | 6.0% | 2.8% | 2.18 | 52.1% |
+| 8–15 | 5.6% | 2.2% | 2.52 | 55.7% |
+| *within 15 fills* | *75.9%* | *79.9%* | | |
+| 16–31 | 6.7% | 4.7% | 1.42 | 41.5% |
+| 32–63 | 9.7% | 4.2% | 2.32 | 53.6% |
+| 64–127 | 3.3% | 1.8% | 1.85 | 48.1% |
+| 128–255 | 2.6% | 4.2% | 0.62 | 23.6% |
+| 256–511 | 1.6% | 3.4% | 0.46 | 18.6% |
+| 512–1,023 | 0.2% | 1.5% | 0.10 | 4.7% |
+| ≥1,024 | 0.0% | 0.2% | 0.23 | 10.2% |
+| *LRU hit rate* | *77.0%* | *82.7%* | | |
+| *median* | 1 | 0 | | |
+
+Marked lines take 33.3% of all data reuses.
+
+### Reuse per workload: share within 15 fills, and LRU hit rate
+
+| Workload | I marked | I unmarked | D marked | D unmarked |
+|---|---|---|---|---|
+| GemsFDTD | – | – | 29% / 67% | 73% / 90% |
+| astar | – | – | 33% / 35% | 31% / 43% |
+| astar_2 | – | 100% / 100% | 100% / 100% | 100% / 100% |
+| bwaves | – | – | 83% / 89% | 28% / 58% |
+| bzip2 | – | – | 99% / 96% | 95% / 90% |
+| bzip2_2 | – | – | 83% / 74% | 67% / 70% |
+| bzip2_3 | – | – | 84% / 67% | 83% / 71% |
+| bzip2_4 | – | – | 97% / 94% | 89% / 84% |
+| bzip2_5 | – | – | 99% / 95% | 98% / 96% |
+| bzip2_6 | – | – | 98% / 95% | 97% / 93% |
+| cactusADM | – | – | 58% / 58% | 32% / 32% |
+| calculix | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| dealII | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gamess | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gamess_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gamess_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gcc | 100% / 100% | 100% / 100% | 99% / 94% | 99% / 98% |
+| gcc_2 | 78% / 70% | 64% / 56% | 12% / 39% | 67% / 94% |
+| gcc_3 | 100% / 100% | 100% / 100% | 95% / 93% | 98% / 97% |
+| gcc_4 | 100% / 100% | 100% / 100% | 77% / 70% | 87% / 84% |
+| gcc_5 | 100% / 100% | 100% / 100% | 98% / 97% | 100% / 100% |
+| gcc_6 | 96% / 96% | 97% / 96% | 44% / 57% | 58% / 83% |
+| gcc_7 | 69% / 69% | 92% / 92% | 35% / 40% | 88% / 89% |
+| gcc_8 | 100% / 93% | 100% / 98% | 97% / 94% | 100% / 100% |
+| gcc_9 | 99% / 99% | 97% / 97% | 62% / 62% | 98% / 98% |
+| gobmk | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gobmk_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gobmk_3 | 100% / 100% | 100% / 100% | 100% / 100% | 99% / 100% |
+| gobmk_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gobmk_5 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gromacs | 0% / 0% | 3% / 3% | 99% / 100% | 99% / 100% |
+| h264ref | 92% / 85% | 91% / 83% | 94% / 91% | 62% / 83% |
+| h264ref_2 | 100% / 97% | 100% / 98% | 100% / 97% | 99% / 98% |
+| h264ref_3 | 100% / 97% | 100% / 97% | 100% / 99% | 100% / 98% |
+| hmmer | 64% / 60% | 63% / 63% | 74% / 79% | 43% / 41% |
+| hmmer_2 | – | – | 100% / 100% | 100% / 100% |
+| lbm | – | – | 0% / 0% | 61% / 61% |
+| leslie3d | 0% / 0% | 0% / 0% | 53% / 81% | 64% / 86% |
+| libquantum | – | – | 0% / 9% | 0% / 9% |
+| mcf | – | – | 66% / 64% | 54% / 62% |
+| milc | – | – | 1% / 11% | 87% / 95% |
+| namd | – | – | 100% / 100% | 100% / 100% |
+| omnetpp | 74% / 72% | 60% / 57% | 45% / 44% | 37% / 36% |
+| perlbench | 100% / 100% | 100% / 100% | 85% / 84% | 83% / 84% |
+| perlbench_2 | 100% / 100% | 100% / 100% | 99% / 99% | 97% / 97% |
+| perlbench_3 | 97% / 97% | 94% / 94% | 46% / 50% | 39% / 57% |
+| povray | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| sjeng | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| soplex | 0% / 0% | 0% / 0% | 41% / 46% | 38% / 49% |
+| soplex_2 | 0% / 0% | 0% / 0% | 7% / 33% | 13% / 27% |
+| sphinx3 | 21% / 21% | 19% / 19% | 25% / 31% | 45% / 58% |
+| tonto | 100% / 100% | 100% / 100% | 100% / 100% | 97% / 100% |
+| wrf | 57% / 57% | 57% / 57% | 77% / 79% | 67% / 70% |
+| xalancbmk | 92% / 92% | 92% / 92% | 37% / 47% | 57% / 77% |
+| zeusmp | – | – | 77% / 79% | 88% / 91% |
+
+Wrote reuse.csv (per workload and bucket) and reuse_summary.json in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2006_defmark_berti_ref

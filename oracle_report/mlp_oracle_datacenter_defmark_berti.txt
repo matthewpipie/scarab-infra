@@ -1,0 +1,200 @@
+## mlp_oracle_datacenter_defmark_berti
+
+golden_small_berti · 7 workloads, 20 simpoints · 10M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1`
+
+Gain over lru in %, geomean over workloads (a benchmark's inputs averaged first).
+
+| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |
+|---|---|---|---|---|---|---|---|
+| instruction | 16.4% | 3.3% | +37.12 | +22.19 | +7.15 | +15.04 | 0.957 |
+| data | 21.4% | 13.5% | +1.32 | +0.96 | +0.76 | +0.20 | 0.992 |
+| both | 16.9% | 4.8% | +45.03 | +23.50 | +8.01 | +15.48 | 0.973 |
+
+Marked: the reference's marked misses as a share of its non-cold misses. A threshold that marks more gives the oracle more to force; the control forces as many, so oracle − control is what the marking's choice of misses is worth.
+
+Checks: replay_check equals lru in cycles on 20/20 simpoints.
+
+
+### Per workload, instruction
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| clang | +1.62 | +0.93 | +0.18 |
+| gcc | +0.18 | +0.06 | +0.06 |
+| mongodb | +0.00 | +0.00 | +0.00 |
+| mysql | +0.00 | +0.00 | +0.00 |
+| postgres | +0.00 | +0.00 | +0.00 |
+| verilator | +159.91 | +67.28 | +53.17 |
+| xgboost | +244.53 | +140.67 | +5.63 |
+| geomean | +37.12 | +22.19 | +7.15 |
+
+### Per workload, data
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| clang | +2.95 | +1.92 | +1.07 |
+| gcc | +0.63 | +0.33 | +0.26 |
+| mongodb | -0.00 | -0.00 | -0.00 |
+| mysql | +0.00 | +0.00 | +0.00 |
+| postgres | +0.20 | +0.20 | +0.19 |
+| verilator | +0.67 | +0.26 | +0.21 |
+| xgboost | +4.92 | +4.05 | +3.63 |
+| geomean | +1.32 | +0.96 | +0.76 |
+
+### Per workload, both
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| clang | +4.73 | +2.95 | +1.36 |
+| gcc | +0.79 | +0.47 | +0.16 |
+| mongodb | -0.00 | -0.00 | -0.00 |
+| mysql | +0.00 | +0.00 | +0.00 |
+| postgres | +0.20 | +0.20 | +0.19 |
+| verilator | +170.56 | +67.95 | +53.80 |
+| xgboost | +371.56 | +151.70 | +9.64 |
+| geomean | +45.03 | +23.50 | +8.01 |
+
+### Control against oracle, mlp_oracle_datacenter_defmark_berti
+
+Control / oracle, summed over simpoints, and the range of the per-simpoint ratios. Drawn: over the whole reference, the control's draw against the marked misses (with mlp_oracle_reuse_only, non-cold ones) and the lines they fall on. Forced: misses the replay forced, over the whole run and over its measured region, against the oracle with the same install mode. The draw is matched over the whole reference, warmup included, so the measured region can hold more or fewer of the control's misses than of the oracle's. No stat counts the distinct lines a replay forced.
+
+| Config | Side | Misses drawn | Lines drawn | Forced, whole run | Forced, measured | Lowest measured | Draws that were marked |
+|---|---|---|---|---|---|---|---|
+| ctrl_i_ro | instruction | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9371 (0.861–1.003) | 0.9569 (0.879–1.500) | xgboost/3311 | 29.5% |
+| *oracle_i totals* | | 4,981,635 | 357,169 | 4,970,433 | 2,526,389 | | |
+| ctrl_d_ro | data | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9925 (0.955–1.027) | 0.9924 (0.938–1.028) | gcc/939 | 77.2% |
+| *oracle_d totals* | | 721,487 | 35,199 | 701,496 | 362,602 | | |
+| ctrl_b_ro | both | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9547 (0.912–1.027) | 0.9726 (0.927–1.167) | xgboost/3311 | 35.5% |
+| *oracle_b totals* | | 5,703,122 | 392,368 | 5,544,444 | 2,823,403 | | |
+
+## Reuse distance of the forced misses, mlp_oracle_datacenter_defmark_berti
+
+golden_small_berti · 7 workloads, 20 simpoints · 10M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1` · from replay_check
+
+The misses the oracle forces (marked) and the misses the control forces (control), with every non-cold miss for scale, by the fills into the line's MLC set since its last reuse (a reuse is a demand or instruction-prefetch lookup). Every one of them is an LRU miss, so most are past a 16-way set's reach; the marked − control column is how the oracle's misses differ from a random sample of as many, on as many lines. Shares of each class's own misses, whole run (warmup included, as the forcing), every workload weighing the same.
+
+#### Instruction
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤7 | 1.7% | 1.9% | 1.9% | +0.0 pts |
+| 8–15 | 20.5% | 21.4% | 21.0% | +0.5 pts |
+| 16–31 | 23.0% | 15.9% | 17.1% | -1.2 pts |
+| 32–63 | 47.5% | 52.8% | 44.2% | +8.6 pts |
+| 64–127 | 3.2% | 3.7% | 5.4% | -1.7 pts |
+| 128–255 | 2.4% | 2.5% | 4.9% | -2.3 pts |
+| 256–511 | 1.2% | 1.2% | 3.5% | -2.3 pts |
+| 512–1,023 | 0.4% | 0.4% | 1.6% | -1.2 pts |
+| 1,024–2,047 | 0.1% | 0.1% | 0.4% | -0.3 pts |
+| ≥2,048 | 0.0% | 0.0% | 0.1% | -0.1 pts |
+| *median* | 32–63 | 32–63 | 32–63 | |
+| *misses, whole run* | 30,299,127 | 4,981,635 | 4,981,635 | |
+| *misses, measured region* | 15,540,436 | 2,532,324 | 2,592,686 | |
+
+29.5% of the control's misses are marked ones.
+
+#### Data
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤7 | 0.3% | 0.5% | 0.3% | +0.2 pts |
+| 8–15 | 23.2% | 21.3% | 22.1% | -0.8 pts |
+| 16–31 | 37.0% | 37.3% | 36.1% | +1.2 pts |
+| 32–63 | 33.7% | 34.4% | 33.4% | +1.0 pts |
+| 64–127 | 2.2% | 2.2% | 2.5% | -0.3 pts |
+| 128–255 | 1.5% | 1.8% | 1.9% | -0.1 pts |
+| 256–511 | 1.0% | 1.2% | 1.5% | -0.3 pts |
+| 512–1,023 | 0.7% | 0.7% | 1.3% | -0.6 pts |
+| 1,024–2,047 | 0.4% | 0.4% | 0.7% | -0.3 pts |
+| 2,048–4,095 | 0.1% | 0.2% | 0.2% | +0.0 pts |
+| ≥4,096 | 0.1% | 0.1% | 0.1% | -0.0 pts |
+| *median* | 16–31 | 16–31 | 16–31 | |
+| *misses, whole run* | 3,377,246 | 721,487 | 721,487 | |
+| *misses, measured region* | 1,760,357 | 373,234 | 373,462 | |
+
+77.2% of the control's misses are marked ones.
+
+Checks: misses filed equal the reference's draw on instruction marked 20/20, instruction control 20/20, data marked 20/20, data control 20/20 simpoints; the draw equals ctrl_i_ro's on 20/20 simpoints.
+
+### Forced misses per workload, mlp_oracle_datacenter_defmark_berti: share under 32 fills, and median
+
+| Workload | I marked | I control | D marked | D control |
+|---|---|---|---|---|
+| clang | 24% / 32–63 | 27% / 32–63 | 55% / 16–31 | 59% / 16–31 |
+| gcc | 10% / 32–63 | 12% / 32–63 | 1% / 32–63 | 1% / 32–63 |
+| mongodb | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| mysql | 100% / 16–31 | 100% / 8–15 | 80% / 16–31 | 88% / 16–31 |
+| postgres | – | – | 95% / 16–31 | 95% / 16–31 |
+| verilator | 1% / 32–63 | 0% / 32–63 | 55% / 16–31 | 36% / 32–63 |
+| xgboost | 0% / 32–63 | 0% / 128–255 | 28% / 32–63 | 31% / 32–63 |
+
+Wrote miss_reuse.csv (per workload and bucket, whole run) in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_datacenter_defmark_berti
+
+Wrote per_workload.csv and ipc.csv in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_datacenter_defmark_berti
+
+
+## Reuse distance, mlp_oracle_datacenter_defmark_berti_ref
+
+golden_small_berti · 7 workloads, 20 simpoints · plain LRU (the reference run)
+
+A reuse is a demand or instruction-prefetch lookup at the MLC of a line filled before. Its distance is the fills into the line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse (marked once any of its fills was marked). Unmarked instruction lines include those an instruction prefetch brought in with no demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. Every workload weighs the same. For the control, see --miss-reuse.
+
+#### Instruction
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 55.0% | 80.5% | 0.68 | 35.9% |
+| 1 | 4.4% | 3.0% | 1.46 | 54.5% |
+| 2–3 | 1.9% | 1.1% | 1.79 | 59.4% |
+| 4–7 | 0.3% | 0.4% | 0.73 | 37.4% |
+| 8–15 | 0.3% | 0.3% | 1.18 | 49.2% |
+| *within 15 fills* | *61.9%* | *85.2%* | | |
+| 16–31 | 0.3% | 0.2% | 1.21 | 49.9% |
+| 32–63 | 30.9% | 10.5% | 2.96 | 70.8% |
+| 64–127 | 2.9% | 1.4% | 2.11 | 63.3% |
+| 128–255 | 2.4% | 1.4% | 1.69 | 58.1% |
+| 256–511 | 1.1% | 0.8% | 1.37 | 52.9% |
+| 512–1,023 | 0.4% | 0.3% | 1.09 | 47.3% |
+| ≥1,024 | 0.1% | 0.1% | 0.76 | 38.5% |
+| *LRU hit rate* | *75.2%* | *73.7%* | | |
+| *median* | 0 | 0 | | |
+
+Marked lines take 45.1% of all instruction reuses.
+
+#### Data
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 53.5% | 52.2% | 1.03 | 55.6% |
+| 1 | 4.9% | 6.2% | 0.79 | 49.1% |
+| 2–3 | 6.1% | 5.8% | 1.04 | 56.0% |
+| 4–7 | 8.1% | 4.0% | 2.05 | 71.5% |
+| 8–15 | 8.8% | 2.0% | 4.49 | 84.6% |
+| *within 15 fills* | *81.5%* | *70.2%* | | |
+| 16–31 | 6.8% | 2.2% | 3.07 | 78.9% |
+| 32–63 | 7.3% | 27.5% | 0.27 | 24.5% |
+| 64–127 | 1.3% | 0.1% | 13.80 | 94.4% |
+| 128–255 | 1.2% | 0.0% | 548.07 | 99.9% |
+| 256–511 | 0.9% | 0.0% | 1032.48 | 99.9% |
+| 512–1,023 | 0.5% | 0.0% | 548.08 | 99.9% |
+| 1,024–2,047 | 0.3% | 0.0% | 402.37 | 99.8% |
+| 2,048–4,095 | 0.2% | 0.0% | 204.35 | 99.6% |
+| ≥4,096 | 0.1% | 0.0% | 65.67 | 98.8% |
+| *LRU hit rate* | *81.6%* | *77.9%* | | |
+| *median* | 0 | 0 | | |
+
+Marked lines take 55.0% of all data reuses.
+
+### Reuse per workload: share within 15 fills, and LRU hit rate
+
+| Workload | I marked | I unmarked | D marked | D unmarked |
+|---|---|---|---|---|
+| clang | 99% / 99% | 98% / 98% | 94% / 94% | 93% / 92% |
+| gcc | 98% / 98% | 99% / 98% | 48% / 48% | 10% / 12% |
+| mongodb | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| mysql | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| postgres | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| verilator | 5% / 5% | 7% / 7% | 72% / 75% | 72% / 76% |
+| xgboost | 24% / 24% | 13% / 13% | 53% / 54% | 56% / 65% |
+
+Wrote reuse.csv (per workload and bucket) and reuse_summary.json in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_datacenter_defmark_berti_ref

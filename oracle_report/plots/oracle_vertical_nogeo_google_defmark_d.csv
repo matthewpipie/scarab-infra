@@ -1,0 +1,13 @@
+study,suite,core,side,workload,measure,gain_pct,cut
+mlp_oracle_google_defmark,google,golden_small,d,arizona,ceiling,19.9459,False
+mlp_oracle_google_defmark,google,golden_small,d,arizona,oracle,11.703,False
+mlp_oracle_google_defmark,google,golden_small,d,arizona,control,4.5938,False
+mlp_oracle_google_defmark,google,golden_small,d,arizona,control_seed1,4.6173,False
+mlp_oracle_google_defmark,google,golden_small,d,sierra.a.4,ceiling,18.6348,False
+mlp_oracle_google_defmark,google,golden_small,d,sierra.a.4,oracle,9.0167,False
+mlp_oracle_google_defmark,google,golden_small,d,sierra.a.4,control,4.9389,False
+mlp_oracle_google_defmark,google,golden_small,d,sierra.a.4,control_seed1,4.9663,False
+mlp_oracle_google_defmark,google,golden_small,d,tahoe,ceiling,15.7444,False
+mlp_oracle_google_defmark,google,golden_small,d,tahoe,oracle,9.2447,False
+mlp_oracle_google_defmark,google,golden_small,d,tahoe,control,6.0454,False
+mlp_oracle_google_defmark,google,golden_small,d,tahoe,control_seed1,6.0553,False

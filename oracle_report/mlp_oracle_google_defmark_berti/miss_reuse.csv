@@ -1,0 +1,1153 @@
+study,workload,side,class,bucket,fills_from,count
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,3,4,27.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,4,8,20194.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,5,16,138869.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,6,32,86621.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,7,64,94743.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,8,128,80975.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,9,256,27922.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,10,512,3309.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,11,1024,3.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,3,4,2.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,4,8,1682.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,5,16,9111.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,6,32,14441.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,7,64,15842.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,8,128,12277.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,9,256,3632.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,10,512,450.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,11,1024,1.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,3,4,1.0
+mlp_oracle_google_defmark_berti,arizona,I,control,4,8,838.0
+mlp_oracle_google_defmark_berti,arizona,I,control,5,16,5751.0
+mlp_oracle_google_defmark_berti,arizona,I,control,6,32,5318.0
+mlp_oracle_google_defmark_berti,arizona,I,control,7,64,12675.0
+mlp_oracle_google_defmark_berti,arizona,I,control,8,128,22445.0
+mlp_oracle_google_defmark_berti,arizona,I,control,9,256,9518.0
+mlp_oracle_google_defmark_berti,arizona,I,control,10,512,891.0
+mlp_oracle_google_defmark_berti,arizona,I,control,11,1024,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,0,0,2.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,3,4,38.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,4,8,35812.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,5,16,279949.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,6,32,301642.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,7,64,429718.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,8,128,520494.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,9,256,189637.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,10,512,5543.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,11,1024,69.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,3,4,7.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,4,8,6448.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,5,16,53381.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,6,32,102721.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,7,64,113523.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,8,128,102686.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,9,256,29842.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,10,512,1263.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,11,1024,22.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,2,2,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,3,4,1.0
+mlp_oracle_google_defmark_berti,arizona,D,control,4,8,4106.0
+mlp_oracle_google_defmark_berti,arizona,D,control,5,16,33860.0
+mlp_oracle_google_defmark_berti,arizona,D,control,6,32,52445.0
+mlp_oracle_google_defmark_berti,arizona,D,control,7,64,85125.0
+mlp_oracle_google_defmark_berti,arizona,D,control,8,128,155604.0
+mlp_oracle_google_defmark_berti,arizona,D,control,9,256,76236.0
+mlp_oracle_google_defmark_berti,arizona,D,control,10,512,2474.0
+mlp_oracle_google_defmark_berti,arizona,D,control,11,1024,40.0
+mlp_oracle_google_defmark_berti,arizona,D,control,12,2048,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,arizona,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,2,2,32.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,3,4,7027.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,4,8,631358.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,5,16,1284653.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,6,32,880893.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,7,64,619819.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,8,128,398055.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,9,256,201676.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,10,512,116332.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,11,1024,45638.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,12,2048,1956.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,13,4096,22.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,2,2,3.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,3,4,753.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,4,8,55993.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,5,16,99448.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,6,32,130482.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,7,64,82872.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,8,128,51890.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,9,256,24747.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,10,512,14675.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,11,1024,5842.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,12,2048,248.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,13,4096,2.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,2,2,1.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,3,4,146.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,4,8,21415.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,5,16,64516.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,6,32,81637.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,7,64,90636.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,8,128,84429.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,9,256,62331.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,10,512,37384.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,11,1024,23647.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,12,2048,796.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,13,4096,10.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,0,0,1.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,1,1,1.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,2,2,5.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,3,4,2367.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,4,8,220137.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,5,16,609107.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,6,32,600108.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,7,64,616118.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,8,128,538835.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,9,256,363850.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,10,512,293198.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,11,1024,153723.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,12,2048,6911.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,13,4096,66.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,0,0,1.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,1,1,1.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,2,2,4.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,3,4,771.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,4,8,65086.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,5,16,142762.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,6,32,183604.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,7,64,163523.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,8,128,152727.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,9,256,132896.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,10,512,124222.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,11,1024,62828.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,12,2048,2104.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,13,4096,16.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,2,2,3.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,3,4,463.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,4,8,43598.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,5,16,129949.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,6,32,142810.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,7,64,157906.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,8,128,182569.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,9,256,162347.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,10,512,139590.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,11,1024,68638.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,12,2048,2643.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,13,4096,27.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,bravo.a,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,3,4,57.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,4,8,67928.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,5,16,428551.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,6,32,429036.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,7,64,324105.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,8,128,215111.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,9,256,192171.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,10,512,104819.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,11,1024,12844.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,12,2048,10.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,3,4,8.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,4,8,6777.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,5,16,33468.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,6,32,74795.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,7,64,54709.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,8,128,32830.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,9,256,30676.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,10,512,16453.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,11,1024,2599.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,12,2048,1.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,3,4,8.0
+mlp_oracle_google_defmark_berti,charlie,I,control,4,8,5617.0
+mlp_oracle_google_defmark_berti,charlie,I,control,5,16,31634.0
+mlp_oracle_google_defmark_berti,charlie,I,control,6,32,37688.0
+mlp_oracle_google_defmark_berti,charlie,I,control,7,64,41171.0
+mlp_oracle_google_defmark_berti,charlie,I,control,8,128,43223.0
+mlp_oracle_google_defmark_berti,charlie,I,control,9,256,55480.0
+mlp_oracle_google_defmark_berti,charlie,I,control,10,512,33670.0
+mlp_oracle_google_defmark_berti,charlie,I,control,11,1024,3818.0
+mlp_oracle_google_defmark_berti,charlie,I,control,12,2048,2.0
+mlp_oracle_google_defmark_berti,charlie,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,3,4,71.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,4,8,45691.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,5,16,314570.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,6,32,351115.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,7,64,309242.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,8,128,189441.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,9,256,205379.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,10,512,146772.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,11,1024,16791.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,12,2048,8.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,3,4,28.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,4,8,15429.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,5,16,102146.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,6,32,160572.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,7,64,141119.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,8,128,83039.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,9,256,80852.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,10,512,53908.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,11,1024,4518.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,12,2048,3.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,2,2,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,3,4,32.0
+mlp_oracle_google_defmark_berti,charlie,D,control,4,8,17917.0
+mlp_oracle_google_defmark_berti,charlie,D,control,5,16,131103.0
+mlp_oracle_google_defmark_berti,charlie,D,control,6,32,119582.0
+mlp_oracle_google_defmark_berti,charlie,D,control,7,64,101439.0
+mlp_oracle_google_defmark_berti,charlie,D,control,8,128,85941.0
+mlp_oracle_google_defmark_berti,charlie,D,control,9,256,103565.0
+mlp_oracle_google_defmark_berti,charlie,D,control,10,512,73712.0
+mlp_oracle_google_defmark_berti,charlie,D,control,11,1024,8313.0
+mlp_oracle_google_defmark_berti,charlie,D,control,12,2048,4.0
+mlp_oracle_google_defmark_berti,charlie,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,charlie,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,2,2,1.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,3,4,2462.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,4,8,215893.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,5,16,753810.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,6,32,483095.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,7,64,338405.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,8,128,169705.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,9,256,80389.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,10,512,34745.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,11,1024,14387.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,12,2048,643.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,3,4,129.0
+mlp_oracle_google_defmark_berti,delta,I,marked,4,8,15292.0
+mlp_oracle_google_defmark_berti,delta,I,marked,5,16,46620.0
+mlp_oracle_google_defmark_berti,delta,I,marked,6,32,84128.0
+mlp_oracle_google_defmark_berti,delta,I,marked,7,64,57421.0
+mlp_oracle_google_defmark_berti,delta,I,marked,8,128,25421.0
+mlp_oracle_google_defmark_berti,delta,I,marked,9,256,10317.0
+mlp_oracle_google_defmark_berti,delta,I,marked,10,512,3717.0
+mlp_oracle_google_defmark_berti,delta,I,marked,11,1024,1607.0
+mlp_oracle_google_defmark_berti,delta,I,marked,12,2048,52.0
+mlp_oracle_google_defmark_berti,delta,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,2,2,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,3,4,89.0
+mlp_oracle_google_defmark_berti,delta,I,control,4,8,8956.0
+mlp_oracle_google_defmark_berti,delta,I,control,5,16,34620.0
+mlp_oracle_google_defmark_berti,delta,I,control,6,32,38575.0
+mlp_oracle_google_defmark_berti,delta,I,control,7,64,45054.0
+mlp_oracle_google_defmark_berti,delta,I,control,8,128,47385.0
+mlp_oracle_google_defmark_berti,delta,I,control,9,256,39079.0
+mlp_oracle_google_defmark_berti,delta,I,control,10,512,21866.0
+mlp_oracle_google_defmark_berti,delta,I,control,11,1024,8682.0
+mlp_oracle_google_defmark_berti,delta,I,control,12,2048,397.0
+mlp_oracle_google_defmark_berti,delta,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,2,2,3.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,3,4,1699.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,4,8,188123.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,5,16,593351.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,6,32,475040.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,7,64,532071.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,8,128,513018.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,9,256,421250.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,10,512,317754.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,11,1024,87901.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,12,2048,3677.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,D,marked,2,2,1.0
+mlp_oracle_google_defmark_berti,delta,D,marked,3,4,458.0
+mlp_oracle_google_defmark_berti,delta,D,marked,4,8,54831.0
+mlp_oracle_google_defmark_berti,delta,D,marked,5,16,167512.0
+mlp_oracle_google_defmark_berti,delta,D,marked,6,32,203038.0
+mlp_oracle_google_defmark_berti,delta,D,marked,7,64,223095.0
+mlp_oracle_google_defmark_berti,delta,D,marked,8,128,225597.0
+mlp_oracle_google_defmark_berti,delta,D,marked,9,256,193163.0
+mlp_oracle_google_defmark_berti,delta,D,marked,10,512,137726.0
+mlp_oracle_google_defmark_berti,delta,D,marked,11,1024,31385.0
+mlp_oracle_google_defmark_berti,delta,D,marked,12,2048,761.0
+mlp_oracle_google_defmark_berti,delta,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,2,2,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,3,4,386.0
+mlp_oracle_google_defmark_berti,delta,D,control,4,8,42995.0
+mlp_oracle_google_defmark_berti,delta,D,control,5,16,144924.0
+mlp_oracle_google_defmark_berti,delta,D,control,6,32,134936.0
+mlp_oracle_google_defmark_berti,delta,D,control,7,64,195867.0
+mlp_oracle_google_defmark_berti,delta,D,control,8,128,249279.0
+mlp_oracle_google_defmark_berti,delta,D,control,9,256,241663.0
+mlp_oracle_google_defmark_berti,delta,D,control,10,512,183248.0
+mlp_oracle_google_defmark_berti,delta,D,control,11,1024,42858.0
+mlp_oracle_google_defmark_berti,delta,D,control,12,2048,1409.0
+mlp_oracle_google_defmark_berti,delta,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,delta,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,1,1,16.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,2,2,123.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,3,4,1905.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,4,8,381774.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,5,16,2121984.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,6,32,2257225.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,7,64,1522891.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,8,128,748843.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,9,256,315857.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,10,512,143489.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,11,1024,15713.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,12,2048,24.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,I,marked,1,1,2.0
+mlp_oracle_google_defmark_berti,merced,I,marked,2,2,32.0
+mlp_oracle_google_defmark_berti,merced,I,marked,3,4,242.0
+mlp_oracle_google_defmark_berti,merced,I,marked,4,8,35299.0
+mlp_oracle_google_defmark_berti,merced,I,marked,5,16,168211.0
+mlp_oracle_google_defmark_berti,merced,I,marked,6,32,394978.0
+mlp_oracle_google_defmark_berti,merced,I,marked,7,64,256811.0
+mlp_oracle_google_defmark_berti,merced,I,marked,8,128,129062.0
+mlp_oracle_google_defmark_berti,merced,I,marked,9,256,56875.0
+mlp_oracle_google_defmark_berti,merced,I,marked,10,512,27146.0
+mlp_oracle_google_defmark_berti,merced,I,marked,11,1024,3054.0
+mlp_oracle_google_defmark_berti,merced,I,marked,12,2048,1.0
+mlp_oracle_google_defmark_berti,merced,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,merced,I,control,2,2,20.0
+mlp_oracle_google_defmark_berti,merced,I,control,3,4,186.0
+mlp_oracle_google_defmark_berti,merced,I,control,4,8,16459.0
+mlp_oracle_google_defmark_berti,merced,I,control,5,16,112739.0
+mlp_oracle_google_defmark_berti,merced,I,control,6,32,177901.0
+mlp_oracle_google_defmark_berti,merced,I,control,7,64,246501.0
+mlp_oracle_google_defmark_berti,merced,I,control,8,128,235706.0
+mlp_oracle_google_defmark_berti,merced,I,control,9,256,183790.0
+mlp_oracle_google_defmark_berti,merced,I,control,10,512,88733.0
+mlp_oracle_google_defmark_berti,merced,I,control,11,1024,9651.0
+mlp_oracle_google_defmark_berti,merced,I,control,12,2048,13.0
+mlp_oracle_google_defmark_berti,merced,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,1,1,8.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,2,2,107.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,3,4,1427.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,4,8,162597.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,5,16,784636.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,6,32,735851.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,7,64,678443.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,8,128,511713.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,9,256,271463.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,10,512,195621.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,11,1024,47481.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,12,2048,103.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,D,marked,1,1,4.0
+mlp_oracle_google_defmark_berti,merced,D,marked,2,2,45.0
+mlp_oracle_google_defmark_berti,merced,D,marked,3,4,574.0
+mlp_oracle_google_defmark_berti,merced,D,marked,4,8,57983.0
+mlp_oracle_google_defmark_berti,merced,D,marked,5,16,273698.0
+mlp_oracle_google_defmark_berti,merced,D,marked,6,32,395259.0
+mlp_oracle_google_defmark_berti,merced,D,marked,7,64,336141.0
+mlp_oracle_google_defmark_berti,merced,D,marked,8,128,234962.0
+mlp_oracle_google_defmark_berti,merced,D,marked,9,256,109064.0
+mlp_oracle_google_defmark_berti,merced,D,marked,10,512,67170.0
+mlp_oracle_google_defmark_berti,merced,D,marked,11,1024,13120.0
+mlp_oracle_google_defmark_berti,merced,D,marked,12,2048,39.0
+mlp_oracle_google_defmark_berti,merced,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,merced,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,merced,D,control,1,1,5.0
+mlp_oracle_google_defmark_berti,merced,D,control,2,2,53.0
+mlp_oracle_google_defmark_berti,merced,D,control,3,4,553.0
+mlp_oracle_google_defmark_berti,merced,D,control,4,8,47919.0
+mlp_oracle_google_defmark_berti,merced,D,control,5,16,240747.0
+mlp_oracle_google_defmark_berti,merced,D,control,6,32,252410.0
+mlp_oracle_google_defmark_berti,merced,D,control,7,64,345773.0
+mlp_oracle_google_defmark_berti,merced,D,control,8,128,325350.0
+mlp_oracle_google_defmark_berti,merced,D,control,9,256,157166.0
+mlp_oracle_google_defmark_berti,merced,D,control,10,512,95472.0
+mlp_oracle_google_defmark_berti,merced,D,control,11,1024,22541.0
+mlp_oracle_google_defmark_berti,merced,D,control,12,2048,58.0
+mlp_oracle_google_defmark_berti,merced,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,merced,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,merced,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,1,1,40.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,2,2,2666.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,3,4,146408.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,4,8,2954479.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,5,16,5147512.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,6,32,3025101.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,7,64,1589502.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,8,128,918978.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,9,256,583298.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,10,512,321293.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,11,1024,111811.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,12,2048,9532.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,13,4096,14.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,1,1,7.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,2,2,327.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,3,4,14018.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,4,8,241744.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,5,16,363447.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,6,32,404176.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,7,64,191855.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,8,128,107865.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,9,256,73347.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,10,512,40055.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,11,1024,13564.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,12,2048,1193.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,13,4096,1.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,2,2,9.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,3,4,732.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,4,8,42094.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,5,16,174041.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,6,32,235590.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,7,64,283955.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,8,128,296536.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,9,256,229465.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,10,512,140756.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,11,1024,45560.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,12,2048,2850.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,13,4096,4.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,1,1,8.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,2,2,430.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,3,4,19040.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,4,8,407428.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,5,16,877663.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,6,32,815653.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,7,64,765175.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,8,128,653727.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,9,256,559715.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,10,512,977641.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,11,1024,306909.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,12,2048,63449.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,13,4096,850.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,1,1,4.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,2,2,181.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,3,4,6554.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,4,8,132103.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,5,16,263237.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,6,32,317694.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,7,64,279569.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,8,128,232684.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,9,256,190674.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,10,512,197459.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,11,1024,77156.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,12,2048,12863.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,13,4096,31.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,1,1,1.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,2,2,50.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,3,4,2065.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,4,8,52479.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,5,16,163962.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,6,32,234449.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,7,64,269672.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,8,128,267132.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,9,256,256506.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,10,512,304160.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,11,1024,132775.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,12,2048,26908.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,13,4096,33.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.3,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,1,1,2.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,2,2,174.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,3,4,21877.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,4,8,2353618.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,5,16,7930421.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,6,32,6587551.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,7,64,4141871.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,8,128,2064770.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,9,256,822218.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,10,512,309375.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,11,1024,128297.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,12,2048,35542.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,13,4096,200.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,2,2,19.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,3,4,2108.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,4,8,197936.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,5,16,571152.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,6,32,932716.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,7,64,516258.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,8,128,243308.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,9,256,91211.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,10,512,33916.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,11,1024,15557.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,12,2048,4715.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,13,4096,18.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,2,2,8.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,3,4,463.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,4,8,56074.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,5,16,307376.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,6,32,432112.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,7,64,545980.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,8,128,564828.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,9,256,408888.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,10,512,202503.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,11,1024,75172.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,12,2048,15423.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,13,4096,73.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,2,2,66.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,3,4,3861.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,4,8,332010.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,5,16,1198042.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,6,32,1100516.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,7,64,939434.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,8,128,761249.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,9,256,747752.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,10,512,729455.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,11,1024,552776.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,12,2048,167975.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,13,4096,902.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,2,2,11.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,3,4,1077.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,4,8,106459.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,5,16,356420.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,6,32,452991.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,7,64,346619.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,8,128,242009.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,9,256,210863.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,10,512,168360.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,11,1024,109158.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,12,2048,31384.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,13,4096,160.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,2,2,19.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,3,4,996.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,4,8,50804.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,5,16,211195.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,6,32,247378.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,7,64,285132.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,8,128,303549.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,9,256,345892.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,10,512,329109.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,11,1024,207720.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,12,2048,43550.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,13,4096,148.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.4,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,1,1,8.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,2,2,1131.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,3,4,155496.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,4,8,3303628.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,5,16,4761331.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,6,32,2525284.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,7,64,1273652.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,8,128,690015.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,9,256,333147.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,10,512,158296.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,11,1024,63209.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,12,2048,4976.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,13,4096,2.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,2,2,103.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,3,4,13659.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,4,8,250832.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,5,16,309860.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,6,32,323635.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,7,64,146589.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,8,128,78138.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,9,256,36664.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,10,512,18026.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,11,1024,8454.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,12,2048,691.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,2,2,15.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,3,4,1557.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,4,8,64704.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,5,16,154578.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,6,32,198352.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,7,64,256851.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,8,128,236138.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,9,256,153911.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,10,512,86749.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,11,1024,31366.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,12,2048,2415.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,13,4096,1.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,1,1,3.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,2,2,193.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,3,4,23528.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,4,8,543201.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,5,16,978379.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,6,32,908418.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,7,64,810893.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,8,128,679859.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,9,256,598048.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,10,512,517052.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,11,1024,324715.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,12,2048,18043.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,13,4096,16.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,1,1,3.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,2,2,80.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,3,4,7369.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,4,8,161759.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,5,16,282282.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,6,32,367045.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,7,64,309268.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,8,128,248445.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,9,256,200853.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,10,512,160481.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,11,1024,86368.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,12,2048,5419.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,13,4096,8.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,2,2,19.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,3,4,3133.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,4,8,80343.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,5,16,197851.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,6,32,294138.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,7,64,309082.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,8,128,292026.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,9,256,289494.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,10,512,243727.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,11,1024,114578.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,12,2048,4978.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,sierra.a.6,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,2,2,13.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,3,4,5298.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,4,8,921676.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,5,16,3608977.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,6,32,3141538.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,7,64,2064733.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,8,128,1297033.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,9,256,698265.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,10,512,266615.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,11,1024,97400.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,12,2048,1116.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,2,2,1.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,3,4,516.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,4,8,71935.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,5,16,242063.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,6,32,417971.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,7,64,239205.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,8,128,146909.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,9,256,82597.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,10,512,32349.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,11,1024,11910.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,12,2048,103.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,2,2,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,3,4,66.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,4,8,14553.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,5,16,134192.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,6,32,195971.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,7,64,216132.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,8,128,253981.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,9,256,257267.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,10,512,133240.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,11,1024,39878.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,12,2048,276.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,2,2,1.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,3,4,1021.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,4,8,196585.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,5,16,816937.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,6,32,756257.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,7,64,608365.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,8,128,425009.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,9,256,424053.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,10,512,280681.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,11,1024,148323.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,12,2048,5050.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,13,4096,2.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,2,2,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,3,4,374.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,4,8,69043.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,5,16,283293.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,6,32,374004.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,7,64,276813.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,8,128,193753.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,9,256,174266.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,10,512,90976.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,11,1024,41357.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,12,2048,980.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,2,2,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,3,4,119.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,4,8,36519.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,5,16,209434.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,6,32,243341.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,7,64,295537.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,8,128,238051.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,9,256,272356.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,10,512,144720.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,11,1024,63265.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,12,2048,1501.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,13,4096,2.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,tahoe,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,2,2,108.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,3,4,46151.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,4,8,1629918.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,5,16,2166192.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,6,32,1056893.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,7,64,537325.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,8,128,249483.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,9,256,103871.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,10,512,38936.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,11,1024,6030.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,12,2048,32.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,I,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,I,marked,2,2,14.0
+mlp_oracle_google_defmark_berti,tango,I,marked,3,4,5362.0
+mlp_oracle_google_defmark_berti,tango,I,marked,4,8,147003.0
+mlp_oracle_google_defmark_berti,tango,I,marked,5,16,156394.0
+mlp_oracle_google_defmark_berti,tango,I,marked,6,32,148616.0
+mlp_oracle_google_defmark_berti,tango,I,marked,7,64,69248.0
+mlp_oracle_google_defmark_berti,tango,I,marked,8,128,29056.0
+mlp_oracle_google_defmark_berti,tango,I,marked,9,256,10558.0
+mlp_oracle_google_defmark_berti,tango,I,marked,10,512,4040.0
+mlp_oracle_google_defmark_berti,tango,I,marked,11,1024,642.0
+mlp_oracle_google_defmark_berti,tango,I,marked,12,2048,7.0
+mlp_oracle_google_defmark_berti,tango,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,tango,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,I,control,2,2,3.0
+mlp_oracle_google_defmark_berti,tango,I,control,3,4,926.0
+mlp_oracle_google_defmark_berti,tango,I,control,4,8,67803.0
+mlp_oracle_google_defmark_berti,tango,I,control,5,16,112791.0
+mlp_oracle_google_defmark_berti,tango,I,control,6,32,102504.0
+mlp_oracle_google_defmark_berti,tango,I,control,7,64,106347.0
+mlp_oracle_google_defmark_berti,tango,I,control,8,128,89846.0
+mlp_oracle_google_defmark_berti,tango,I,control,9,256,61614.0
+mlp_oracle_google_defmark_berti,tango,I,control,10,512,25419.0
+mlp_oracle_google_defmark_berti,tango,I,control,11,1024,3656.0
+mlp_oracle_google_defmark_berti,tango,I,control,12,2048,23.0
+mlp_oracle_google_defmark_berti,tango,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,tango,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,2,2,60.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,3,4,11477.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,4,8,450069.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,5,16,751162.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,6,32,532345.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,7,64,504644.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,8,128,485725.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,9,256,446850.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,10,512,284979.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,11,1024,42325.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,12,2048,420.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,13,4096,6.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,D,marked,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,D,marked,2,2,26.0
+mlp_oracle_google_defmark_berti,tango,D,marked,3,4,4863.0
+mlp_oracle_google_defmark_berti,tango,D,marked,4,8,183975.0
+mlp_oracle_google_defmark_berti,tango,D,marked,5,16,298451.0
+mlp_oracle_google_defmark_berti,tango,D,marked,6,32,267298.0
+mlp_oracle_google_defmark_berti,tango,D,marked,7,64,220327.0
+mlp_oracle_google_defmark_berti,tango,D,marked,8,128,183268.0
+mlp_oracle_google_defmark_berti,tango,D,marked,9,256,142490.0
+mlp_oracle_google_defmark_berti,tango,D,marked,10,512,73689.0
+mlp_oracle_google_defmark_berti,tango,D,marked,11,1024,10442.0
+mlp_oracle_google_defmark_berti,tango,D,marked,12,2048,137.0
+mlp_oracle_google_defmark_berti,tango,D,marked,13,4096,2.0
+mlp_oracle_google_defmark_berti,tango,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,tango,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,tango,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,tango,D,control,2,2,7.0
+mlp_oracle_google_defmark_berti,tango,D,control,3,4,1714.0
+mlp_oracle_google_defmark_berti,tango,D,control,4,8,91390.0
+mlp_oracle_google_defmark_berti,tango,D,control,5,16,198577.0
+mlp_oracle_google_defmark_berti,tango,D,control,6,32,201067.0
+mlp_oracle_google_defmark_berti,tango,D,control,7,64,245274.0
+mlp_oracle_google_defmark_berti,tango,D,control,8,128,265014.0
+mlp_oracle_google_defmark_berti,tango,D,control,9,256,243154.0
+mlp_oracle_google_defmark_berti,tango,D,control,10,512,124281.0
+mlp_oracle_google_defmark_berti,tango,D,control,11,1024,14283.0
+mlp_oracle_google_defmark_berti,tango,D,control,12,2048,168.0
+mlp_oracle_google_defmark_berti,tango,D,control,13,4096,2.0
+mlp_oracle_google_defmark_berti,tango,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,tango,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,1,1,55.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,2,2,634.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,3,4,1732.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,4,8,17691.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,5,16,114197.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,6,32,103755.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,7,64,87060.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,8,128,40971.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,9,256,21718.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,10,512,19232.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,11,1024,1638.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,12,2048,15.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,1,1,7.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,2,2,47.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,3,4,111.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,4,8,1613.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,5,16,7905.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,6,32,15803.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,7,64,11768.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,8,128,4882.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,9,256,2779.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,10,512,2083.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,11,1024,173.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,12,2048,1.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,1,1,1.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,2,2,6.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,3,4,23.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,4,8,1518.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,5,16,10119.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,6,32,12849.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,7,64,10115.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,8,128,4813.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,9,256,3099.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,10,512,4361.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,11,1024,267.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,12,2048,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,1,1,955.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,2,2,5711.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,3,4,21470.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,4,8,66570.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,5,16,815540.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,6,32,308476.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,7,64,316745.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,8,128,285213.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,9,256,183942.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,10,512,149869.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,11,1024,36122.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,12,2048,200.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,1,1,425.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,2,2,2308.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,3,4,8157.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,4,8,24735.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,5,16,344731.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,6,32,136152.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,7,64,146579.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,8,128,113884.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,9,256,73923.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,10,512,43243.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,11,1024,15656.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,12,2048,120.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,1,1,61.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,2,2,1121.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,3,4,6037.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,4,8,21306.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,5,16,117988.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,6,32,186994.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,7,64,194831.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,8,128,177606.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,9,256,100474.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,10,512,83532.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,11,1024,19845.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,12,2048,115.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,whiskey,D,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,1,1,4.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,2,2,467.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,3,4,26053.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,4,8,939147.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,5,16,4640554.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,6,32,2700692.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,7,64,1232694.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,8,128,470551.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,9,256,171966.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,10,512,54806.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,11,1024,14432.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,12,2048,170.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,I,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,1,1,1.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,2,2,52.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,3,4,2592.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,4,8,85745.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,5,16,357156.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,6,32,469743.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,7,64,210393.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,8,128,79755.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,9,256,28346.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,10,512,8460.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,11,1024,2253.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,12,2048,51.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,I,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,I,control,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,I,control,1,1,0.0
+mlp_oracle_google_defmark_berti,yankee,I,control,2,2,9.0
+mlp_oracle_google_defmark_berti,yankee,I,control,3,4,855.0
+mlp_oracle_google_defmark_berti,yankee,I,control,4,8,46008.0
+mlp_oracle_google_defmark_berti,yankee,I,control,5,16,238470.0
+mlp_oracle_google_defmark_berti,yankee,I,control,6,32,294210.0
+mlp_oracle_google_defmark_berti,yankee,I,control,7,64,281695.0
+mlp_oracle_google_defmark_berti,yankee,I,control,8,128,213683.0
+mlp_oracle_google_defmark_berti,yankee,I,control,9,256,115493.0
+mlp_oracle_google_defmark_berti,yankee,I,control,10,512,42170.0
+mlp_oracle_google_defmark_berti,yankee,I,control,11,1024,11810.0
+mlp_oracle_google_defmark_berti,yankee,I,control,12,2048,144.0
+mlp_oracle_google_defmark_berti,yankee,I,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,I,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,I,control,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,1,1,1.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,2,2,129.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,3,4,8019.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,4,8,328507.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,5,16,1619204.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,6,32,928820.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,7,64,468853.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,8,128,261276.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,9,256,188073.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,10,512,154094.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,11,1024,62873.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,12,2048,934.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,D,all non-cold,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,1,1,1.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,2,2,54.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,3,4,3191.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,4,8,123976.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,5,16,604254.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,6,32,482274.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,7,64,231498.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,8,128,119748.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,9,256,67537.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,10,512,42285.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,11,1024,13670.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,12,2048,229.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,D,marked,15,16384,0.0
+mlp_oracle_google_defmark_berti,yankee,D,control,0,0,0.0
+mlp_oracle_google_defmark_berti,yankee,D,control,1,1,0.0
+mlp_oracle_google_defmark_berti,yankee,D,control,2,2,37.0
+mlp_oracle_google_defmark_berti,yankee,D,control,3,4,2567.0
+mlp_oracle_google_defmark_berti,yankee,D,control,4,8,111599.0
+mlp_oracle_google_defmark_berti,yankee,D,control,5,16,539797.0
+mlp_oracle_google_defmark_berti,yankee,D,control,6,32,395768.0
+mlp_oracle_google_defmark_berti,yankee,D,control,7,64,266465.0
+mlp_oracle_google_defmark_berti,yankee,D,control,8,128,168153.0
+mlp_oracle_google_defmark_berti,yankee,D,control,9,256,105771.0
+mlp_oracle_google_defmark_berti,yankee,D,control,10,512,73116.0
+mlp_oracle_google_defmark_berti,yankee,D,control,11,1024,25047.0
+mlp_oracle_google_defmark_berti,yankee,D,control,12,2048,370.0
+mlp_oracle_google_defmark_berti,yankee,D,control,13,4096,0.0
+mlp_oracle_google_defmark_berti,yankee,D,control,14,8192,0.0
+mlp_oracle_google_defmark_berti,yankee,D,control,15,16384,0.0

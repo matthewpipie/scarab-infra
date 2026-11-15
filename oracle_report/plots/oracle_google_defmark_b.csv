@@ -1,0 +1,16 @@
+study,suite,core,side,workload,measure,gain_pct,cut
+mlp_oracle_google_defmark,google,golden_small,b,arizona,ceiling,21.4637,False
+mlp_oracle_google_defmark,google,golden_small,b,arizona,oracle,12.2439,False
+mlp_oracle_google_defmark,google,golden_small,b,arizona,control,4.6935,False
+mlp_oracle_google_defmark,google,golden_small,b,arizona,control_seed1,4.7192,False
+mlp_oracle_google_defmark,google,golden_small,b,sierra.a.4,ceiling,54.3942,False
+mlp_oracle_google_defmark,google,golden_small,b,sierra.a.4,oracle,18.6526,False
+mlp_oracle_google_defmark,google,golden_small,b,sierra.a.4,control,6.5735,False
+mlp_oracle_google_defmark,google,golden_small,b,sierra.a.4,control_seed1,6.615,False
+mlp_oracle_google_defmark,google,golden_small,b,tahoe,ceiling,31.784,False
+mlp_oracle_google_defmark,google,golden_small,b,tahoe,oracle,15.2262,False
+mlp_oracle_google_defmark,google,golden_small,b,tahoe,control,7.0696,False
+mlp_oracle_google_defmark,google,golden_small,b,tahoe,control_seed1,7.0743,False
+mlp_oracle_google_defmark,google,golden_small,b,Geomean,ceiling,34.8774,False
+mlp_oracle_google_defmark,google,golden_small,b,Geomean,oracle,15.6017,False
+mlp_oracle_google_defmark,google,golden_small,b,Geomean,control,8.1546,False

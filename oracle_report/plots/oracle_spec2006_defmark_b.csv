@@ -1,0 +1,16 @@
+study,suite,core,side,workload,measure,gain_pct,cut
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,astar,ceiling,200.756,True
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,astar,oracle,86.2376,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,astar,control,32.0019,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,astar,control_seed1,31.8554,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,libquantum,ceiling,248.3652,True
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,libquantum,oracle,2.977,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,libquantum,control,5.6248,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,libquantum,control_seed1,5.638,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,mcf,ceiling,149.9331,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,mcf,oracle,35.5792,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,mcf,control,36.6941,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,mcf,control_seed1,36.7421,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,Geomean,ceiling,29.2464,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,Geomean,oracle,8.4457,False
+mlp_oracle_spec2006_defmark,spec2006,golden_small,b,Geomean,control,6.125,False
