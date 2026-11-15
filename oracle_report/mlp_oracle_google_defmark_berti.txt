@@ -1,0 +1,223 @@
+## mlp_oracle_google_defmark_berti
+
+golden_small_berti · 12 workloads, 63 simpoints · 50M warmup + 200M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1`
+
+Gain over lru in %, geomean over workloads (a benchmark's inputs averaged first).
+
+| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |
+|---|---|---|---|---|---|---|---|
+| instruction | 10.8% | 7.1% | +6.77 | +3.52 | +0.65 | +2.87 | 0.979 |
+| data | 36.0% | 50.0% | +21.59 | +10.93 | +7.22 | +3.71 | 0.988 |
+| both | 18.6% | 38.7% | +34.88 | +15.22 | +8.01 | +7.21 | 0.982 |
+
+Marked: the reference's marked misses as a share of its non-cold misses. A threshold that marks more gives the oracle more to force; the control forces as many, so oracle − control is what the marking's choice of misses is worth.
+
+Checks: replay_check equals lru in cycles on 63/63 simpoints.
+
+
+### Per workload, instruction
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| arizona | +0.98 | +0.54 | +0.12 |
+| bravo.a | +5.13 | +2.94 | +0.41 |
+| charlie | +2.74 | +1.59 | +0.32 |
+| delta | +2.32 | +1.29 | +0.23 |
+| merced | +7.71 | +4.36 | +1.06 |
+| sierra.a.3 | +11.76 | +5.66 | +1.09 |
+| sierra.a.4 | +18.42 | +8.38 | +1.52 |
+| sierra.a.6 | +9.21 | +4.26 | +0.84 |
+| tahoe | +9.91 | +5.44 | +0.92 |
+| tango | +4.54 | +2.72 | +0.35 |
+| whiskey | +0.70 | +0.40 | +0.01 |
+| yankee | +9.13 | +5.02 | +1.00 |
+| geomean | +6.77 | +3.52 | +0.65 |
+
+### Per workload, data
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| arizona | +9.87 | +4.70 | +1.93 |
+| bravo.a | +20.70 | +11.25 | +7.05 |
+| charlie | +11.50 | +6.19 | +3.79 |
+| delta | +31.01 | +15.47 | +10.36 |
+| merced | +18.75 | +10.19 | +7.64 |
+| sierra.a.3 | +18.76 | +9.31 | +5.03 |
+| sierra.a.4 | +18.01 | +8.83 | +4.95 |
+| sierra.a.6 | +22.76 | +11.71 | +6.23 |
+| tahoe | +15.48 | +9.17 | +5.97 |
+| tango | +21.76 | +12.31 | +8.11 |
+| whiskey | +59.02 | +22.54 | +19.06 |
+| yankee | +17.94 | +10.44 | +7.45 |
+| geomean | +21.59 | +10.93 | +7.22 |
+
+### Per workload, both
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| arizona | +11.44 | +5.25 | +2.05 |
+| bravo.a | +30.71 | +14.86 | +7.54 |
+| charlie | +15.86 | +8.03 | +4.16 |
+| delta | +36.86 | +17.24 | +10.66 |
+| merced | +32.81 | +15.48 | +8.91 |
+| sierra.a.3 | +41.47 | +16.12 | +6.28 |
+| sierra.a.4 | +54.84 | +18.82 | +6.64 |
+| sierra.a.6 | +42.57 | +17.04 | +7.20 |
+| tahoe | +32.66 | +15.54 | +7.08 |
+| tango | +30.46 | +15.73 | +8.54 |
+| whiskey | +61.64 | +23.06 | +19.17 |
+| yankee | +35.35 | +16.56 | +8.73 |
+| geomean | +34.88 | +15.22 | +8.01 |
+
+### Control against oracle, mlp_oracle_google_defmark_berti
+
+Control / oracle, summed over simpoints, and the range of the per-simpoint ratios. Drawn: over the whole reference, the control's draw against the marked misses (with mlp_oracle_reuse_only, non-cold ones) and the lines they fall on. Forced: misses the replay forced, over the whole run and over its measured region, against the oracle with the same install mode. The draw is matched over the whole reference, warmup included, so the measured region can hold more or fewer of the control's misses than of the oracle's. No stat counts the distinct lines a replay forced.
+
+| Config | Side | Misses drawn | Lines drawn | Forced, whole run | Forced, measured | Lowest measured | Draws that were marked |
+|---|---|---|---|---|---|---|---|
+| ctrl_i_ro | instruction | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9708 (0.959–0.990) | 0.9791 (0.337–1.048) | whiskey/0 | 11.3% |
+| *oracle_i totals* | | 10,448,508 | 1,790,129 | 10,221,031 | 8,476,516 | | |
+| ctrl_d_ro | data | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9943 (0.829–1.354) | 0.9881 (0.549–1.567) | tahoe/0 | 36.3% |
+| *oracle_d totals* | | 15,861,235 | 5,933,121 | 15,657,347 | 13,264,490 | | |
+| ctrl_b_ro | both | 1.0000 (1.000–1.000) | 1.0000 (1.000–1.000) | 0.9832 (0.885–1.301) | 0.9824 (0.753–1.499) | tahoe/0 | 26.4% |
+| *oracle_b totals* | | 26,309,743 | 7,723,250 | 25,747,580 | 21,630,149 | | |
+
+## Reuse distance of the forced misses, mlp_oracle_google_defmark_berti
+
+golden_small_berti · 12 workloads, 63 simpoints · 50M warmup + 200M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1` · from replay_check
+
+The misses the oracle forces (marked) and the misses the control forces (control), with every non-cold miss for scale, by the fills into the line's MLC set since its last reuse (a reuse is a demand or instruction-prefetch lookup). Every one of them is an LRU miss, so most are past a 16-way set's reach; the marked − control column is how the oracle's misses differ from a random sample of as many, on as many lines. Shares of each class's own misses, whole run (warmup included, as the forcing), every workload weighing the same.
+
+#### Instruction
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤7 | 0.4% | 0.3% | 0.0% | +0.3 pts |
+| 8–15 | 11.9% | 9.5% | 3.7% | +5.9 pts |
+| 16–31 | 32.8% | 20.9% | 14.1% | +6.8 pts |
+| 32–63 | 23.3% | 31.3% | 17.3% | +14.0 pts |
+| 64–127 | 15.6% | 19.4% | 20.1% | -0.7 pts |
+| 128–255 | 8.9% | 10.4% | 20.1% | -9.7 pts |
+| 256–511 | 4.5% | 5.1% | 14.7% | -9.6 pts |
+| 512–1,023 | 2.1% | 2.4% | 7.7% | -5.3 pts |
+| 1,024–2,047 | 0.5% | 0.6% | 2.1% | -1.5 pts |
+| ≥2,048 | 0.0% | 0.0% | 0.1% | -0.1 pts |
+| *median* | 32–63 | 32–63 | 64–127 | |
+| *misses, whole run* | 97,092,697 | 10,448,508 | 10,448,433 | |
+| *misses, measured region* | 80,430,366 | 8,667,313 | 8,755,520 | |
+
+11.3% of the control's misses are marked ones.
+
+#### Data
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤7 | 0.2% | 0.2% | 0.1% | +0.1 pts |
+| 8–15 | 6.2% | 5.7% | 3.6% | +2.1 pts |
+| 16–31 | 22.5% | 19.8% | 14.4% | +5.3 pts |
+| 32–63 | 18.0% | 21.6% | 15.8% | +5.8 pts |
+| 64–127 | 16.6% | 18.4% | 17.7% | +0.7 pts |
+| 128–255 | 14.2% | 14.3% | 18.5% | -4.2 pts |
+| 256–511 | 10.5% | 10.2% | 15.1% | -4.9 pts |
+| 512–1,023 | 8.3% | 7.0% | 10.5% | -3.6 pts |
+| 1,024–2,047 | 3.2% | 2.6% | 3.8% | -1.3 pts |
+| ≥2,048 | 0.4% | 0.2% | 0.4% | -0.1 pts |
+| *median* | 64–127 | 64–127 | 64–127 | |
+| *misses, whole run* | 44,037,764 | 15,861,235 | 15,861,083 | |
+| *misses, measured region* | 37,024,038 | 13,439,319 | 13,333,394 | |
+
+36.3% of the control's misses are marked ones.
+
+Checks: misses filed equal the reference's draw on instruction marked 63/63, instruction control 63/63, data marked 63/63, data control 63/63 simpoints; the draw equals ctrl_i_ro's on 63/63 simpoints.
+
+### Forced misses per workload, mlp_oracle_google_defmark_berti: share under 32 fills, and median
+
+| Workload | I marked | I control | D marked | D control |
+|---|---|---|---|---|
+| arizona | 19% / 64–127 | 11% / 128–255 | 15% / 64–127 | 9% / 128–255 |
+| bravo.a | 33% / 32–63 | 18% / 64–127 | 20% / 64–127 | 17% / 128–255 |
+| charlie | 16% / 64–127 | 15% / 128–255 | 18% / 64–127 | 23% / 64–127 |
+| delta | 25% / 32–63 | 18% / 64–127 | 18% / 64–127 | 15% / 128–255 |
+| merced | 19% / 32–63 | 12% / 64–127 | 22% / 64–127 | 19% / 64–127 |
+| sierra.a.3 | 43% / 32–63 | 15% / 64–127 | 24% / 64–127 | 13% / 128–255 |
+| sierra.a.4 | 30% / 32–63 | 14% / 64–127 | 23% / 64–127 | 13% / 128–255 |
+| sierra.a.6 | 48% / 32–63 | 19% / 64–127 | 25% / 64–127 | 15% / 128–255 |
+| tahoe | 25% / 32–63 | 12% / 128–255 | 23% / 64–127 | 16% / 64–127 |
+| tango | 54% / 16–31 | 32% / 64–127 | 35% / 32–63 | 21% / 64–127 |
+| whiskey | 21% / 32–63 | 25% / 32–63 | 42% / 32–63 | 16% / 64–127 |
+| yankee | 36% / 32–63 | 23% / 64–127 | 43% / 32–63 | 39% / 32–63 |
+
+Wrote miss_reuse.csv (per workload and bucket, whole run) in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_google_defmark_berti
+
+Wrote per_workload.csv and ipc.csv in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_google_defmark_berti
+
+
+## Reuse distance, mlp_oracle_google_defmark_berti_ref
+
+golden_small_berti · 12 workloads, 63 simpoints · plain LRU (the reference run)
+
+A reuse is a demand or instruction-prefetch lookup at the MLC of a line filled before. Its distance is the fills into the line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse (marked once any of its fills was marked). Unmarked instruction lines include those an instruction prefetch brought in with no demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. Every workload weighs the same. For the control, see --miss-reuse.
+
+#### Instruction
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 39.2% | 34.3% | 1.14 | 57.5% |
+| 1 | 15.5% | 13.1% | 1.18 | 58.3% |
+| 2–3 | 11.7% | 9.9% | 1.18 | 58.3% |
+| 4–7 | 8.8% | 7.5% | 1.17 | 58.1% |
+| 8–15 | 7.6% | 7.2% | 1.06 | 55.7% |
+| *within 15 fills* | *82.7%* | *71.9%* | | |
+| 16–31 | 7.4% | 8.4% | 0.88 | 51.2% |
+| 32–63 | 4.9% | 7.0% | 0.70 | 45.4% |
+| 64–127 | 2.9% | 5.4% | 0.52 | 38.3% |
+| 128–255 | 1.3% | 3.6% | 0.36 | 30.1% |
+| 256–511 | 0.5% | 2.2% | 0.25 | 22.6% |
+| 512–1,023 | 0.2% | 1.2% | 0.18 | 17.3% |
+| ≥1,024 | 0.0% | 0.3% | 0.14 | 14.5% |
+| *LRU hit rate* | *80.3%* | *69.1%* | | |
+| *median* | 1 | 2–3 | | |
+
+Marked lines take 54.2% of all instruction reuses.
+
+#### Data
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 34.4% | 31.3% | 1.10 | 56.9% |
+| 1 | 12.6% | 14.1% | 0.89 | 51.6% |
+| 2–3 | 11.1% | 11.6% | 0.96 | 53.6% |
+| 4–7 | 8.3% | 7.8% | 1.08 | 56.4% |
+| 8–15 | 6.8% | 5.6% | 1.21 | 59.3% |
+| *within 15 fills* | *73.2%* | *70.4%* | | |
+| 16–31 | 7.7% | 4.6% | 1.68 | 66.9% |
+| 32–63 | 5.7% | 4.1% | 1.38 | 62.5% |
+| 64–127 | 4.6% | 4.9% | 0.93 | 52.9% |
+| 128–255 | 3.7% | 5.7% | 0.65 | 43.8% |
+| 256–511 | 2.6% | 4.5% | 0.58 | 41.3% |
+| 512–1,023 | 1.7% | 3.9% | 0.45 | 35.2% |
+| 1,024–2,047 | 0.7% | 1.8% | 0.38 | 31.6% |
+| ≥2,048 | 0.1% | 0.2% | 0.26 | 23.5% |
+| *LRU hit rate* | *69.7%* | *70.4%* | | |
+| *median* | 2–3 | 2–3 | | |
+
+Marked lines take 54.6% of all data reuses.
+
+### Reuse per workload: share within 15 fills, and LRU hit rate
+
+| Workload | I marked | I unmarked | D marked | D unmarked |
+|---|---|---|---|---|
+| arizona | 82% / 81% | 73% / 73% | 58% / 60% | 53% / 58% |
+| bravo.a | 92% / 90% | 80% / 78% | 77% / 75% | 57% / 54% |
+| charlie | 89% / 88% | 85% / 84% | 88% / 88% | 76% / 77% |
+| delta | 92% / 91% | 89% / 88% | 74% / 72% | 70% / 69% |
+| merced | 75% / 73% | 66% / 64% | 70% / 69% | 82% / 82% |
+| sierra.a.3 | 90% / 86% | 80% / 76% | 74% / 71% | 71% / 71% |
+| sierra.a.4 | 75% / 71% | 52% / 49% | 66% / 63% | 74% / 74% |
+| sierra.a.6 | 92% / 88% | 84% / 80% | 79% / 76% | 72% / 71% |
+| tahoe | 76% / 73% | 54% / 52% | 61% / 59% | 69% / 70% |
+| tango | 93% / 89% | 85% / 81% | 76% / 72% | 70% / 68% |
+| whiskey | 71% / 70% | 56% / 54% | 82% / 81% | 67% / 67% |
+| yankee | 67% / 63% | 56% / 53% | 55% / 51% | 83% / 82% |
+
+Wrote reuse.csv (per workload and bucket) and reuse_summary.json in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_google_defmark_berti_ref

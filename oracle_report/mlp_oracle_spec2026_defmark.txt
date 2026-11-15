@@ -1,0 +1,612 @@
+## mlp_oracle_spec2026_defmark
+
+golden_small · 26 workloads (90 inputs), 269 simpoints · 50M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1`
+
+Gain over lru in %, geomean over workloads (a benchmark's inputs averaged first).
+
+| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |
+|---|---|---|---|---|---|---|---|
+| instruction | 10.4% | 54.5% | +0.29 | +0.19 | +0.02 | +0.16 | 1.072 |
+| data | 21.7% | 74.7% | +11.02 | +2.98 | +2.29 | +0.69 | 0.976 |
+| both | 20.8% | 74.2% | +11.40 | +3.19 | +2.32 | +0.87 | 0.980 |
+
+Marked: the reference's marked misses as a share of its non-cold misses. A threshold that marks more gives the oracle more to force; the control forces as many, so oracle − control is what the marking's choice of misses is worth.
+
+Checks: replay_check equals lru in cycles on 269/269 simpoints; oracle_i beats its ceiling on abc_r, astcenc_r, femflow_r, gem5_r_3, marian_r, marian_r_2, nest_r, ns3_r_3, ns3_r_4, ns3_r_5, palm_r, vpr_r_4, zstd_r_4, zstd_r_5 (expected only within noise); oracle_d beats its ceiling on cppcheck_r_2, ocio_r, sealcrypto_r (expected only within noise); oracle_b beats its ceiling on cppcheck_r_2, ns3_r_3, ns3_r_5, ocio_r, sealcrypto_r, vpr_r_4 (expected only within noise).
+
+
+### Per workload, instruction
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| abc_r | -0.00 | +0.00 | +0.00 |
+| abc_r_2 | +0.00 | +0.00 | +0.00 |
+| abc_r_3 | +0.00 | +0.00 | +0.00 |
+| abc_r_4 | +0.00 | +0.00 | +0.00 |
+| abc_r_5 | +0.00 | +0.00 | +0.00 |
+| abc_r_6 | +0.00 | -0.01 | +0.00 |
+| astcenc_r | -0.00 | -0.00 | -0.00 |
+| astcenc_r_2 | +0.00 | +0.00 | +0.00 |
+| astcenc_r_3 | +0.00 | +0.00 | +0.00 |
+| cactus_r | +0.00 | +0.00 | +0.00 |
+| cppcheck_r | +0.04 | +0.03 | +0.02 |
+| cppcheck_r_2 | +0.00 | +0.00 | +0.00 |
+| cppcheck_r_3 | +0.00 | +0.00 | +0.00 |
+| cpython_r | +0.00 | +0.00 | +0.00 |
+| cpython_r_2 | +0.00 | +0.00 | +0.00 |
+| cpython_r_3 | +0.00 | +0.00 | +0.00 |
+| femflow_r | +0.08 | +0.12 | +0.01 |
+| flightdm_r | +0.00 | +0.00 | +0.00 |
+| flightdm_r_2 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_3 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_4 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_5 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_6 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_7 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_8 | +0.00 | +0.00 | +0.00 |
+| fotonik3d_r | +0.00 | +0.00 | +0.00 |
+| gcc_r | +7.04 | +4.45 | +0.62 |
+| gcc_r_2 | +7.40 | +4.49 | +0.63 |
+| gcc_r_3 | +3.97 | +2.41 | +0.19 |
+| gem5_r | +0.00 | +0.00 | +0.00 |
+| gem5_r_2 | +0.00 | +0.00 | +0.00 |
+| gem5_r_3 | -0.03 | -0.03 | -0.03 |
+| gem5_r_4 | -0.00 | -0.00 | +0.00 |
+| gmsh_r | +0.00 | +0.00 | +0.00 |
+| gmsh_r_2 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_3 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_4 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_5 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_6 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_7 | +0.00 | +0.00 | +0.00 |
+| lbm_r | +0.00 | +0.00 | +0.00 |
+| llvm_r | +2.40 | +1.47 | +0.35 |
+| llvm_r_2 | +1.03 | +0.62 | +0.06 |
+| marian_r | -0.03 | -0.02 | -0.01 |
+| marian_r_2 | -0.01 | +0.01 | -0.01 |
+| nest_r | -0.02 | -0.01 | -0.02 |
+| nest_r_2 | -0.00 | -0.01 | -0.02 |
+| nest_r_3 | +0.00 | +0.00 | +0.00 |
+| ns3_r | +0.02 | -0.00 | +0.00 |
+| ns3_r_2 | +0.00 | +0.00 | +0.00 |
+| ns3_r_3 | -0.00 | +0.00 | +0.00 |
+| ns3_r_4 | -0.02 | +0.00 | +0.00 |
+| ns3_r_5 | -0.00 | +0.00 | +0.00 |
+| ns3_r_6 | +0.18 | +0.06 | +0.00 |
+| ntest_r | +0.00 | +0.00 | +0.00 |
+| ocio_r | +0.01 | +0.00 | +0.00 |
+| ocio_r_2 | +0.00 | +0.00 | +0.00 |
+| ocio_r_3 | +0.00 | +0.00 | +0.00 |
+| ocio_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r | -0.05 | -0.05 | -0.00 |
+| omnetpp_r_10 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_2 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_3 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_5 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_6 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_7 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_8 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_9 | +0.00 | +0.00 | +0.00 |
+| palm_r | -0.16 | +0.00 | -0.00 |
+| roms_r | -0.07 | -0.07 | -0.07 |
+| sealcrypto_r | -0.00 | -0.00 | -0.01 |
+| sqlite_r | -0.02 | -0.02 | +0.00 |
+| sqlite_r_2 | +0.00 | +0.00 | +0.00 |
+| sqlite_r_3 | +0.00 | +0.00 | +0.00 |
+| stockfish_r | +0.00 | +0.00 | +0.00 |
+| stockfish_r_2 | +0.00 | +0.00 | -0.04 |
+| stockfish_r_3 | +0.01 | +0.01 | +0.00 |
+| vpr_r | +0.04 | -0.03 | -0.02 |
+| vpr_r_2 | +0.02 | -0.00 | +0.00 |
+| vpr_r_3 | +0.08 | +0.03 | +0.13 |
+| vpr_r_4 | +0.05 | +0.08 | +0.12 |
+| zstd_r | -0.01 | -0.02 | -0.02 |
+| zstd_r_2 | +0.04 | +0.03 | +0.03 |
+| zstd_r_3 | +0.07 | -0.01 | +0.00 |
+| zstd_r_4 | -0.07 | -0.00 | -0.06 |
+| zstd_r_5 | +0.00 | +0.04 | +0.00 |
+| zstd_r_6 | +0.00 | +0.00 | +0.00 |
+| zstd_r_7 | +0.00 | +0.00 | +0.00 |
+| zstd_r_8 | +0.09 | +0.00 | +0.00 |
+| geomean | +0.29 | +0.19 | +0.02 |
+
+### Per workload, data
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| abc_r | +4.33 | +3.07 | +2.58 |
+| abc_r_2 | +0.00 | +0.00 | +0.00 |
+| abc_r_3 | +0.00 | +0.00 | +0.00 |
+| abc_r_4 | +0.00 | +0.00 | +0.00 |
+| abc_r_5 | +0.00 | +0.00 | +0.00 |
+| abc_r_6 | +15.66 | +10.99 | +9.57 |
+| astcenc_r | +0.07 | +0.00 | +0.07 |
+| astcenc_r_2 | +0.00 | +0.00 | +0.00 |
+| astcenc_r_3 | +0.00 | +0.00 | +0.00 |
+| cactus_r | +3.50 | +1.29 | +0.50 |
+| cppcheck_r | +1.28 | +0.35 | +0.77 |
+| cppcheck_r_2 | -0.01 | -0.01 | -0.00 |
+| cppcheck_r_3 | +0.05 | +0.03 | +0.04 |
+| cpython_r | +0.00 | +0.00 | +0.00 |
+| cpython_r_2 | +0.00 | +0.00 | +0.00 |
+| cpython_r_3 | +0.00 | +0.00 | +0.00 |
+| femflow_r | +25.96 | +5.30 | +4.52 |
+| flightdm_r | +0.00 | +0.00 | +0.00 |
+| flightdm_r_2 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_3 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_4 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_5 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_6 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_7 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_8 | +0.00 | +0.00 | +0.00 |
+| fotonik3d_r | +1.71 | +0.39 | +0.07 |
+| gcc_r | +4.72 | +3.46 | +1.66 |
+| gcc_r_2 | +4.58 | +3.37 | +1.53 |
+| gcc_r_3 | +17.77 | +8.07 | +5.78 |
+| gem5_r | +0.03 | +0.02 | +0.01 |
+| gem5_r_2 | +0.00 | +0.00 | +0.00 |
+| gem5_r_3 | +2.55 | +1.32 | +0.59 |
+| gem5_r_4 | +0.00 | +0.00 | -0.00 |
+| gmsh_r | +0.00 | +0.00 | +0.00 |
+| gmsh_r_2 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_3 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_4 | +1.78 | +1.24 | +1.02 |
+| gmsh_r_5 | +2.19 | +1.48 | +1.19 |
+| gmsh_r_6 | +10.91 | +7.46 | +6.66 |
+| gmsh_r_7 | +6.05 | +4.22 | +3.51 |
+| lbm_r | +13.41 | +0.00 | -0.01 |
+| llvm_r | +1.58 | +1.27 | +0.35 |
+| llvm_r_2 | +0.69 | +0.38 | +0.32 |
+| marian_r | +200.56 | +5.80 | +9.55 |
+| marian_r_2 | +148.79 | +5.24 | +8.76 |
+| nest_r | +25.87 | +10.81 | +6.39 |
+| nest_r_2 | +56.83 | +35.19 | +19.16 |
+| nest_r_3 | +0.00 | +0.00 | +0.00 |
+| ns3_r | +0.03 | +0.02 | +0.04 |
+| ns3_r_2 | +0.00 | +0.00 | +0.00 |
+| ns3_r_3 | +0.00 | +0.00 | +0.00 |
+| ns3_r_4 | +0.87 | +0.45 | +0.25 |
+| ns3_r_5 | +0.00 | +0.00 | +0.00 |
+| ns3_r_6 | +0.14 | +0.07 | +0.05 |
+| ntest_r | +0.00 | +0.00 | +0.00 |
+| ocio_r | +6.96 | +6.96 | +1.63 |
+| ocio_r_2 | +0.00 | +0.00 | +0.00 |
+| ocio_r_3 | +0.04 | +0.01 | +0.03 |
+| ocio_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r | +39.19 | +21.13 | +16.33 |
+| omnetpp_r_10 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_2 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_3 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_5 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_6 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_7 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_8 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_9 | +0.00 | +0.00 | +0.00 |
+| palm_r | +21.24 | +5.25 | +2.98 |
+| roms_r | +32.43 | +2.11 | +1.85 |
+| sealcrypto_r | +3.70 | +3.70 | +2.69 |
+| sqlite_r | +10.23 | +6.81 | +5.28 |
+| sqlite_r_2 | +0.00 | +0.00 | +0.00 |
+| sqlite_r_3 | +0.00 | +0.00 | +0.00 |
+| stockfish_r | +0.11 | +0.11 | -0.00 |
+| stockfish_r_2 | +0.50 | +0.36 | +0.11 |
+| stockfish_r_3 | +1.70 | +0.57 | +0.19 |
+| vpr_r | +28.81 | +20.73 | +16.49 |
+| vpr_r_2 | +0.88 | +0.45 | +0.17 |
+| vpr_r_3 | +44.80 | +30.40 | +24.84 |
+| vpr_r_4 | +0.16 | +0.12 | +0.04 |
+| zstd_r | +3.39 | +1.58 | +1.46 |
+| zstd_r_2 | +6.23 | +4.12 | +1.28 |
+| zstd_r_3 | +18.56 | +12.94 | +5.43 |
+| zstd_r_4 | +26.83 | +16.21 | +7.83 |
+| zstd_r_5 | +45.91 | +39.29 | +36.78 |
+| zstd_r_6 | +17.31 | +15.89 | +15.29 |
+| zstd_r_7 | +10.15 | +9.06 | +8.27 |
+| zstd_r_8 | +6.84 | +5.72 | +5.33 |
+| geomean | +11.02 | +2.98 | +2.29 |
+
+### Per workload, both
+
+| Workload | ceiling | oracle | control |
+|---|---|---|---|
+| abc_r | +4.31 | +3.07 | +2.58 |
+| abc_r_2 | +0.00 | +0.00 | +0.00 |
+| abc_r_3 | +0.00 | +0.00 | +0.00 |
+| abc_r_4 | +0.00 | +0.00 | +0.00 |
+| abc_r_5 | +0.00 | +0.00 | +0.00 |
+| abc_r_6 | +15.59 | +10.99 | +9.52 |
+| astcenc_r | +0.07 | -0.00 | +0.07 |
+| astcenc_r_2 | +0.00 | +0.00 | +0.00 |
+| astcenc_r_3 | +0.00 | +0.00 | +0.00 |
+| cactus_r | +3.50 | +1.29 | +0.50 |
+| cppcheck_r | +1.35 | +0.43 | +0.80 |
+| cppcheck_r_2 | -0.01 | -0.01 | -0.00 |
+| cppcheck_r_3 | +0.05 | +0.03 | +0.04 |
+| cpython_r | +0.00 | +0.00 | +0.00 |
+| cpython_r_2 | +0.00 | +0.00 | +0.00 |
+| cpython_r_3 | +0.00 | +0.00 | +0.00 |
+| femflow_r | +26.11 | +5.40 | +4.56 |
+| flightdm_r | +0.00 | +0.00 | +0.00 |
+| flightdm_r_2 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_3 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_4 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_5 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_6 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_7 | +0.00 | +0.00 | +0.00 |
+| flightdm_r_8 | +0.00 | +0.00 | +0.00 |
+| fotonik3d_r | +1.71 | +0.39 | +0.07 |
+| gcc_r | +12.96 | +8.10 | +2.32 |
+| gcc_r_2 | +13.46 | +8.42 | +2.26 |
+| gcc_r_3 | +23.91 | +11.31 | +6.15 |
+| gem5_r | +0.03 | +0.02 | +0.01 |
+| gem5_r_2 | +0.00 | +0.00 | +0.00 |
+| gem5_r_3 | +2.53 | +1.32 | +0.59 |
+| gem5_r_4 | +0.00 | -0.00 | -0.00 |
+| gmsh_r | +0.00 | +0.00 | +0.00 |
+| gmsh_r_2 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_3 | +0.00 | +0.00 | +0.00 |
+| gmsh_r_4 | +1.78 | +1.24 | +1.02 |
+| gmsh_r_5 | +2.19 | +1.48 | +1.19 |
+| gmsh_r_6 | +10.91 | +7.46 | +6.66 |
+| gmsh_r_7 | +6.05 | +4.22 | +3.51 |
+| lbm_r | +13.41 | +0.00 | -0.01 |
+| llvm_r | +4.19 | +2.57 | +0.66 |
+| llvm_r_2 | +1.81 | +1.14 | +0.42 |
+| marian_r | +200.61 | +5.80 | +9.55 |
+| marian_r_2 | +148.85 | +5.24 | +8.75 |
+| nest_r | +25.87 | +10.80 | +6.39 |
+| nest_r_2 | +56.90 | +35.11 | +19.16 |
+| nest_r_3 | +0.00 | +0.00 | +0.00 |
+| ns3_r | +0.03 | +0.02 | +0.04 |
+| ns3_r_2 | +0.00 | +0.00 | +0.00 |
+| ns3_r_3 | -0.00 | +0.00 | +0.00 |
+| ns3_r_4 | +0.87 | +0.45 | +0.25 |
+| ns3_r_5 | -0.00 | +0.00 | +0.00 |
+| ns3_r_6 | +0.32 | +0.13 | +0.04 |
+| ntest_r | +0.00 | +0.00 | +0.00 |
+| ocio_r | +6.96 | +6.96 | +1.64 |
+| ocio_r_2 | +0.00 | +0.00 | +0.00 |
+| ocio_r_3 | +0.04 | +0.01 | +0.03 |
+| ocio_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r | +39.37 | +21.13 | +16.33 |
+| omnetpp_r_10 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_2 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_3 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_4 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_5 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_6 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_7 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_8 | +0.00 | +0.00 | +0.00 |
+| omnetpp_r_9 | +0.00 | +0.00 | +0.00 |
+| palm_r | +21.28 | +5.25 | +2.90 |
+| roms_r | +32.31 | +2.11 | +1.85 |
+| sealcrypto_r | +3.68 | +3.69 | +2.70 |
+| sqlite_r | +10.24 | +6.81 | +5.26 |
+| sqlite_r_2 | +0.00 | +0.00 | +0.00 |
+| sqlite_r_3 | +0.00 | +0.00 | +0.00 |
+| stockfish_r | +0.11 | +0.11 | -0.00 |
+| stockfish_r_2 | +0.50 | +0.36 | +0.11 |
+| stockfish_r_3 | +1.64 | +0.58 | +0.19 |
+| vpr_r | +28.88 | +20.73 | +16.49 |
+| vpr_r_2 | +0.85 | +0.47 | +0.19 |
+| vpr_r_3 | +45.00 | +30.45 | +24.84 |
+| vpr_r_4 | +0.04 | +0.18 | +0.16 |
+| zstd_r | +3.50 | +1.66 | +1.46 |
+| zstd_r_2 | +6.54 | +4.27 | +1.30 |
+| zstd_r_3 | +18.46 | +12.99 | +5.39 |
+| zstd_r_4 | +26.92 | +16.28 | +7.82 |
+| zstd_r_5 | +45.91 | +39.29 | +36.78 |
+| zstd_r_6 | +17.26 | +15.89 | +15.29 |
+| zstd_r_7 | +10.15 | +9.06 | +8.27 |
+| zstd_r_8 | +6.83 | +5.81 | +5.31 |
+| geomean | +11.40 | +3.19 | +2.32 |
+
+### Control against oracle, mlp_oracle_spec2026_defmark
+
+Control / oracle, summed over simpoints, and the range of the per-simpoint ratios. Drawn: over the whole reference, the control's draw against the marked misses (with mlp_oracle_reuse_only, non-cold ones) and the lines they fall on. Forced: misses the replay forced, over the whole run and over its measured region, against the oracle with the same install mode. The draw is matched over the whole reference, warmup included, so the measured region can hold more or fewer of the control's misses than of the oracle's. No stat counts the distinct lines a replay forced.
+
+| Config | Side | Misses drawn | Lines drawn | Forced, whole run | Forced, measured | Lowest measured | Draws that were marked |
+|---|---|---|---|---|---|---|---|
+| ctrl_i_ro | instruction | 0.9999 (0.857–1.000) | 1.0000 (1.000–1.000) | 0.9872 (0.857–1.308) | 1.0717 (0.000–10.000) | cpython_r_2/8791 | 10.9% |
+| *oracle_i totals* | | 145,851 | 86,534 | 142,032 | 31,156 | | |
+| ctrl_d_ro | data | 0.9999 (0.667–1.000) | 1.0000 (1.000–1.000) | 0.9998 (0.667–1.005) | 0.9765 (0.000–2.929) | cactus_r/62189 | 42.6% |
+| *oracle_d totals* | | 3,476,302 | 1,974,938 | 3,475,342 | 878,947 | | |
+| ctrl_b_ro | both | 0.9999 (0.667–1.000) | 1.0000 (1.000–1.000) | 0.9994 (0.667–1.017) | 0.9797 (0.000–4.000) | cactus_r/62189 | 41.3% |
+| *oracle_b totals* | | 3,622,153 | 2,061,472 | 3,615,671 | 909,785 | | |
+
+## Reuse distance of the forced misses, mlp_oracle_spec2026_defmark
+
+golden_small · 90 workloads, 269 simpoints · 50M warmup + 10M measured · marking: `--mlp_data_bound 3 --mlp_data_bound_min 16 --mlp_lin_data_thresh 0.0 --mlp_instr_mark 2 --mlp_lin_instr_thresh 0.7 --mlp_instr_starve 2 --mlp_instr_starve_min 1` · from replay_check
+
+The misses the oracle forces (marked) and the misses the control forces (control), with every non-cold miss for scale, by the fills into the line's MLC set since its last reuse (a reuse is a demand or instruction-prefetch lookup). Every one of them is an LRU miss, so most are past a 16-way set's reach; the marked − control column is how the oracle's misses differ from a random sample of as many, on as many lines. Shares of each class's own misses, whole run (warmup included, as the forcing), every workload weighing the same.
+
+#### Instruction
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤1 | 0.1% | 0.0% | 0.0% | -0.0 pts |
+| 2–3 | 0.3% | 1.2% | 0.5% | +0.7 pts |
+| 4–7 | 4.7% | 6.3% | 5.1% | +1.2 pts |
+| 8–15 | 21.8% | 23.8% | 19.7% | +4.1 pts |
+| 16–31 | 38.7% | 28.5% | 32.4% | -3.9 pts |
+| 32–63 | 20.6% | 24.0% | 23.5% | +0.5 pts |
+| 64–127 | 7.5% | 7.7% | 9.0% | -1.3 pts |
+| 128–255 | 2.3% | 3.1% | 3.6% | -0.5 pts |
+| 256–511 | 0.7% | 1.4% | 2.1% | -0.7 pts |
+| 512–1,023 | 1.0% | 1.5% | 0.8% | +0.7 pts |
+| ≥1,024 | 2.3% | 2.4% | 3.1% | -0.8 pts |
+| *median* | 16–31 | 16–31 | 16–31 | |
+| *misses, whole run* | 1,401,960 | 145,851 | 145,843 | |
+| *misses, measured region* | 288,746 | 31,849 | 34,989 | |
+
+10.9% of the control's misses are marked ones.
+
+#### Data
+
+| Fills since the line's last reuse | all non-cold | marked | control | marked − control |
+|---|---|---|---|---|
+| ≤1 | 0.1% | 0.0% | 0.1% | -0.1 pts |
+| 2–3 | 0.7% | 0.7% | 0.9% | -0.2 pts |
+| 4–7 | 6.0% | 6.1% | 6.0% | +0.0 pts |
+| 8–15 | 26.4% | 25.9% | 24.7% | +1.2 pts |
+| 16–31 | 36.7% | 32.7% | 35.2% | -2.5 pts |
+| 32–63 | 13.9% | 16.4% | 14.9% | +1.4 pts |
+| 64–127 | 9.1% | 10.1% | 10.5% | -0.4 pts |
+| 128–255 | 2.8% | 3.0% | 3.3% | -0.3 pts |
+| 256–511 | 0.9% | 1.2% | 1.1% | +0.1 pts |
+| 512–1,023 | 2.8% | 2.9% | 2.8% | +0.1 pts |
+| 1,024–2,047 | 0.4% | 0.6% | 0.4% | +0.2 pts |
+| ≥2,048 | 0.1% | 0.4% | 0.1% | +0.3 pts |
+| *median* | 16–31 | 16–31 | 16–31 | |
+| *misses, whole run* | 16,005,043 | 3,476,302 | 3,475,951 | |
+| *misses, measured region* | 3,753,579 | 879,153 | 858,466 | |
+
+42.6% of the control's misses are marked ones.
+
+Checks: misses filed equal the reference's draw on instruction marked 269/269, instruction control 269/269, data marked 269/269, data control 269/269 simpoints; the draw equals ctrl_i_ro's on 269/269 simpoints.
+
+### Forced misses per workload, mlp_oracle_spec2026_defmark: share under 32 fills, and median
+
+| Workload | I marked | I control | D marked | D control |
+|---|---|---|---|---|
+| abc_r | 98% / 16–31 | 92% / 16–31 | 98% / 8–15 | 98% / 8–15 |
+| abc_r_2 | – | – | – | – |
+| abc_r_3 | – | – | – | – |
+| abc_r_4 | – | – | – | – |
+| abc_r_5 | – | – | 100% / 16–31 | 100% / 16–31 |
+| abc_r_6 | 66% / 16–31 | 65% / 16–31 | 32% / 32–63 | 36% / 32–63 |
+| astcenc_r | 100% / 4–7 | 100% / 4–7 | 100% / 16–31 | 100% / 16–31 |
+| astcenc_r_2 | – | – | – | – |
+| astcenc_r_3 | – | – | – | – |
+| cactus_r | – | – | 0% / 64–127 | 0% / 64–127 |
+| cppcheck_r | 90% / 16–31 | 86% / 16–31 | 100% / 8–15 | 99% / 8–15 |
+| cppcheck_r_2 | 100% / 8–15 | 100% / 16–31 | 100% / 8–15 | 100% / 8–15 |
+| cppcheck_r_3 | 100% / 16–31 | 100% / 16–31 | 36% / 32–63 | 33% / 32–63 |
+| cpython_r | – | – | – | – |
+| cpython_r_2 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 16–31 |
+| cpython_r_3 | – | – | – | – |
+| femflow_r | 48% / 32–63 | 39% / 32–63 | 32% / 32–63 | 22% / 32–63 |
+| flightdm_r | – | – | – | – |
+| flightdm_r_2 | – | – | – | – |
+| flightdm_r_3 | – | – | – | – |
+| flightdm_r_4 | – | – | – | – |
+| flightdm_r_5 | – | – | – | – |
+| flightdm_r_6 | – | – | – | – |
+| flightdm_r_7 | – | – | – | – |
+| flightdm_r_8 | – | – | – | – |
+| fotonik3d_r | – | – | 25% / 128–255 | 82% / 16–31 |
+| gcc_r | 32% / 32–63 | 27% / 32–63 | 37% / 32–63 | 36% / 32–63 |
+| gcc_r_2 | 27% / 32–63 | 20% / 32–63 | 30% / 32–63 | 24% / 32–63 |
+| gcc_r_3 | 24% / 32–63 | 15% / 32–63 | 84% / 16–31 | 81% / 16–31 |
+| gem5_r | – | – | 100% / 4–7 | 100% / 4–7 |
+| gem5_r_2 | – | – | – | – |
+| gem5_r_3 | 73% / 16–31 | 77% / 16–31 | 91% / 16–31 | 93% / 16–31 |
+| gem5_r_4 | 100% / 4–7 | 100% / 4–7 | 99% / 4–7 | 100% / 4–7 |
+| gmsh_r | – | – | – | – |
+| gmsh_r_2 | – | – | – | – |
+| gmsh_r_3 | – | – | – | – |
+| gmsh_r_4 | – | – | 81% / 16–31 | 85% / 16–31 |
+| gmsh_r_5 | – | – | 70% / 16–31 | 75% / 16–31 |
+| gmsh_r_6 | – | – | 57% / 16–31 | 61% / 16–31 |
+| gmsh_r_7 | 100% / 16–31 | 100% / 16–31 | 61% / 16–31 | 65% / 16–31 |
+| lbm_r | – | – | 0% / 128–255 | 0% / 128–255 |
+| llvm_r | 68% / 16–31 | 58% / 16–31 | 68% / 16–31 | 66% / 16–31 |
+| llvm_r_2 | 69% / 16–31 | 54% / 16–31 | 78% / 16–31 | 73% / 16–31 |
+| marian_r | 57% / 16–31 | 62% / 16–31 | 0% / 64–127 | 2% / 64–127 |
+| marian_r_2 | 30% / 32–63 | 45% / 32–63 | 1% / 64–127 | 2% / 64–127 |
+| nest_r | 32% / 64–127 | 44% / 32–63 | 12% / 64–127 | 25% / 64–127 |
+| nest_r_2 | 22% / 32–63 | 20% / 32–63 | 37% / 32–63 | 35% / 32–63 |
+| nest_r_3 | – | – | – | – |
+| ns3_r | 100% / 8–15 | 100% / 8–15 | 100% / 4–7 | 100% / 4–7 |
+| ns3_r_2 | – | – | – | – |
+| ns3_r_3 | – | – | – | – |
+| ns3_r_4 | 100% / 8–15 | 98% / 8–15 | 99% / 8–15 | 100% / 8–15 |
+| ns3_r_5 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| ns3_r_6 | 100% / 8–15 | 99% / 8–15 | 100% / 8–15 | 100% / 4–7 |
+| ntest_r | – | – | – | – |
+| ocio_r | 0% / 512–1,023 | 0% / 1,024–2,047 | 0% / 512–1,023 | 0% / 512–1,023 |
+| ocio_r_2 | – | – | – | – |
+| ocio_r_3 | – | – | 97% / 16–31 | 95% / 16–31 |
+| ocio_r_4 | – | – | – | – |
+| omnetpp_r | 70% / 16–31 | 62% / 16–31 | 84% / 8–15 | 82% / 8–15 |
+| omnetpp_r_10 | – | – | – | – |
+| omnetpp_r_2 | – | – | – | – |
+| omnetpp_r_3 | – | – | – | – |
+| omnetpp_r_4 | – | – | – | – |
+| omnetpp_r_5 | – | – | – | – |
+| omnetpp_r_6 | – | – | – | – |
+| omnetpp_r_7 | – | – | – | – |
+| omnetpp_r_8 | – | – | – | – |
+| omnetpp_r_9 | – | – | – | – |
+| palm_r | 0% / 1,024–2,047 | 1% / 1,024–2,047 | 0% / 512–1,023 | 0% / 512–1,023 |
+| roms_r | 17% / 128–255 | 8% / 256–511 | 32% / 64–127 | 45% / 64–127 |
+| sealcrypto_r | 25% / 32–63 | 37% / 32–63 | 90% / 16–31 | 93% / 16–31 |
+| sqlite_r | 50% / 16–31 | 46% / 32–63 | 57% / 16–31 | 56% / 16–31 |
+| sqlite_r_2 | – | – | 100% / 16–31 | 100% / 16–31 |
+| sqlite_r_3 | – | – | – | – |
+| stockfish_r | 100% / 8–15 | 100% / 8–15 | 99% / 8–15 | 99% / 8–15 |
+| stockfish_r_2 | 96% / 8–15 | 98% / 8–15 | 95% / 8–15 | 95% / 8–15 |
+| stockfish_r_3 | 73% / 8–15 | 77% / 16–31 | 85% / 8–15 | 85% / 8–15 |
+| vpr_r | 38% / 32–63 | 25% / 32–63 | 65% / 16–31 | 62% / 16–31 |
+| vpr_r_2 | 74% / 16–31 | 48% / 32–63 | 62% / 16–31 | 75% / 16–31 |
+| vpr_r_3 | 44% / 32–63 | 29% / 32–63 | 55% / 16–31 | 50% / 16–31 |
+| vpr_r_4 | 75% / 16–31 | 46% / 32–63 | 62% / 16–31 | 71% / 16–31 |
+| zstd_r | 88% / 8–15 | 84% / 8–15 | 100% / 8–15 | 100% / 8–15 |
+| zstd_r_2 | 67% / 16–31 | 64% / 16–31 | 94% / 8–15 | 89% / 8–15 |
+| zstd_r_3 | 34% / 32–63 | 47% / 32–63 | 75% / 16–31 | 68% / 16–31 |
+| zstd_r_4 | 7% / 32–63 | 19% / 32–63 | 42% / 32–63 | 45% / 32–63 |
+| zstd_r_5 | 31% / 32–63 | 41% / 32–63 | 48% / 32–63 | 47% / 32–63 |
+| zstd_r_6 | 7% / 32–63 | 7% / 32–63 | 66% / 16–31 | 67% / 16–31 |
+| zstd_r_7 | – | – | 74% / 16–31 | 75% / 16–31 |
+| zstd_r_8 | 4% / 32–63 | 4% / 32–63 | 83% / 16–31 | 85% / 16–31 |
+
+Wrote miss_reuse.csv (per workload and bucket, whole run) in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2026_defmark
+
+Wrote per_workload.csv and ipc.csv in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2026_defmark
+
+
+## Reuse distance, mlp_oracle_spec2026_defmark_ref
+
+golden_small · 90 workloads, 269 simpoints · plain LRU (the reference run)
+
+A reuse is a demand or instruction-prefetch lookup at the MLC of a line filled before. Its distance is the fills into the line's set since its previous reuse (since its first fill, for the first); a 16-way LRU set has evicted an untouched line after 16. Marked and unmarked are the line's class at the reuse (marked once any of its fills was marked). Unmarked instruction lines include those an instruction prefetch brought in with no demand waiting, and unmarked data lines those a store, writeback or data prefetch did. Columns give each class's share of its own reuses; the last two compare marked with unmarked lines in each bucket. Every workload weighs the same. For the control, see --miss-reuse.
+
+#### Instruction
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 82.5% | 73.2% | 1.13 | 32.7% |
+| 1 | 4.7% | 4.4% | 1.08 | 31.7% |
+| 2–3 | 2.7% | 3.7% | 0.71 | 23.5% |
+| 4–7 | 1.5% | 3.2% | 0.45 | 16.3% |
+| 8–15 | 2.8% | 1.7% | 1.63 | 41.3% |
+| *within 15 fills* | *94.1%* | *86.2%* | | |
+| 16–31 | 3.2% | 2.9% | 1.13 | 32.8% |
+| 32–63 | 1.3% | 5.1% | 0.25 | 9.6% |
+| 64–127 | 1.0% | 4.1% | 0.25 | 9.6% |
+| 128–255 | 0.4% | 1.5% | 0.24 | 9.5% |
+| ≥256 | 0.0% | 0.2% | 0.00 | 0.1% |
+| *LRU hit rate* | *93.0%* | *87.1%* | | |
+| *median* | 0 | 0 | | |
+
+Marked lines take 30.1% of all instruction reuses.
+
+#### Data
+
+| Fills since previous reuse | marked | unmarked | marked / unmarked | marked share of reuses |
+|---|---|---|---|---|
+| 0 | 69.3% | 70.6% | 0.98 | 51.8% |
+| 1 | 8.2% | 9.6% | 0.86 | 48.4% |
+| 2–3 | 5.9% | 5.6% | 1.04 | 53.3% |
+| 4–7 | 5.4% | 3.5% | 1.56 | 63.1% |
+| 8–15 | 3.4% | 1.9% | 1.78 | 66.2% |
+| *within 15 fills* | *92.1%* | *91.2%* | | |
+| 16–31 | 2.8% | 2.2% | 1.29 | 58.6% |
+| 32–63 | 2.2% | 1.6% | 1.42 | 61.0% |
+| 64–127 | 2.4% | 3.4% | 0.70 | 43.3% |
+| 128–255 | 0.4% | 1.2% | 0.31 | 25.6% |
+| 256–511 | 0.1% | 0.3% | 0.15 | 14.3% |
+| ≥512 | 0.0% | 0.1% | 0.05 | 4.9% |
+| *LRU hit rate* | *89.6%* | *91.4%* | | |
+| *median* | 0 | 0 | | |
+
+Marked lines take 52.3% of all data reuses.
+
+### Reuse per workload: share within 15 fills, and LRU hit rate
+
+| Workload | I marked | I unmarked | D marked | D unmarked |
+|---|---|---|---|---|
+| abc_r | 0% / 0% | 0% / 0% | 99% / 96% | 99% / 98% |
+| abc_r_2 | – | – | 100% / 100% | 100% / 100% |
+| abc_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| abc_r_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| abc_r_5 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| abc_r_6 | 93% / 93% | 78% / 78% | 62% / 61% | 69% / 68% |
+| astcenc_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| astcenc_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| astcenc_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| cactus_r | 100% / 100% | 100% / 100% | 99% / 99% | 99% / 99% |
+| cppcheck_r | 100% / 100% | 100% / 99% | 96% / 90% | 97% / 94% |
+| cppcheck_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| cppcheck_r_3 | – | – | 74% / 74% | 79% / 79% |
+| cpython_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| cpython_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 99% |
+| cpython_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| femflow_r | 99% / 98% | 97% / 97% | 67% / 66% | 74% / 73% |
+| flightdm_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_5 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_6 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_7 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| flightdm_r_8 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| fotonik3d_r | – | – | 32% / 32% | 67% / 67% |
+| gcc_r | 96% / 95% | 88% / 86% | 89% / 87% | 94% / 93% |
+| gcc_r_2 | 95% / 94% | 85% / 84% | 89% / 88% | 92% / 92% |
+| gcc_r_3 | 96% / 96% | 90% / 89% | 79% / 76% | 87% / 86% |
+| gem5_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gem5_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gem5_r_3 | 100% / 100% | 100% / 100% | 99% / 98% | 96% / 95% |
+| gem5_r_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gmsh_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gmsh_r_2 | – | 100% / 100% | 100% / 100% | 100% / 100% |
+| gmsh_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| gmsh_r_4 | 100% / 100% | 100% / 100% | 96% / 95% | 97% / 95% |
+| gmsh_r_5 | 100% / 100% | 100% / 100% | 96% / 94% | 98% / 97% |
+| gmsh_r_6 | – | – | 90% / 88% | 88% / 86% |
+| gmsh_r_7 | – | 0% / 0% | 93% / 92% | 94% / 92% |
+| lbm_r | – | – | 0% / 48% | 57% / 57% |
+| llvm_r | 98% / 97% | 94% / 91% | 96% / 94% | 94% / 92% |
+| llvm_r_2 | 99% / 99% | 97% / 96% | 98% / 97% | 98% / 97% |
+| marian_r | – | – | 12% / 12% | 36% / 36% |
+| marian_r_2 | – | – | 0% / 0% | 0% / 0% |
+| nest_r | 63% / 63% | 73% / 73% | 43% / 41% | 45% / 42% |
+| nest_r_2 | 94% / 93% | 87% / 87% | 48% / 46% | 50% / 49% |
+| nest_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| ns3_r | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| ns3_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| ns3_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| ns3_r_4 | 100% / 100% | 100% / 100% | 100% / 99% | 100% / 99% |
+| ns3_r_5 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| ns3_r_6 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 99% |
+| ntest_r | – | 100% / 100% | 100% / 100% | 100% / 100% |
+| ocio_r | – | 100% / 100% | 100% / 100% | 98% / 98% |
+| ocio_r_2 | – | – | 100% / 100% | 100% / 100% |
+| ocio_r_3 | – | – | 98% / 98% | 100% / 100% |
+| ocio_r_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r | 100% / 100% | 100% / 100% | 85% / 70% | 89% / 79% |
+| omnetpp_r_10 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_4 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_5 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_6 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_7 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_8 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| omnetpp_r_9 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| palm_r | 100% / 100% | 100% / 100% | 90% / 90% | 85% / 85% |
+| roms_r | – | – | 91% / 91% | 84% / 84% |
+| sealcrypto_r | 100% / 100% | 0% / 0% | 97% / 96% | 96% / 95% |
+| sqlite_r | 100% / 100% | 100% / 100% | 77% / 74% | 81% / 78% |
+| sqlite_r_2 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| sqlite_r_3 | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| stockfish_r | 100% / 100% | 100% / 100% | 100% / 99% | 100% / 100% |
+| stockfish_r_2 | 100% / 100% | 100% / 100% | 100% / 99% | 100% / 99% |
+| stockfish_r_3 | 100% / 100% | 100% / 100% | 99% / 99% | 99% / 98% |
+| vpr_r | 100% / 100% | 100% / 99% | 84% / 77% | 86% / 80% |
+| vpr_r_2 | 100% / 100% | 100% / 100% | 98% / 97% | 98% / 95% |
+| vpr_r_3 | 100% / 100% | 100% / 100% | 71% / 65% | 79% / 75% |
+| vpr_r_4 | 100% / 100% | 100% / 100% | 100% / 99% | 100% / 98% |
+| zstd_r | 94% / 68% | 85% / 65% | 99% / 94% | 100% / 99% |
+| zstd_r_2 | 39% / 23% | 39% / 28% | 96% / 90% | 93% / 85% |
+| zstd_r_3 | 0% / 0% | 16% / 3% | 91% / 84% | 79% / 71% |
+| zstd_r_4 | 0% / 0% | 0% / 0% | 82% / 77% | 72% / 66% |
+| zstd_r_5 | – | 12% / 6% | 64% / 60% | 82% / 80% |
+| zstd_r_6 | – | 0% / 0% | 71% / 67% | 90% / 88% |
+| zstd_r_7 | – | – | 80% / 76% | 93% / 91% |
+| zstd_r_8 | 71% / 71% | 0% / 0% | 91% / 89% | 95% / 94% |
+
+Wrote reuse.csv (per workload and bucket) and reuse_summary.json in /home/mgiordan/carp/scarab-infra-oraclesuite/oracle_report/mlp_oracle_spec2026_defmark_ref

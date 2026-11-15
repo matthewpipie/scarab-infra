@@ -1,0 +1,15 @@
+study,suite,core,side,workload,measure,ipc,cut
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,lru,1.2857,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,ceiling,3.8644,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,oracle,1.3602,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,control,1.4086,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,control_seed1,1.4092,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,lru,1.754,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,ceiling,2.7508,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,oracle,2.3712,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,control,2.0901,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,control_seed1,2.091,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,lru,1.9352,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,ceiling,2.1485,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,oracle,1.993,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,control,1.9796,False

@@ -1,0 +1,12 @@
+study,suite,core,side,workload,measure,gain_pct,cut
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,ceiling,200.5623,True
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,oracle,5.7955,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,control,9.5532,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,marian_r,control_seed1,9.605,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,ceiling,56.8326,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,oracle,35.188,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,control,19.1595,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,nest_r_2,control_seed1,19.2138,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,ceiling,11.0202,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,oracle,2.9839,False
+mlp_oracle_spec2026_defmark,spec2026,golden_small,d,Geomean,control,2.2928,False

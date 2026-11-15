@@ -1,0 +1,5 @@
+study,marking,workload,side,marked_share,oracle_pct,control_pct,cut
+mlp_oracle_google_arizona_db0,fu_wait per load,arizona,d,0.57363,18.0405,9.721,False
+mlp_oracle_google_arizona_db1,fu_wait per miss,arizona,d,0.567947,17.9815,9.6303,False
+mlp_oracle_google_arizona_db2,ROB-head stall,arizona,d,0.280367,12.0191,4.8866,False
+mlp_oracle_google_defmark,ROB-head no issue,arizona,d,0.264195,11.703,4.5938,False
