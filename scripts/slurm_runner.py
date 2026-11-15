@@ -43,6 +43,8 @@ from .utilities import (
         normalize_simulations,
         require_aslr_disabled,
         use_apptainer,
+        parse_workload_params,
+        resolve_params,
         )
 from .image_identity import image_tag_for
 
@@ -528,6 +530,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
     scarab_build = descriptor_data["scarab_build"]
     traces_dir = descriptor_data["traces_dir"]
     configs = descriptor_data["configurations"]
+    workload_params = {k: parse_workload_params(k, c.get("workload_params")) for k, c in configs.items()}
     simulations = descriptor_data["simulations"]
     application_dir = descriptor_data.get("application_dir", ".")
     total_sims = 0
@@ -583,15 +586,16 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
 
             slurm_ids = []
             for config_key in configs:
-                config = configs[config_key]["params"]
                 binary_name = configs[config_key]["binary"]
                 slurm_options = configs[config_key].get("slurm_options") or ""
                 overhead_mb = configs[config_key].get("memory_overhead_mb") or 0
-                if config == "":
-                    config = None
 
                 for cluster_id, weight in simpoints.items():
                     info(f"cluster_id: {cluster_id}, weight: {weight}", dbg_lvl)
+                    config = resolve_params(configs[config_key]["params"], workload_params[config_key],
+                                            suite, subsuite, workload, cluster_id)
+                    if config == "":
+                        config = None
 
                     docker_container_name = f"{docker_prefix}_{suite}_{subsuite}_{workload}_{experiment_name}_{config_key.replace("/", "-")}_{cluster_id}_{sim_mode}_{user}"
 
