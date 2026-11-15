@@ -24,9 +24,9 @@ main (c8bb06d) are not supported.
 Method, as ./sci --visualize: a workload's IPC is its simpoints' weighted measured instructions
 over their weighted measured cycles (Periodic_Instructions / Periodic_Cycles), over the simpoints
 that finished under every config reported for that descriptor (others are dropped and counted).
-Per-workload gains match --visualize's. Its Avg row does not match the geomeans here: it divides
-the mean of a config's workload IPCs by the mean of the baseline's, so it weighs workloads by IPC,
-and before scarab-infra#10 also by the share of their simpoint weight that ran.
+Per-workload gains match --visualize's. The geomeans nest as sci's do (scarab_stats/aggregation.py):
+a benchmark's inputs (SPEC gcc, gcc_2, ...) are averaged first, so a benchmark counts once however
+many inputs it has; a suite with one input per workload (Google) is a plain geomean over workloads.
 """
 
 import argparse
@@ -40,6 +40,8 @@ from pathlib import Path
 import pandas as pd
 
 INFRA = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(INFRA))
+from scarab_stats.aggregation import Hierarchy  # noqa: E402
 META = ["Configuration", "Workload", "Cluster Id", "Weight", "Collect Failed"]
 STATS = {"inst": "Periodic_Instructions", "cycles": "Periodic_Cycles"}
 for _s in "ID":
@@ -128,6 +130,7 @@ def load_long(desc):
     long = pd.DataFrame({
         "config": t["Configuration"].values,
         "workload": t["Workload"].str.split("/").str[-1].values,
+        "label": t["Workload"].astype(str).values,
         "cluster": t["Cluster Id"].astype(str).values,
         "weight": pd.to_numeric(t["Weight"], errors="coerce").fillna(1.0).values,
         "failed": t["Collect Failed"].astype(str).str.strip().str.lower().eq("true").values,
@@ -137,6 +140,18 @@ def load_long(desc):
     long["ipc"] = long["inst"] / long["cycles"]
     long["ok"] = ~long["failed"] & long["ipc"].gt(0) & long["ipc"].apply(math.isfinite)
     return long
+
+
+def segment_size(suite):
+    """The memtrace segment of a suite's simpoints (its measured region without --inst_limit), or None."""
+    try:
+        db = json.loads((INFRA / "workloads" / "workloads_db.json").read_text())
+        sizes = {v["simulation"]["memtrace"]["segment_size"] for sub in db.get(suite, {}).values()
+                 if isinstance(sub, dict) for w, v in sub.items()
+                 if not w.startswith("_") and isinstance(v, dict) and v.get("simulation", {}).get("memtrace")}
+        return sizes.pop() if len(sizes) == 1 else None
+    except (OSError, ValueError, KeyError):
+        return None
 
 
 def geomean(values):
@@ -182,6 +197,10 @@ class Study:
         self.rows = rows.loc[keep].copy()
         self.n_sp = len(common)
         self.workloads = sorted(self.rows["workload"].unique())
+        # sci's grouping of inputs (gcc, gcc_2, ...) into benchmarks, by the full suite/subsuite/workload label.
+        self.labels = dict(zip(self.rows["workload"], self.rows["label"]))
+        self.hierarchy = Hierarchy(self.labels[w] for w in self.workloads)
+        self.n_bench = len(self.hierarchy.workloads)
         self.ipc = {}
         for c, g in self.rows.groupby("config"):
             by = g["workload"]
@@ -192,8 +211,9 @@ class Study:
         sims = self.desc["simulations"]
         limit = flag(cfgs[self.roles["lru"]].get("params", ""), "inst_limit")
         warm = sims[0].get("warmup") or 0
-        self.length = (f"{warm / 1e6:g}M warmup + {(int(limit) - warm) / 1e6:g}M measured"
-                       if limit else f"{warm / 1e6:g}M warmup")
+        measured = int(limit) - warm if limit else segment_size(sims[0].get("suite"))
+        self.length = (f"{warm / 1e6:g}M warmup + {measured / 1e6:g}M measured" if measured
+                       else f"{warm / 1e6:g}M warmup")
         self.arch = self.desc.get("architecture", "?")
 
     def _marking(self):
@@ -207,7 +227,17 @@ class Study:
         return "n/a"
 
     def geo(self, role):
-        return pct(geomean(self.gain[role].values)) if role in self.gain else math.nan
+        """The role's gain over lru, as a nested geomean: inputs -> benchmark -> suite (sci's Avg)."""
+        if role not in self.gain:
+            return math.nan
+        per_input = {self.labels[w]: v for w, v in self.gain[role].items() if v > 0 and math.isfinite(v)}
+        avg = self.hierarchy.aggregate(per_input, geometric=True)["Avg"]
+        return pct(avg) if avg is not None else math.nan
+
+    def count(self):
+        """'N workloads' or, when some benchmarks have several inputs, 'N workloads (M inputs)'."""
+        n = len(self.workloads)
+        return f"{self.n_bench} workloads ({n} inputs)" if self.n_bench != n else f"{n} workloads"
 
     def cell(self, role):
         return sgn(self.geo(role)) if role in self.gain else "–"
@@ -318,7 +348,7 @@ def borrow_ceilings(study, source):
 
 def summary(st):
     out = [f"## {st.name}", ""]
-    out.append(f"{st.arch} · {len(st.workloads)} workloads, {st.n_sp} simpoints · {st.length} · marking: `{st.marking}`")
+    out.append(f"{st.arch} · {st.count()}, {st.n_sp} simpoints · {st.length} · marking: `{st.marking}`")
     if st.dropped:
         out.append(f"Dropped {len(st.dropped)} simpoints that did not finish under every config: "
                    + ", ".join(f"{w}/{c}" for w, c in st.dropped[:8]) + (" …" if len(st.dropped) > 8 else ""))
@@ -329,7 +359,7 @@ def summary(st):
             warn.append(f"lru differs on {len(lru_differs)} of {len(st.workloads)} workloads, so the binary, machine "
                         "or length differs and its ceilings do not apply here; run --ceilings")
         out.append(f"Ceilings from {src}" + (f" (WARNING: {'; '.join(warn)})" if warn else ""))
-    out += ["", "Gain over lru in %, geomean over workloads.", "",
+    out += ["", "Gain over lru in %, geomean over workloads (a benchmark's inputs averaged first).", "",
             "| Side | Marked | Marked misses that are cold | Ceiling | Oracle | Control | Oracle − control | Forced, control / oracle |",
             "|---|---|---|---|---|---|---|---|"]
     for s in "idb":
@@ -480,10 +510,14 @@ class Reuse:
 
     def side_summary(self, s):
         """The histogram of one side as plain numbers: buckets (the last ones folded into one), each
-        class's share of its own reuses per bucket, marked's share of all reuses per bucket, and totals."""
+        class's share of its own reuses per bucket, marked's share of all reuses per bucket, and totals.
+        None when the side has no reuses."""
         fr = self.frac[s]
         dist = fr.div(fr.sum(axis=1), axis=0)  # each class's own distribution
-        last = max(b for b in range(REUSE_BUCKETS) if (dist[b] >= 0.0005).any())
+        seen = [b for b in range(REUSE_BUCKETS) if (dist[b] >= 0.0005).any()]
+        if not seen:
+            return None
+        last = max(seen)
         buckets = []
         for b in range(last + 1):
             tail = b == last and last < REUSE_BUCKETS - 1
@@ -506,6 +540,8 @@ class Reuse:
     def table(self, s):
         sm = self.side_summary(s)
         side = SIDE_NAME[s.lower()]
+        if sm is None:
+            return [f"#### {side.capitalize()}", "", "No reuses on this side."]
         names = [REUSE_CLASSES[c] for c in self.classes]
         head = ["Fills since previous reuse"] + names + ["marked / unmarked", "marked share of reuses"]
         out = [f"#### {side.capitalize()}", "", "| " + " | ".join(head) + " |", "|---" * len(head) + "|"]
@@ -653,8 +689,10 @@ class MissReuse:
     def table(self, s):
         side = SIDE_NAME[s.lower()]
         d = {cls: self.dist(s, cls) for cls in MISS_CLASSES}
-        last = max(b for b in range(REUSE_BUCKETS) if any(d[c][b] >= 0.0005 for c in d))
-        first = min(b for b in range(REUSE_BUCKETS) if any(d[c][b] >= 0.0005 for c in d))
+        seen = [b for b in range(REUSE_BUCKETS) if any(d[c][b] >= 0.0005 for c in d)]
+        if not seen:
+            return [f"#### {side.capitalize()}", "", "No non-cold misses on this side."]
+        first, last = min(seen), max(seen)
         names = [MISS_CLASSES[c] for c in MISS_CLASSES]
         head = ["Fills since the line's last reuse"] + names + ["marked − control"]
         out = [f"#### {side.capitalize()}", "", "| " + " | ".join(head) + " |", "|---" * len(head) + "|"]

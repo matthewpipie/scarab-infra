@@ -17,13 +17,20 @@ whatever main's defaults become. --architecture picks the core (src/PARAMS.<arch
 adds machine flags; both reach every config too, as the reference and the replays must run the same
 machine. Every flag is checked against the commit's *.param.def before anything is written.
 
+--suite picks the workloads (default google): any suite of workloads/workloads_db.json with memtrace
+traces, each workload's --top heaviest simpoints. A Google simpoint is a whole core, so its length is
+yours to set (--warmup, --measured). Any other suite's simpoint is one segment of its trace (10M on
+SPEC and datacenter) with the warmup its trace holds ahead of it, so --measured is the segment and
+--warmup at most what the trace holds (50M on SPEC, 10M on datacenter).
+
     python tools/mlp_oracle/make_descriptors.py --tag base
     python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --sides d,b
     python tools/mlp_oracle/make_descriptors.py --tag dmin8 --marking "--mlp_data_bound_min 8" --check
     python tools/mlp_oracle/make_descriptors.py --tag incl --architecture golden_small_incl --ceilings
     python tools/mlp_oracle/make_descriptors.py --tag l2_1m --params "--mlc_size 1048576" --ceilings
+    python tools/mlp_oracle/make_descriptors.py --tag base --suite spec2017 --top 3 --ceilings
 
-Then run both with tools/mlp_oracle/run_study.sh mlp_oracle_google_<tag> and read the results with
+Then run both with tools/mlp_oracle/run_study.sh mlp_oracle_<suite>_<tag> and read the results with
 tools/mlp_oracle/report.py. See tools/mlp_oracle/README.md.
 """
 
@@ -65,6 +72,11 @@ GOOGLE_PICKS = {
     "yankee": [0, 1, 2],
 }
 CHECK_PICKS = {"delta": [0]}
+# With --top N, Google takes each workload's first N cores (they weigh the same, and sci's sort keeps
+# their order). The shortest Google core holds 347.7M instructions (count of 11-14), so a run of up
+# to GOOGLE_TOP_MAX instructions fits every core with some slack; a longer one needs picks.
+GOOGLE_TOP_MAX = 340_000_000
+WORKLOADS_DB = INFRA / "workloads" / "workloads_db.json"
 
 SIDES = {"i": (1, "instruction"), "d": (2, "data"), "b": (3, "both sides")}
 LRU = "--mlc_cache_repl_policy 0"
@@ -79,7 +91,14 @@ RD_FLAGS = re.findall(r"--(\w+)", RD)
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--tag", required=True, help="names the study: mlp_oracle_google_<tag> and mlp_oracle_google_<tag>_ref")
+    p.add_argument("--tag", required=True, help="names the study: mlp_oracle_<suite>_<tag> and mlp_oracle_<suite>_<tag>_ref")
+    p.add_argument("--suite", default="google",
+                   help="a suite of workloads/workloads_db.json: google (default), spec2006, spec2017, spec2026, "
+                        "datacenter, ...; every workload of it that has a memtrace trace")
+    p.add_argument("--top", type=int, default=None,
+                   help="simpoints per workload, the heaviest (sci's top_simpoint N); Google's cores weigh the same, so "
+                        "its first N. Default: Google the 35 cores of the baseline (GOOGLE_PICKS), other suites every "
+                        "simpoint")
     p.add_argument("--marking", default="", help='Scarab flags that change the marking, e.g. "--mlp_data_bound_min 8"; '
                    "every other marking flag takes the binary's default")
     p.add_argument("--params", default="",
@@ -101,15 +120,27 @@ def parse_args():
     p.add_argument("--no-replay-check", action="store_true",
                    help="skip replay_check, which replays the reference forcing nothing and must equal lru, "
                         "and holds the forced misses' reuse distances (report.py --miss-reuse)")
-    p.add_argument("--warmup", type=int, default=50_000_000)
-    p.add_argument("--measured", type=int, default=500_000_000)
+    p.add_argument("--warmup", type=int, default=None,
+                   help="warmup instructions per simpoint (default 50M, or as much as a suite's traces hold if less: "
+                        "10M on datacenter)")
+    p.add_argument("--measured", type=int, default=None,
+                   help="measured instructions per simpoint: Google only (default 500M); any other suite measures "
+                        "its simpoints' segment (10M on SPEC and datacenter)")
     p.add_argument("--check", action="store_true",
-                   help="smoke test: delta core 0, 1M warmup + 3M measured, experiments mlp_oracle_check_<tag>*")
+                   help="smoke test, experiments mlp_oracle_check_<tag>* (mlp_oracle_check_<suite>_<tag>* off Google): "
+                        "Google delta core 0 at 1M warmup + 3M measured; another suite its first workload's heaviest "
+                        "simpoint at 1M warmup + its segment")
+    p.add_argument("--check-workload", help="the workload --check runs off Google (default the suite's first), its "
+                   "heaviest simpoint; pick one with misses to reuse (perlbench has none in 11M instructions)")
+    p.add_argument("--workloads", dest="only", default="",
+                   help="comma-separated workloads of the suite to run (default all), e.g. to try a marking on one")
     p.add_argument("--architecture", default="golden_small")
     p.add_argument("--scarab-path", default=f"/home/{USER}/carp/scarab-oracle/",
                    help="a private clone of matthewpipie/scarab; sci checks hashes out in it in place")
     p.add_argument("--root-dir", default=f"/mnt/storage/{USER}/", help="output goes to <root-dir>/simulations/<experiment>")
-    p.add_argument("--traces-dir", default="/mnt/storage/traces/shanen/")
+    p.add_argument("--traces-dir", default=None,
+                   help="where the traces are (default: Google /mnt/storage/traces/shanen/, other suites "
+                        "/mnt/storage/traces/scarab/)")
     p.add_argument("--application-dir", default=f"/home/{USER}/carp/applications")
     p.add_argument("--max-parallel", type=int, default=256,
                    help="written into both descriptors; run_study.sh resizes it from the machine's load at launch")
@@ -137,10 +168,70 @@ def parse_args():
         if not (gi.isdigit() and gd.isdigit()):
             p.error(f"--repl-mlp: {pair!r} is not gamma_i:gamma_d")
         a.pairs.append((int(gi), int(gd)))
-    if a.check:
-        a.warmup, a.measured = 1_000_000, 3_000_000
+    if a.top is not None and a.top < 1:
+        p.error("--top takes a positive number of simpoints")
+    resolve_suite(p, a)
     resolve_binary(p, a)
     return a
+
+
+def resolve_suite(p, a):
+    """The suite's memtrace workloads (a.workloads: (subsuite, workload, simpoints)), and the run length."""
+    db = json.loads(WORKLOADS_DB.read_text())
+    if a.suite not in db or not isinstance(db[a.suite], dict):
+        p.error(f"--suite: {WORKLOADS_DB.name} has no suite {a.suite!r}")
+    a.google = a.suite == "google"
+    a.workloads, warmups, segments = [], set(), set()
+    for sub, ws in db[a.suite].items():
+        if sub.startswith("_") or not isinstance(ws, dict):
+            continue
+        for w, v in ws.items():
+            mt = v.get("simulation", {}).get("memtrace") if isinstance(v, dict) else None
+            if w.startswith("_") or not mt or not v.get("simpoints"):
+                continue
+            a.workloads.append((sub, w, v["simpoints"]))
+            warmups.add(mt["warmup"])
+            segments.add(mt["segment_size"])
+    if not a.workloads:
+        p.error(f"--suite: {a.suite} has no workload with a memtrace trace")
+    if a.check_workload:
+        if a.google or not a.check:
+            p.error("--check-workload goes with --check, off Google")
+        pick = [x for x in a.workloads if x[1] == a.check_workload]
+        if not pick:
+            p.error(f"--check-workload: {a.suite} has no memtrace workload {a.check_workload!r}")
+        a.workloads = pick + [x for x in a.workloads if x[1] != a.check_workload]
+    if a.only:
+        only = [w.strip() for w in a.only.split(",") if w.strip()]
+        missing = sorted(set(only) - {x[1] for x in a.workloads})
+        if missing:
+            p.error(f"--workloads: {a.suite} has no memtrace workload {', '.join(missing)}")
+        if a.check or (a.google and a.top is None):
+            p.error("--workloads needs --top (and not --check): the Google default cores and the checks are fixed picks")
+        a.workloads = [x for x in a.workloads if x[1] in only]
+    trace_warmup = min(warmups)
+    if a.check:
+        a.warmup = 1_000_000
+        a.measured = 3_000_000 if a.google else None
+    if a.warmup is None:
+        a.warmup = min(50_000_000, trace_warmup)
+    if a.warmup > trace_warmup:
+        p.error(f"--warmup: {a.suite}'s traces hold at most {millions(trace_warmup)} instructions of warmup")
+    if a.google:
+        if a.measured is None:
+            a.measured = 500_000_000
+        if a.top is not None and a.warmup + a.measured > GOOGLE_TOP_MAX:
+            p.error(f"--top: a Google run over {millions(GOOGLE_TOP_MAX)} instructions may not fit every core; "
+                    "pick the cores in GOOGLE_PICKS instead")
+    else:
+        if len(segments) != 1:
+            p.error(f"--suite: {a.suite}'s workloads have different segment sizes ({sorted(segments)})")
+        seg = segments.pop()
+        if a.measured not in (None, seg):
+            p.error(f"--measured: a {a.suite} simpoint is one {millions(seg)} segment; only Google's length is free")
+        a.measured = seg
+    if a.traces_dir is None:
+        a.traces_dir = "/mnt/storage/traces/shanen/" if a.google else "/mnt/storage/traces/scarab/"
 
 
 def flag_pairs(p, opt, text):
@@ -198,7 +289,8 @@ def resolve_binary(p, a):
 
 
 def names(a):
-    stem = f"mlp_oracle_check_{a.tag}" if a.check else f"mlp_oracle_google_{a.tag}"
+    suite = "" if a.google else f"{a.suite}_"
+    stem = f"mlp_oracle_check_{suite}{a.tag}" if a.check else f"mlp_oracle_{a.suite}_{a.tag}"
     return stem, f"{stem}_ref"
 
 
@@ -207,14 +299,41 @@ def millions(n):
 
 
 def simulations(a):
-    picks = CHECK_PICKS if a.check else GOOGLE_PICKS
-    return [{"suite": "google", "subsuite": "google", "workload": w, "cluster_id": c,
-             "simulation_type": "memtrace", "warmup": a.warmup}
-            for w, cs in picks.items() for c in cs]
+    """The descriptor's simulations and its top_simpoint."""
+    def sim(sub, w, c):
+        return {"suite": a.suite, "subsuite": sub, "workload": w, "cluster_id": c,
+                "simulation_type": "memtrace", "warmup": a.warmup}
+    if a.google and (a.check or a.top is None):
+        return [sim("google", w, c) for w, cs in (CHECK_PICKS if a.check else GOOGLE_PICKS).items() for c in cs], False
+    if a.check:
+        sub, w, sps = a.workloads[0]
+        return [sim(sub, w, max(sps, key=lambda s: s.get("weight") or 0)["cluster_id"])], False
+    return [sim(sub, w, None) for sub, w, _ in a.workloads], a.top or False
+
+
+def describe_simulations(a):
+    if a.check:
+        if a.google:
+            return "delta core 0"
+        sub, w, _ = a.workloads[0]
+        return f"{a.suite} {w}'s heaviest simpoint"
+    if a.google and a.top is None:
+        return ("All 12 google workloads, the first three cores of each (whiskey has two), skipping cores whose "
+                "trace is too short for the run (charlie 0 and 1, merced 2)")
+    n_sp = sum(min(len(sps), a.top or len(sps)) for _, _, sps in a.workloads)
+    which = ("every simpoint" if a.top is None else
+             f"the first {a.top} cores" if a.google else f"the {a.top} heaviest simpoints (weights renormalized)")
+    if a.only:
+        return f"{a.suite} {', '.join(w for _, w, _ in a.workloads)} only, {which} of each: {n_sp} simpoints"
+    return f"All {len(a.workloads)} {a.suite} workloads with a memtrace trace, {which} of each: {n_sp} simpoints"
 
 
 def config(a, doc, params, mem=64):
-    params = " ".join(f"{params} {a.marking_full} {a.params} --inst_limit {a.warmup + a.measured}".split())
+    # Google's run length is --inst_limit, as its simpoints are whole cores. Elsewhere the run script sets it from
+    # the warmup and the segment, shortening the warmup of a segment too close to the trace's start, which a
+    # --inst_limit here would override.
+    limit = f"--inst_limit {a.warmup + a.measured}" if a.google else ""
+    params = " ".join(f"{params} {a.marking_full} {a.params} {limit}".split())
     return {"_params": doc, "params": params, "binary": a.binary, "slurm_options": "", "memory_overhead_mb": mem}
 
 
@@ -266,11 +385,17 @@ def replay_configs(a, ref_exp):
     return c
 
 
+def n_simpoints(a):
+    sims, top = simulations(a)
+    if all(s["cluster_id"] is not None for s in sims):
+        return len(sims)
+    return sum(min(len(sps), top or len(sps)) for _, _, sps in a.workloads)
+
+
 def descriptor(a, experiment, purpose, configs, max_parallel):
-    sims = simulations(a)
-    picks = "delta core 0" if a.check else (
-        "All 12 google workloads, the first three cores of each (whiskey has two), skipping cores whose trace "
-        "is too short for the run (charlie 0 and 1, merced 2)")
+    sims, top = simulations(a)
+    limit = ("--inst_limit is warmup + measured; it overrides the run script's cap at the trace length." if a.google
+             else "No --inst_limit: the run script runs each simpoint's warmup and segment.")
     return {
         "_descriptor_type": "A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
         "descriptor_type": "simulation",
@@ -281,7 +406,7 @@ def descriptor(a, experiment, purpose, configs, max_parallel):
         "_workload_manager": "manual: run the simulations on this machine, at most max_parallel at a time.",
         "workload_manager": "manual",
         "_max_parallel": "run_study.sh sets this at launch from idle cores, free memory and your other runs.",
-        "max_parallel": min(max_parallel, len(sims) * len(configs)),
+        "max_parallel": min(max_parallel, n_simpoints(a) * len(configs)),
         "_container_reuse": "One reused container per slot instead of one per sim.",
         "container_reuse": True,
         "_root_dir": "Output goes to <root_dir>/simulations/<experiment>. The reference and the replay runs must share it.",
@@ -294,14 +419,15 @@ def descriptor(a, experiment, purpose, configs, max_parallel):
         "scarab_build": "opt",
         "_traces_dir": "The local directory containing all simpointed traces, resolved as <traces_dir>/<suite>/<subsuite>/<workload>.",
         "traces_dir": a.traces_dir,
-        "_top_simpoint": "false: the simpoints are listed by cluster_id in simulations.",
-        "top_simpoint": False,
-        "_simulations": f"{picks}. {millions(a.warmup)} warmup + {millions(a.measured)} measured per simpoint.",
+        "_top_simpoint": ("false: the simpoints are listed by cluster_id in simulations, or every simpoint of a "
+                          "workload. N: each workload's N heaviest simpoints, weights renormalized."),
+        "top_simpoint": top,
+        "_simulations": (f"{describe_simulations(a)}. {millions(a.warmup)} warmup + {millions(a.measured)} measured "
+                         "per simpoint."),
         "simulations": sims,
         "_configurations": (f"Binary: {a.commit_desc}. Marking on every config: {a.marking_full} "
                             f"(set by --marking: {a.marking or 'none'}). Machine flags on every config: "
-                            f"{a.params or 'none'}. --inst_limit is warmup + measured; it overrides the run "
-                            "script's cap at the trace length."),
+                            f"{a.params or 'none'}. {limit}"),
         "configurations": configs,
         "_collect_stats": "Stats collection settings for ./sci --collect-stats.",
         "collect_stats": {"configs": None},
@@ -343,8 +469,9 @@ def main():
     out = INFRA / "json"
     for d in (ref, replay):
         write(out / f"{d['experiment']}.json", d)
-    n_sims = len(replay["simulations"])
+    n_sims = n_simpoints(a)
     n_cfg = len(replay["configurations"])
+    print(f"{a.suite}: {describe_simulations(a)}, {millions(a.warmup)} warmup + {millions(a.measured)} measured")
     print(f"binary {a.binary}: {a.commit_desc}")
     print(f"marking: {a.marking_full}")
     changed = {n: v for n, v in a.marking_flags.items() if a.marking_defaults.get(n) != v}

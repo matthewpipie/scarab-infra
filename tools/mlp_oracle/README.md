@@ -1,9 +1,9 @@
 # REPL_MLP oracle study
 
 This study measures how much L2 (MLC) replacement could gain from REPL_MLP's marking, and how
-well the marking picks the misses that matter. It runs the 12 Google workloads, 35 simpoints, with
-50M warmup + 500M measured instructions per simpoint, on golden_small with an LRU MLC unless you
-pick another core. The marking, the scarab commit and the core are all yours to choose (see
+well the marking picks the misses that matter. By default it runs the 12 Google workloads, 35
+simpoints, with 50M warmup + 500M measured instructions per simpoint, on golden_small with an LRU
+MLC. The marking, the scarab commit, the core and the suite are all yours to choose (see
 [Running a study](#running-a-study)).
 
 | Config | What it forces to hit | What it tells you |
@@ -21,9 +21,9 @@ cold and no replacement policy can turn it into a hit. Forced hits reinstall the
 so the cache contents stay as they are under LRU and only the miss latency goes away.
 
 A miss's mark is known only once it comes back, so the study runs in two passes. The reference
-(`mlp_oracle_google_<tag>_ref`, one config named `track`) runs LRU and records every MLC miss and its
+(`mlp_oracle_<suite>_<tag>_ref`, one config named `track`) runs LRU and records every MLC miss and its
 mark in `mlp_oracle_misses.0.bin` in each simpoint directory. The replay runs
-(`mlp_oracle_google_<tag>`) read that record and force the chosen misses as they line up with it.
+(`mlp_oracle_<suite>_<tag>`) read that record and force the chosen misses as they line up with it.
 The marking flags therefore matter in the reference. The generator passes them to every config
 anyway, so REPL_MLP runs with the same marking.
 
@@ -31,9 +31,12 @@ anyway, so REPL_MLP runs with the same marking.
 
 | File | What it does |
 |---|---|
-| `make_descriptors.py` | Writes `json/mlp_oracle_google_<tag>_ref.json` and `json/mlp_oracle_google_<tag>.json` for one marking. |
+| `make_descriptors.py` | Writes `json/mlp_oracle_<suite>_<tag>_ref.json` and `json/mlp_oracle_<suite>_<tag>.json` for one marking, core and suite. |
 | `run_study.sh` | Builds the binary, runs the reference, checks that every simpoint recorded, runs the replay configs, and collects stats. Each step waits for room on the machine. |
 | `report.py` | For each study: the marked share, the ceiling, oracle and control gains per side, REPL_MLP, the variants, and the checks. It also compares several studies. `--match` shows how closely each control matched its oracle, `--miss-reuse` the reuse distances of the misses the oracle and the control force, and `--reuse` those of marked and unmarked lines. |
+| `plot.py` | Paper figures: one bar chart per study and side of the ceiling, oracle and control gains per workload and suite geomean, with any extra control seeds. Each image has only axis labels and a legend, is cropped tight, and gets a CSV of its plotted values. |
+| `plot_markings.py` | Paper figures comparing markings on one workload: the oracle and its control under each of several studies that differ only in their marking (e.g. each `--mlp_data_bound` mode), with the marked share, gap and factor on stdout. |
+| `seed_descriptor.py` | Writes a descriptor that redraws a study's controls with another `--mlp_oracle_seed`, for a few workloads, against the same reference. |
 | `baseline/` | The descriptors of the ratio-marking study already run on pakuchi (`mlp_oracle_google_t3`), so you can report it and borrow its ceilings. |
 
 ## Running a study
@@ -143,6 +146,31 @@ The reference and the replays must run the same machine, so everything here reac
 - **L2 associativity** sets how many fills a line survives untouched under LRU, which is the scale
   `--miss-reuse` reads against (16 on golden_small).
 
+### 3b. Pick the suite
+
+`--suite` takes any suite of `workloads/workloads_db.json` (default `google`), and runs every
+workload of it that has a memtrace trace. The experiments are `mlp_oracle_<suite>_<tag>` and
+`mlp_oracle_<suite>_<tag>_ref`; a smoke test is `mlp_oracle_check_<suite>_<tag>` (Google's keep their
+old names, `mlp_oracle_check_<tag>`). `--top N` keeps each workload's N heaviest simpoints, with
+their weights renormalized, as sci's `top_simpoint: N` does.
+
+- **Google:** a simpoint is a whole core, so `--warmup` and `--measured` set the run, through
+  `--inst_limit`. Without `--top` it runs the 35 cores of the baseline (`GOOGLE_PICKS`). With `--top N`
+  it runs each workload's first N cores, which weigh the same; that needs a run of at most 340M
+  instructions, since the shortest core holds 347.7M.
+- **Other suites** (SPEC, datacenter, ...): a simpoint is one segment of its trace, 10M instructions,
+  so `--measured` is that segment, and `--warmup` defaults to 50M or as much as the traces hold if
+  less (10M on datacenter). The configs carry no `--inst_limit`: the run script sets it, and shortens
+  the warmup of a segment too close to its trace's start. Traces come from `/mnt/storage/traces/scarab/`
+  (Google's from `/mnt/storage/traces/shanen/`).
+
+```
+python tools/mlp_oracle/make_descriptors.py --tag base --suite spec2017 --top 3 --ceilings --repl-mlp ""
+python tools/mlp_oracle/make_descriptors.py --tag base --suite google --top 6 --measured 200000000 --ceilings
+```
+
+A study covers one suite, so `report.py` gives each suite's geomean on its own line.
+
 ### 4. Smoke test (a few minutes)
 
 ```
@@ -197,7 +225,8 @@ python tools/mlp_oracle/report.py tools/mlp_oracle/baseline/mlp_oracle_google_t3
     --ceilings-from tools/mlp_oracle/baseline/mlp_oracle_google_t3.json --workloads --out oracle_report/
 ```
 
-Gains are geomeans over workloads of each workload's IPC over lru's. A workload's IPC is computed
+Gains are geomeans over workloads of each workload's IPC over lru's. As in `./sci --visualize`, a
+benchmark's inputs (SPEC `gcc`, `gcc_2`, ...) are averaged first, so it counts once. A workload's IPC is computed
 the way sci does it, so per-workload gains match `./sci --visualize`.
 
 To compare markings, look at:
@@ -244,6 +273,90 @@ Unmarked data lines include the ones a store or writeback brought in (`OTHER`).
 Override either flag with `--ref-params`. Each table's header says which definitions the run used.
 `--out` also writes `miss_reuse.csv`, `reuse.csv` (per workload and bucket) and
 `reuse_summary.json`.
+
+### 7. Plots, and a second control seed
+
+```
+python tools/mlp_oracle/seed_descriptor.py mlp_oracle_google_defmark --workloads sierra.a.4,whiskey,delta --seed 1
+# more workloads for a seed that has run: their own experiment (sci overwrites one it runs again)
+python tools/mlp_oracle/seed_descriptor.py mlp_oracle_google_defmark --workloads tahoe --seed 1 --tag tahoe
+python tools/mlp_oracle/seed_descriptor.py mlp_oracle_google_defmark --workloads arizona --seed 1 --tag arizona
+cloudhost/cloudhost run pakuchi mlp_oracle_google_defmark_seed1    # where the reference's records are
+./sci --collect-stats mlp_oracle_google_defmark_seed1
+python tools/mlp_oracle/plot.py mlp_oracle_google_defmark \
+    --seeds mlp_oracle_google_defmark_seed1 mlp_oracle_google_defmark_seed1_tahoe \
+            mlp_oracle_google_defmark_seed1_arizona \
+    --sides d,b --out oracle.png      # oracle_google_defmark_d.png, oracle_google_defmark_b.png
+```
+
+The control forces a random draw of the reference's misses, so its gain carries sampling noise.
+`--mlp_oracle_seed N` draws another. `seed_descriptor.py` writes `json/<study>_seed<N>.json`: the
+study's lru and controls, drawn with that seed, for the workloads named. It replays the study's
+reference, so it needs no new reference run, but it must run where those records are: the host that
+ran the reference, or pakuchi once they are pulled. Its lru is a check: it must equal the study's.
+
+`plot.py` makes paper figures: one graph per image, with axis labels, a legend and a factor bracket per
+group and no other text (no title, no value labels), for a caption to explain. It writes one image per study and side
+(`--sides i,d,b`), named from the `--out` stem, the study without its `mlp_oracle_` prefix, and the side;
+with one study and one side the image is `--out` itself. The extension picks the format (`.pdf` gives a
+vector figure). Each workload gets ceiling, oracle and control bars, then a bar for each extra seed.
+A bracket from the oracle bar to the (seed-0) control bar carries the factor, the oracle's gain over
+the control's (e.g. `3.4×`; one decimal, whole numbers from 10×; left out unless both gain).
+`--bracket vertical` stands it up: from the shorter bar's top to the taller's, in the shorter bar's slot,
+with the factor beside it. A group whose bars' tops are under 6 px apart, or whose label would have to
+clear a taller bar on the far side (the ceiling, when the oracle is the shorter bar), keeps the
+horizontal bracket. `--bracket none` leaves it out. `plot_markings.py` takes the same flag.
+`--side-label` names each graph's side in an outlined box in the plot's top right corner
+("Instructions", "Data" or "Instructions & Data"), raising the y axis until no bar or bracket reaches
+under the box. `oracle_report/plots/oracle_vertical_nogeo_google_defmark_{i,d,b}.png` are the Google
+figures with `--geomean off --bracket vertical --side-label`.
+A geomean group comes last: by default the suite's, over all the study's workloads (`--geomean suite`);
+`--geomean plotted` takes it over the plotted workloads only (with the extra seeds' controls when every
+plotted workload has them), and `--geomean off` leaves it out. stderr always gives the suite geomean.
+`--metric ipc` plots absolute IPC (weighted fetched instructions over weighted cycles, the
+`Periodic_Instructions` the gains use) with LRU as a bar of its own: light gray with dark vertical lines.
+Its geomean group is the geomean of each config's IPC, so its ratios to LRU are the gain geomeans, and
+the factor brackets and gap table stay in gains over LRU. The gains come from
+`report.py`'s `Study`, so they match the reports. A seed study goes with the study of the same suite and
+core, and the script refuses one whose lru differs. `--workloads` picks the workloads. Without it, a
+graph shows the suite's `DEFAULT_WORKLOADS` (Google: arizona, sierra.a.4, tahoe), or else the study's
+workloads that have an extra seed, or else all of them. `--order` sorts them: alphabetically by default
+(digit runs as numbers), `given` (as listed), or `ceiling` (by the both-sides ceiling, largest first).
+
+The figure is drawn at print size, single column by default (3.3 × 2.1 in, wider past four groups, up
+to 7 in; `--width`, `--height`), so its 8 pt text prints at 8 pt. It is saved at 300 dpi (`--dpi`). The
+x labels turn only as far as they need to clear each other. `--ymax` cuts the axis, and a bar it cuts
+gets a break mark. The values of cut bars go to the CSV (its `cut` column) and to stderr, along with each
+graph's run details and suite geomeans, for the caption. stdout gets each graph's gap table, per
+workload and for the suite geomean, against each seed's control: the gap (oracle gain minus control
+gain, in points) and the factor (oracle gain over control gain, `-` when the control gains nothing).
+
+The bars are plain rectangles, readable in color, under color blindness and printed in black and white:
+each series has its own texture and tone. The ceiling is pale gray with dark dots, the oracle solid dark
+blue, the control dark orange stripes on a pale orange fill at 45°, and an extra seed the same at 135°.
+Grayscale and deuteranope/protanope renders were checked by eye. `--theme dark` draws the dark version. A CSV of
+every plotted value is written beside each image. `oracle_report/plots/` has the figures for the four
+suites with a second seed.
+
+### 8. Markings compared on one workload
+
+```
+for m in 0 1 2; do    # the default, mode 3, is the main study
+  python tools/mlp_oracle/make_descriptors.py --tag arizona_db$m --workloads arizona --top 6 \
+      --warmup 50000000 --measured 200000000 --sides d,b --binary scarab_c4ae7e6 --repl-mlp "" \
+      --marking "--mlp_data_bound $m"
+done
+# run each reference, then its replay, on one host; collect both
+python tools/mlp_oracle/plot_markings.py mlp_oracle_google_arizona_db{0,1,2} mlp_oracle_google_defmark \
+    --workload arizona --sides d,b --out arizona_db.png
+```
+
+`make_descriptors.py --workloads` limits a study to some workloads (it needs `--top`). Everything but the
+marking must match the study it is compared with: binary, run length, simpoints, core. `plot_markings.py`
+refuses studies whose LRU IPC for the workload differs. It draws one group per study, the oracle and its
+control, in `plot.py`'s style (with its factor bracket). Studies that differ in `--mlp_data_bound` get its count's name as the tick
+label (`--labels` overrides). stdout gets, per study, the reference's marked share of the workload's non-cold
+misses, the two gains, the gap and the factor.
 
 ## Baseline: the ratio marking (`mlp_oracle_google_t3`)
 
