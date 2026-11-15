@@ -21,7 +21,7 @@
       "warmup": null
     }
   ],
-  "_configurations": "The 3D sweep: stall signal --mlp_data_bound {0 fu_wait, 1 no_issue} x scope --mlp_data_scope {0 rob_head, 1 all_loads} x threshold --mlp_data_bound_min {4, 8, 16, 32}, 16 arms total, each with --mlc_cache_repl_policy 9, the cheaper-hardware countdown boost (--mlp_boost_countdown 1, in place of --mlp_boost_in_fills 1), and the recommended lambdas (--mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64). mlp_lin_data_thresh is left at its default 0 (ratio gate off) so mlp_data_bound/mlp_data_scope/mlp_data_bound_min alone decide marking. mlp_instr_mark/mlp_instr_starve/mlp_instr_starve_min are left at their REPL_MLP defaults (2, 2, 1) since this sweep is data-side only. baseline is plain L2 LRU for reference.",
+  "_configurations": "The 3D data-side sweep: stall signal --mlp_data_bound {0 fu_wait, 1 no_issue} x scope --mlp_data_scope {0 rob_head, 1 all_loads} x threshold --mlp_data_bound_min {4, 8, 16, 32}, 16 arms, each with --mlc_cache_repl_policy 9, the cheaper-hardware countdown boost (--mlp_boost_countdown 1, in place of --mlp_boost_in_fills 1), and the recommended lambdas (--mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64). mlp_lin_data_thresh is left at its default 0 (ratio gate off) so mlp_data_bound/mlp_data_scope/mlp_data_bound_min alone decide marking. mlp_instr_mark/mlp_instr_starve/mlp_instr_starve_min are left at their REPL_MLP defaults (2, 2, 1) on these 16 arms since they are data-side only.\nPlus a separate instruction-side sweep (not crossed with the above): --mlp_instr_starve {1 backend_starved, 2 backend_starved_and_rob_head_not_load, 3 issue_queue_empty} x --mlp_instr_starve_min {1, 4, 8}, 9 arms, each on top of the same --mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64, with mlp_data_bound/mlp_data_scope/mlp_data_bound_min left at their REPL_MLP defaults (1 no_issue, 0 rob_head, 16).\nbaseline is plain L2 LRU for reference.",
   "configurations": {
     "baseline": {
       "params": "",
@@ -124,12 +124,66 @@
       "binary": "scarab_head",
       "slurm_options": "",
       "memory_overhead_mb": 64
+    },
+    "starve1_smin1": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 1 --mlp_instr_starve_min 1",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve1_smin4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 1 --mlp_instr_starve_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve1_smin8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 1 --mlp_instr_starve_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve2_smin1": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 2 --mlp_instr_starve_min 1",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve2_smin4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 2 --mlp_instr_starve_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve2_smin8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 2 --mlp_instr_starve_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve3_smin1": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 3 --mlp_instr_starve_min 1",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve3_smin4": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 3 --mlp_instr_starve_min 4",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
+    },
+    "starve3_smin8": {
+      "params": "--mlc_cache_repl_policy 9 --mlp_boost_countdown 1 --mlp_lin_data_lambda 16 --mlp_lin_instr_lambda 64 --mlp_instr_starve 3 --mlp_instr_starve_min 8",
+      "binary": "scarab_head",
+      "slurm_options": "",
+      "memory_overhead_mb": 64
     }
   },
   "collect_stats": {
     "configs": null
   },
-  "_visualize": "Baseline is plain LRU. MLP_MARKED_LOAD is how many load fills get marked -- read it against IPC across the 16 arms to see where each signal x scope x min combination trades marking volume for accuracy.",
+  "_visualize": "Baseline is plain LRU. MLP_MARKED_LOAD is how many load fills get marked, MLP_MARKED_FETCH how many instruction fills get marked -- read them against IPC across the 16 data-side arms and separately across the 9 instruction-side arms.",
   "visualize": {
     "baseline": "baseline",
     "configs": [
@@ -148,11 +202,21 @@
       "noissue_allloads_min4",
       "noissue_allloads_min8",
       "noissue_allloads_min16",
-      "noissue_allloads_min32"
+      "noissue_allloads_min32",
+      "starve1_smin1",
+      "starve1_smin4",
+      "starve1_smin8",
+      "starve2_smin1",
+      "starve2_smin4",
+      "starve2_smin8",
+      "starve3_smin1",
+      "starve3_smin4",
+      "starve3_smin8"
     ],
     "counters": [
       "IPC",
-      "MLP_MARKED_LOAD"
+      "MLP_MARKED_LOAD",
+      "MLP_MARKED_FETCH"
     ]
   },
   "mem": {
