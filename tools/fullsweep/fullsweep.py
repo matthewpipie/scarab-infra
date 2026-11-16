@@ -781,14 +781,19 @@ def build_sweep(plan_path, result=None, only=None, skip=None, pick=None, name=No
         name = f"fs_{gs.study}_{gs.variant}" if gs else f"fs_{arch}"
         if suite_names != default_suites:
             name += "_" + "_".join(suite_names)          # e.g. fs_cd1_small_google
+    st_path = Path(plan["state_dir"]) / name / "state.json"
+    old = load_json(st_path) if st_path.exists() else None
+    launched = (old or {}).get("sweeps", [])
     binary = resolve_binary(plan)
+    # A launched sweep keeps the binary HEAD named when it launched, so setups added later (and the frozen
+    # digests of the launched ones) stay on it after scarab_path moves on. An explicit scarab_<hash> still wins.
+    if launched and old.get("binary") and binary != old["binary"] and not str(plan.get("binary", "")).startswith("scarab_"):
+        log(f"{name}: keeping {old['binary']}, which its sweeps ran ({plan.get('binary') or 'HEAD'} is now {binary})")
+        binary = old["binary"]
     cost = Cost(arch)
     inputs, sel = expand(plan, cost)
     configs, info = make_configs(plan, gs, inputs, names, binary)
 
-    st_path = Path(plan["state_dir"]) / name / "state.json"
-    old = load_json(st_path) if st_path.exists() else None
-    launched = (old or {}).get("sweeps", [])
     why = "; it has launched sweeps, so use a new --name" if launched else "; pass --name, or --force to replace it"
     if old and old.get("result") != result and (launched or not force):
         die(f"sweep {name} exists for gsearch {old.get('result')}{why}")
@@ -848,11 +853,14 @@ def build_sweep(plan_path, result=None, only=None, skip=None, pick=None, name=No
     return {"st": st, "files": files, "master": master, "st_path": st_path, "inputs": inputs}
 
 
-def stale_files(name, keep, state_dir):
-    """Descriptors an earlier gen of sweep `name` wrote that it no longer makes (e.g. the old per-setup shards)."""
+def stale_files(name, keep, state_dir, groups=()):
+    """Descriptors an earlier gen of sweep `name` wrote that it no longer makes (e.g. the old per-setup shards).
+    In json/ that is only <name>_<group> and <name>_<group>_b<k>: cloudhost puts copies of its running shards'
+    descriptors there too (<desc>_<n>-<id>_s<k>, with the same fullsweep tag), and those are not ours to remove."""
+    ours = re.compile(rf"{re.escape(name)}_({'|'.join(map(re.escape, groups)) or '(?!)'})(_b\d+)?")
     out = []
     for p in sorted(JSON_DIR.glob(f"{name}_*.json")) + sorted((Path(state_dir) / name / "shards").glob("*.json")):
-        if p.parent == JSON_DIR and p.stem in keep:
+        if p.parent == JSON_DIR and (p.stem in keep or not ours.fullmatch(p.stem)):
             continue
         try:
             if load_json(p).get("fullsweep", {}).get("sweep") == name:
@@ -876,7 +884,7 @@ def cmd_gen(a):
     write_json(master_desc_path(name), master)
     write_json(st_path, st)
     keep = set(files) | {sw["desc"] for sw in st["sweeps"]}
-    stale = stale_files(name, keep, st["plan"]["state_dir"])
+    stale = stale_files(name, keep, st["plan"]["state_dir"], st["plan"]["groups"])
     for p in stale:
         p.unlink()
     shards_dir = st_path.parent / "shards"

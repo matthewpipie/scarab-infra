@@ -70,7 +70,7 @@ class GenCd1Small(unittest.TestCase):
     def test_counts(self):
         per_cfg = Counter(r[0] for r in self.master)
         self.assertEqual(set(per_cfg), {"lru", "mlp_core", "mlp_gd", "mlp_gi", "mlp_sp", "icarus", "emissary",
-                                        "emissary_r1", "lacs", "clip"})
+                                        "emissary_r1", "lacs", "clip", "drrip", "mockingjay", "mockingjay_p1"})
         self.assertEqual(set(per_cfg.values()), {1638})
         lru = Counter(r[1] for r in self.master if r[0] == "lru")
         self.assertEqual(lru, {"google": 192, "datacenter": 71, "spec2006": 433, "spec2017": 243, "spec2026": 699})
@@ -119,7 +119,7 @@ class GenCd1Small(unittest.TestCase):
             self.assertTrue(all(len(s["configs"]) * len(s["sims"]) <= max(size, 71) for s in shards))
             if self.plan["groups"][g].get("slow"):       # else cloudhost marks its costliest shards long itself
                 self.assertTrue(all(s["slow"] for s in shards), g)
-            self.assertTrue(all(s["gb"] >= 3.8 for s in shards), g)
+            self.assertTrue(all(s["gb"] >= 2.0 for s in shards), g)     # cloudhost's floor for measured workloads
         # only these setups (setups added after the first sweeps)
         shards = F.group_shards(st, "google", self.groups["google"], ["lru", "clip"])
         self.assertEqual(sum(len(s["configs"]) * len(s["sims"]) for s in shards), 2 * 192)
@@ -134,11 +134,15 @@ class GenCd1Small(unittest.TestCase):
 
     def test_policy_params(self):
         want = {"lru": "0", "mlp_core": "9", "mlp_gd": "9", "mlp_gi": "9", "mlp_sp": "9", "icarus": "21",
-                "emissary": "24", "emissary_r1": "24", "lacs": "20", "clip": "25"}
+                "emissary": "24", "emissary_r1": "24", "lacs": "20", "clip": "25", "drrip": "18", "mockingjay": "22",
+                "mockingjay_p1": "22"}
         for cfg, suite, sub, wl, cid, params in self.master:
             self.assertEqual(F.flag_value(params, "mlc_cache_repl_policy"), want[cfg], cfg)
             if cfg == "emissary_r1":
                 self.assertEqual(F.flag_value(params, "emissary_rand_denom"), "1")
+            if cfg.startswith("mockingjay"):
+                self.assertEqual(F.flag_value(params, "mockingjay_bypass"), "0", cfg)
+                self.assertEqual(F.flag_value(params, "mockingjay_pf_penalty"), "1" if cfg == "mockingjay_p1" else None)
             if not cfg.startswith("mlp"):
                 self.assertEqual(gammas(params), (None, None), cfg)
         static = {"mlp_core": ("96", "48"), "mlp_gd": ("0", "48"), "mlp_gi": ("96", "0")}
@@ -210,7 +214,7 @@ class GenCd1Small(unittest.TestCase):
         self.assertEqual(out["st"]["name"], "fs_cd1_small_google")
         rows = expand_desc(out["master"])
         self.assertEqual({r[1] for r in rows}, {"google"})
-        self.assertEqual(len(rows), 10 * 192)
+        self.assertEqual(len(rows), len(out["master"]["configurations"]) * 192)
         self.assertEqual(list(out["st"]["groups"]), ["google"])
         self.assertEqual(out["master"]["traces_dir"], self.plan["groups"]["google"]["traces_dir"])
         out = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", plan=self.plan, skip_suites=["google", "spec2006"],
@@ -243,6 +247,23 @@ class GenCd1Small(unittest.TestCase):
             F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=self.plan, only=["lru"], force=True,
                           suites=["google"])
 
+    def test_launched_sweep_keeps_its_binary(self):
+        """A launched sweep stays on the binary HEAD named at launch after scarab_path moves on, so a setup added
+        later runs it too; an explicit scarab_<hash> in the plan still wins (and trips the frozen digests)."""
+        name = "fs_test_binary"
+        old_plan = dict(self.plan, binary="scarab_1234567")        # stands in for HEAD at launch
+        base = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=old_plan, only=["lru"])
+        st = base["st"]
+        st["sweeps"] = [{"id": f"{name}-x", "group": "google", "desc": f"{name}_google", "configs": ["lru"],
+                         "digests": {"lru": st["groups"]["google"]["digests"]["lru"]}, "started": F.now()}]
+        F.write_json(base["st_path"], st)
+        out = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=self.plan, only=["lru", "clip"])
+        self.assertEqual(out["st"]["binary"], "scarab_1234567")
+        self.assertEqual({c["binary"] for c in out["master"]["configurations"].values()}, {"scarab_1234567"})
+        with self.assertRaises(SystemExit):
+            F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=dict(self.plan, binary="scarab_7654321"),
+                          only=["lru"])
+
     def test_estimate_runs(self):
         for pool in ("h4d=5,n4d=10", "n4d=2,pakuchi=128"):
             buf = io.StringIO()
@@ -253,6 +274,23 @@ class GenCd1Small(unittest.TestCase):
         with redirect_stdout(buf):
             F.print_estimate(self.out["st"], self.groups, "pakuchi=64")      # google is cloud-only
         self.assertIn("no machine it may run on", buf.getvalue())
+
+
+class StaleFiles(unittest.TestCase):
+    def test_only_gens_own_descriptors(self):
+        """gen's cleanup removes <name>_<group>[_b<k>] it no longer makes, never cloudhost's copies of running
+        shards (same fullsweep tag) or another sweep whose name starts with this one's."""
+        with tempfile.TemporaryDirectory() as tmp:
+            old, F.JSON_DIR = F.JSON_DIR, Path(tmp)
+            try:
+                tag = lambda n: {"fullsweep": {"sweep": n}}
+                for stem, sweep in [("fs_x_google", "fs_x"), ("fs_x_rest_b3", "fs_x"), ("fs_x_rest_b2", "fs_x"),
+                                    ("fs_x_rest_b2_0-b8d2_s002", "fs_x"), ("fs_x_incl_google", "fs_x_incl")]:
+                    F.write_json(Path(tmp) / f"{stem}.json", tag(sweep))
+                stale = F.stale_files("fs_x", {"fs_x_google", "fs_x_rest_b2"}, tmp, ["google", "rest"])
+                self.assertEqual([p.stem for p in stale], ["fs_x_rest_b3"])
+            finally:
+                F.JSON_DIR = old
 
 
 class Simulate(unittest.TestCase):
