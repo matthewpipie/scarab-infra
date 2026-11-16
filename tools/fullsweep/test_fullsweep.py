@@ -117,7 +117,9 @@ class GenCd1Small(unittest.TestCase):
             self.assertEqual(sims, want, g)
             size = self.plan["groups"][g]["shard_size"]
             self.assertTrue(all(len(s["configs"]) * len(s["sims"]) <= max(size, 71) for s in shards))
-            self.assertEqual({s["slow"] for s in shards}, {bool(self.plan["groups"][g].get("slow"))})
+            if self.plan["groups"][g].get("slow"):       # else cloudhost marks its costliest shards long itself
+                self.assertTrue(all(s["slow"] for s in shards), g)
+            self.assertTrue(all(s["gb"] >= 3.8 for s in shards), g)
         # only these setups (setups added after the first sweeps)
         shards = F.group_shards(st, "google", self.groups["google"], ["lru", "clip"])
         self.assertEqual(sum(len(s["configs"]) * len(s["sims"]) for s in shards), 2 * 192)
@@ -255,8 +257,9 @@ class GenCd1Small(unittest.TestCase):
 
 class Simulate(unittest.TestCase):
     def sweep(self, name, n_shards, sims, minutes, slow=False, gb=3.8, where="any"):
-        return {"name": name, "slow": slow, "where": where, "gb": gb,
-                "shards": [{"local": False, "durs": [(minutes, "spec2017")] * sims} for _ in range(n_shards)]}
+        return {"name": name, "slow": slow, "where": where,
+                "shards": [{"local": False, "slow": slow, "gb": gb, "durs": [(minutes, "spec2017")] * sims}
+                           for _ in range(n_shards)]}
 
     def test_one_machine(self):
         F.LAUNCH_MIN, F.START_OVERHEAD_MIN = 2.0, 3.0

@@ -81,26 +81,30 @@ Output (every descriptor has experiment `<name>`):
 Each group in the plan sets:
 
 - `traces_dir`
-- `shard_size`: cloudhost's `--shard-size`. A suite with at least that many simpoints is cut into chunks of that
-  many, one setup per shard. A smaller suite keeps all its simpoints and takes as many setups as fit.
-- `mem_per_sim_gb`: `--mem-per-sim`, a per-sim reservation that is the same for every sim of a sweep. Google is
-  5.5; the rest use cloudhost's default, 3.8. Peak RSS (VmHWM) of running sims, `ebc4e03`, golden_small, 11-16:
-  - **google at 150M** (dr2 gsearch, 335 sims, many not finished; it grows through a run): charlie up to 5.2 GB;
-    merced, sierra.a.3, sierra.a.4 and tahoe up to 4.3–4.5 (median 2.6–4.1); bravo.a, sierra.a.6 and yankee about
-    3.0; tango and delta under 1.9. The oracle replay sims of 11-14 (250M, extra oracle state) peaked at 4.85 GB.
-  - **Shard mix:** cloudhost cuts shards from consecutive inputs, so a shard is all heavy (sierra, merced) or all
-    light. 5.5 covers a heavy shard at 250M with some margin, and is 2× too much for a light one.
-  - **SPEC:** median 0.07 GB, max 0.54 (gcc_9). datacenter xgboost about 4.0 GB.
-  - **Effect on the estimate** (google 3.8 to 5.5 GB): 2.0–2.2 h on 5 H4D + 10 N4D, where the tail dominates;
-    3.5–4.3 h on 2 H4D + 6 N4D.
+- `shard_size`: cloudhost's `--shard-size`. cloudhost sorts each suite's simpoints by estimated runtime and cuts
+  them into shards of every setup × (shard_size // #setups) simpoints, starting a new shard where the cost halves.
+  So 128 with 10 setups gives shards of 10 × 12 = 120 sims, and fewer at the cost breaks.
+- `mem_per_sim_gb`: `--mem-per-sim`, one reservation for every sim of the group's sweep. Both groups leave it null:
+  cloudhost then sizes each shard from `sim_cost.json`, at its workloads' measured peak +15% and at least 3.8 GB.
+  It scales those peaks by 0.58 for binaries that contain scarab PR #61 (138ae8d), so every shard of a 138ae8d+
+  sweep gets 3.8 GB (185 slots on an H4D).
+  - **PR #61** cut peak RSS ~43%. At 60M, old → new: merced 3.18 → 1.80 GB, sierra.a.4 3.43 → 1.97, whiskey
+    2.52 → 1.44, xgboost 3311 4.47 → 2.57.
+  - **Before PR #61** (`ebc4e03`, VmHWM of running sims, 11-16): google at 150M had charlie up to 5.2 GB; merced,
+    sierra.a.3, sierra.a.4 and tahoe 4.3–4.5; the rest under 3.1. merced and sierra.a.4 reached 4.7–4.8 GB at 250M.
+    RSS grows through a run. SPEC median 0.07 GB, max 0.54 (gcc_9); datacenter xgboost about 4.5.
+  - **Scaled to 250M on PR #61**, the heaviest (charlie) should be about 3.3 GB, under the 3.8 floor. This is
+    an extrapolation; no 250M google sim has run on 138ae8d yet.
+  - Set `mem_per_sim_gb` only to override cloudhost, e.g. for a binary older than PR #61 that `sim_cost.json`
+    gets wrong.
 - `where`: google runs on the cloud only.
 - `slow`: the group's shards go first and prefer the fastest machines (`--slow-suites`).
 - `max_parallel`: used only if a shard runs on pakuchi. A cloud shard runs as many sims as its slice.
 
 cd1/small has 16,380 sims:
 
-- google: 1,920 sims in 30 shards of 64. That is two per H4D (128 google slots) or one per N4D (66).
-- rest: 14,460 sims in 170 shards of 27–96.
+- google: 1,920 sims in 17 shards of 10–120. One 120-sim shard fills most of an H4D's 185 slots.
+- rest: 14,460 sims in 84 shards of 20–180.
 
 ## Counts and estimates
 
@@ -120,8 +124,9 @@ cloud-only.
 
 - Every group's sweep runs at once, slow ones first.
 - Each sweep has at most 4 launches in flight, 2 min each (gsearch's launches took 1.5–3 min).
-- Shards are placed where cloudhost's `place` would put them. Each takes a slice of min(sims, the machine's slots)
-  cores, by cores and by memory per sim, or a partial slice of at least 32 cores.
+- Shards are cloudhost's own (`split_shards`, with its per-shard memory and long-shard marks). They are placed
+  where cloudhost's `place` would put them. Each takes a slice of min(sims, the machine's slots) cores, by cores
+  and by the shard's memory per sim, or a partial slice of at least 32 cores.
 - Sims start 3 min after placement, longest first.
 - Each core goes back to the machine as its last sim ends (tail release).
 
@@ -134,24 +139,27 @@ gsearch cd1/dr1 run:
 
 It predates scarab #58 (8–10% less wall time), so it runs a little high on newer binaries.
 
-**The shard sizes** are the best of a grid (google 48–128 × rest 64–185) under 1, 2 and 3 min launches, on
-5 H4D + 10 N4D and on 2 H4D + 6 N4D. The table shows the worst and mean end-to-end time over those six cases, as a
-multiple of the estimate's own floor (perfect packing, no launch or tail: 1.2 h and 2.5 h):
+**The shard sizes** are the best of a grid (google 64–190 × rest 64–185) under 1, 2 and 3 min launches, on
+5 H4D + 10 N4D and on 2 H4D + 6 N4D. The grid uses cloudhost's cost-aware split (cloudhost 55ad159) and
+PR #61 memory (scarab_138ae8d). The table shows the worst and mean end-to-end time over those six cases, as a
+multiple of the estimate's own floor (perfect packing, no launch or tail: 1.0 h and 2.1 h):
 
-| google | rest | worst | mean |
-| --- | --- | --- | --- |
-| 64 | 96 | 1.94× | 1.77× |
-| 64 | 185 | 2.03× | 1.83× |
-| 48 | 96 | 2.08× | 1.87× |
-| 128 | 96 | 2.26× | 1.87× |
-| any | 64 | ≥ 2.67× | |
+| google | rest | worst | mean | $ |
+| --- | --- | --- | --- | --- |
+| 128 | 185 | 1.78× | 1.63× | 134–152 |
+| 64 | 185 | 1.84× | 1.67× | 135–151 |
+| 128 | 128 | 1.93× | 1.67× | 137–169 |
+| 64 | 96 | 2.37× | 1.78× | 141–174 |
+| any | 64 | ≥ 3.19× | ≥ 2.12× | |
 
-On the full pool the estimate is about 2.1 h and $180.
+google 190 (19 simpoints × 10 setups) does about as well (1.77×), but 190 sims don't fit an H4D's 185 slots.
 
-- **The floor is memory-bound.** google reserves 5.5 GB per sim, against 3.7 GB per core on an H4D.
-- **The rest of the gap** is the model's tail and cloudhost's partial slices: once 32 cores are free, a waiting
-  shard takes them and runs several waves on them.
-- **Shard size matters little:** it moves the estimate only ±0.2 h.
+On the full pool the estimate is about 1.8 h and $151; on 2 H4D + 6 N4D, 3.2 h and $135.
+
+- **The floor is core-bound.** With PR #61 every sim reserves 3.8 GB, so an H4D's memory no longer limits it.
+- **Small rest shards are launch-bound.** Each sweep launches at most 4 shards at a time, so 163 shards at 3 min
+  a launch take about 2 h on their own.
+- **The rest of the gap** is the model's tail and cloudhost's partial slices.
 
 Recalibrate `LAUNCH_MIN` and `START_OVERHEAD_MIN` from the first real sweep's `driver.log`.
 

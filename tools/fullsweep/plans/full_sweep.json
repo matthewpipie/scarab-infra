@@ -16,19 +16,19 @@
   "pick":"best",
   "_baseline":"The baseline config for sci --visualize / --perf-analyze on the merged experiment.",
   "baseline":"lru",
-  "_groups":"Suites that share a traces_dir and run settings. Each group runs as one `cloudhost sweep` of its own descriptor (json/<name>_<group>.json); every group writes the one experiment <name>. traces_dir: where the group's traces are (on pakuchi, and at the same path on cloud machines). shard_size: cloudhost sweep --shard-size: a suite with at least this many simpoints is cut into chunks of this many, one setup per shard; a smaller suite keeps all its simpoints and takes as many setups as fit. mem_per_sim_gb: cloudhost --mem-per-sim (null: cloudhost's default, 3.8 GB; see the README for measured peaks: google 1.4-5.2 GB by workload at 150M and growing, SPEC under 0.6 GB). where: cloudhost --where. slow: the group's shards go first and prefer the fastest machines (--slow-suites). max_parallel: sims at once if a shard runs on pakuchi (a cloud shard runs as many as its slice). The shard sizes came from `fullsweep.py estimate` (README).",
+  "_groups":"Suites that share a traces_dir and run settings. Each group runs as one `cloudhost sweep` of its own descriptor (json/<name>_<group>.json); every group writes the one experiment <name>. traces_dir: where the group's traces are (on pakuchi, and at the same path on cloud machines). shard_size: cloudhost sweep --shard-size: a suite with at least this many simpoints is cut into shards of every setup x (this many // #setups) simpoints of like estimated runtime (cloudhost's split_shards). mem_per_sim_gb: cloudhost --mem-per-sim, one reservation for every sim of the group's sweep (null: cloudhost sizes each shard from sim_cost.json: its workloads' measured peak +15%, scaled for binaries with scarab PR #61, at least 3.8 GB). where: cloudhost --where. slow: the group's shards go first and prefer the fastest machines (--slow-suites). max_parallel: sims at once if a shard runs on pakuchi (a cloud shard runs as many as its slice). The shard sizes came from `fullsweep.py estimate` (README).",
   "groups":{
     "google":{
       "traces_dir":"/mnt/storage/traces/shanen/",
-      "shard_size":64,
-      "mem_per_sim_gb":5.5,
+      "shard_size":128,
+      "mem_per_sim_gb":null,
       "where":"cloud",
       "slow":true,
       "max_parallel":128
     },
     "rest":{
       "traces_dir":"/mnt/storage/traces/scarab/",
-      "shard_size":96,
+      "shard_size":185,
       "mem_per_sim_gb":null,
       "where":"any",
       "slow":false,

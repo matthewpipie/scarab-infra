@@ -540,6 +540,7 @@ def group_shards(st, group, d, configs=None):
     slow = set(st["groups"][group]["suites"]) if g.get("slow") else set()
     shards = ch().split_shards(st["groups"][group]["desc"], "estimate", d, p, g["shard_size"], slow)
     return [{"configs": list(sh["desc"]["configurations"]), "suite": sh["suite"], "slow": sh["slow"],
+             "gb": sh.get("mem_gb") or ch().DEFAULT_MEM_PER_SIM_GB,
              "sims": [f"{s['suite']}/{s['subsuite']}/{s['workload']}" for s in sh["desc"]["simulations"]]}
             for sh in shards]
 
@@ -559,7 +560,7 @@ def parse_pool(spec):
 
 def _choose(sw, sh, machines, min_slice):
     """cloudhost's placement of one shard (place + cloud_fit), on a pool we have to ourselves: (machine, cores)."""
-    n, gb, slow = len(sh["durs"]), sw["gb"], sw["slow"]
+    n, gb, slow = len(sh["durs"]), sh["gb"], sh["slow"]
     full, partial = [], []
     for mi, m in enumerate(machines):
         local = m["type"] == "pakuchi"
@@ -625,13 +626,13 @@ def simulate(sweeps, pool, cost):
                 m, sh = machines[mi], q.pop(0)
                 m["free_c"] -= grant
                 if m["mem"] is not None:
-                    m["free_m"] -= grant * sw["gb"]
+                    m["free_m"] -= grant * sh["gb"]
                 slots[k] = t + LAUNCH_MIN
                 cores = [t + START_OVERHEAD_MIN] * grant
                 for dur in sorted((h4d * cost.slowdown(m["type"], suite) for h4d, suite in sh["durs"]), reverse=True):
                     heapq.heapreplace(cores, cores[0] + dur)
                 for end in cores:
-                    heapq.heappush(releases, (end, mi, sw["gb"]))
+                    heapq.heappush(releases, (end, mi, sh["gb"]))
                 m["first"] = t if m["first"] is None else m["first"]
                 m["last"] = max(m["last"], max(cores))
                 m["shards"] += 1
@@ -677,13 +678,15 @@ def print_estimate(st, descs, pool_spec, configs=None):
         if not shards:
             continue
         sizes = [len(s["configs"]) * len(s["sims"]) for s in shards]
-        print(f"  {group}: {fmt_n(sum(sizes))} sims in {len(shards)} shards of {min(sizes)}-{max(sizes)} "
-              f"(cloudhost sweep --shard-size {g['shard_size']}"
-              + (f", --mem-per-sim {g['mem_per_sim_gb']:g}" if g.get("mem_per_sim_gb") else "")
+        gbs = [g["mem_per_sim_gb"]] if g.get("mem_per_sim_gb") else sorted({s["gb"] for s in shards})
+        mem = f"{gbs[0]:g}" + (f"-{gbs[-1]:g}" if gbs[-1] != gbs[0] else "")
+        print(f"  {group}: {fmt_n(sum(sizes))} sims in {len(shards)} shards of {min(sizes)}-{max(sizes)}, "
+              f"{mem} GB per sim (cloudhost sweep --shard-size {g['shard_size']}"
+              + (f", --mem-per-sim {g['mem_per_sim_gb']:g}" if g.get("mem_per_sim_gb") else ", memory from sim_cost.json")
               + f", --where {g.get('where', 'any')}{', slow: first and on the fastest machines' if g.get('slow') else ''})")
         sweeps.append({"name": group, "slow": bool(g.get("slow")), "where": g.get("where", "any"),
-                       "gb": g.get("mem_per_sim_gb") or ch().DEFAULT_MEM_PER_SIM_GB,
-                       "shards": [{"local": s["suite"] in local_suites,
+                       "shards": [{"local": s["suite"] in local_suites, "slow": s["slow"],
+                                   "gb": g.get("mem_per_sim_gb") or s["gb"],
                                    "durs": [(st["input_cost"][lab], lab.split("/")[0])
                                             for lab in s["sims"] for _ in s["configs"]]} for s in shards]})
     pool = parse_pool(pool_spec)
@@ -695,7 +698,7 @@ def print_estimate(st, descs, pool_spec, configs=None):
     makespan = max(m["last"] for m in used)
     floor = 0.0
     for res in ("cores", "mem"):       # no packing, launch or tail limits: the busier of cores and memory
-        need = sum(h * (1 if res == "cores" else sw["gb"]) for sw in sweeps for s in sw["shards"] for h, _ in s["durs"])
+        need = sum(h * (1 if res == "cores" else s["gb"]) for sw in sweeps for s in sw["shards"] for h, _ in s["durs"])
         have = sum((m["cores"] if res == "cores" or m["mem"] is None else m["mem"])
                    / min(cost.slowdown(m["type"], suite) for suite in st["suites"]) for m in machines)
         floor = max(floor, need / have)
