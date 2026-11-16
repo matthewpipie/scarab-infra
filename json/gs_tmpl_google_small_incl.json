@@ -1,0 +1,83 @@
+{
+  "_descriptor_type":"A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
+  "descriptor_type":"simulation",
+  "_architecture":"PARAMS.<architecture> in scarab_path.",
+  "architecture":"golden_small_incl",
+  "_experiment":"Template for tools/mlp_gsearch: Google on golden_small_incl. gsearch.py copies it into shard descriptors with their own simulations and gi<I>_gd<D> configurations; run as is, it runs the base config only.",
+  "experiment":"gs_tmpl_google_small_incl",
+  "_workload_manager":"manual: run the simulations on this machine, at most max_parallel at a time",
+  "workload_manager":"manual",
+  "_max_parallel":"gsearch.py sets each shard's to min(sims, 192); cloudhost sets it to the core count on cloud machines.",
+  "max_parallel":192,
+  "_container_reuse":"One reused container per slot instead of one per sim.",
+  "container_reuse":true,
+  "_root_dir":"Output goes to <root_dir>/simulations/<experiment>, on the storage drive.",
+  "root_dir":"/mnt/storage/mgiordan/",
+  "_application_dir":"The path to the benchmark application directory used for tracing or simulation.",
+  "application_dir":"/home/mgiordan/carp/applications",
+  "_scarab_path":"A private clone of matthewpipie/scarab main, so sci's in-place hash checkouts cannot disturb a working checkout.",
+  "scarab_path":"/home/mgiordan/carp/scarab-gsearch/",
+  "_scarab_build":"scarab build mode. 'opt', 'opt-avx', 'dbg', or null",
+  "scarab_build":"opt",
+  "_traces_dir":"The local directory containing all simpointed traces, resolved as <traces_dir>/<suite>/<subsuite>/<workload>.",
+  "traces_dir":"/mnt/storage/traces/shanen/",
+  "_top_simpoint":"The 6 highest-weight simpoints of each workload, weights renormalized to sum to 1.",
+  "top_simpoint":6,
+  "_simulations":"All 12 google workloads, top 6 simpoints, 50M warmup + 200M measured (--inst_limit 250000000 in the base params; inst_limit counts the warmup).",
+  "simulations":[
+    {
+      "suite":"google",
+      "subsuite":"google",
+      "workload":null,
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":50000000
+    }
+  ],
+  "_configurations":"Exactly one configuration: the binary and the base params every gamma point adds --mlp_lin_instr_lambda / --mlp_lin_data_lambda to. REPL_MLP with main's countdown defaults (tiered, no_revive) and marking defaults.",
+  "configurations":{
+    "base":{
+      "_params":"REPL_MLP on the MLC, 50M warmup + 200M measured.",
+      "params":"--mlc_cache_repl_policy 9 --inst_limit 250000000",
+      "binary":"scarab_c4ae7e6",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    }
+  },
+  "_collect_stats":"Stats collection settings for ./sci --collect-stats.",
+  "collect_stats":{
+    "configs":null
+  },
+  "_visualize":"gsearch.py report covers the search.",
+  "visualize":{
+    "baseline":"base",
+    "configs":[
+      "base"
+    ],
+    "counters":[
+      "IPC"
+    ]
+  },
+  "_mem":"Memory settings (Slurm only).",
+  "mem":{
+    "collection_baseline":null,
+    "fallback_mb":16384
+  },
+  "_perf_analyze":"Settings for ./sci --perf-analyze.",
+  "perf_analyze":{
+    "baseline":"base",
+    "counters":[
+      "IPC"
+    ],
+    "stat_groups":[
+      "core",
+      "memory"
+    ],
+    "compare_all_stats":false,
+    "drift_top_workloads":5,
+    "drift_top_simpoints":5,
+    "prompt_budget_tokens":12000,
+    "threshold_pct":2.0,
+    "analyzer_cli_cmd":"codex"
+  }
+}
