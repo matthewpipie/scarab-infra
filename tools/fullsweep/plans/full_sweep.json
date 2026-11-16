@@ -1,0 +1,145 @@
+{
+  "_doc":"The full sweep of FULL_SWEEP.txt: every policy on google (top 24 simpoints, 50M warmup + 200M measured), datacenter (memtrace, 10M + 10M) and SPEC 2006/2017/2026 (50M + 10M), the last four at 90% simpoint weight coverage. `fullsweep.py gen STUDY/VARIANT` reads the REPL_MLP gammas from that gsearch result; the architecture and the REPL_MLP base params come from the study's templates. Turn a setup off with \"enabled\": false or on the command line (--only / --skip).",
+  "_gsearch_dir":"Where gsearch.py keeps its studies (<dir>/<study>/{study.json,templates,report}).",
+  "gsearch_dir":"/mnt/storage/mgiordan/gsearch",
+  "_state_dir":"fullsweep.py's own state: <state_dir>/<name>/{state.json,shards/,logs/}.",
+  "state_dir":"/mnt/storage/mgiordan/fullsweep",
+  "_root_dir":"sci root_dir of every descriptor: shards run into <root_dir>/simulations/<shard>, and `merge` links them into <root_dir>/simulations/<name>.",
+  "root_dir":"/mnt/storage/mgiordan/",
+  "application_dir":"/home/mgiordan/carp/applications",
+  "_scarab_path":"A private clone of scarab main, so sci's in-place hash checkouts can't disturb a working checkout.",
+  "scarab_path":"/home/mgiordan/carp/scarab-fullsweep/",
+  "_binary":"Every setup's binary: scarab_<hash>, or HEAD for scarab_path's HEAD when gen runs. A policy can name its own.",
+  "binary":"HEAD",
+  "scarab_build":"opt",
+  "_pick":"Which gsearch point to use: best (the converged incumbent, the report's headline) or max_point (the best measured point).",
+  "pick":"best",
+  "_baseline":"The baseline config for sci --visualize / --perf-analyze on the merged experiment.",
+  "baseline":"lru",
+  "_groups":"Suites that share a traces_dir and run settings. Each group runs as one `cloudhost sweep` of its own descriptor (json/<name>_<group>.json); every group writes the one experiment <name>. traces_dir: where the group's traces are (on pakuchi, and at the same path on cloud machines). shard_size: cloudhost sweep --shard-size: a suite with at least this many simpoints is cut into chunks of this many, one setup per shard; a smaller suite keeps all its simpoints and takes as many setups as fit. mem_per_sim_gb: cloudhost --mem-per-sim (null: cloudhost's default, 3.8 GB; see the README for measured peaks: google 1.4-5.2 GB by workload at 150M and growing, SPEC under 0.6 GB). where: cloudhost --where. slow: the group's shards go first and prefer the fastest machines (--slow-suites). max_parallel: sims at once if a shard runs on pakuchi (a cloud shard runs as many as its slice). The shard sizes came from `fullsweep.py estimate` (README).",
+  "groups":{
+    "google":{
+      "traces_dir":"/mnt/storage/traces/shanen/",
+      "shard_size":64,
+      "mem_per_sim_gb":5.5,
+      "where":"cloud",
+      "slow":true,
+      "max_parallel":128
+    },
+    "rest":{
+      "traces_dir":"/mnt/storage/traces/scarab/",
+      "shard_size":96,
+      "mem_per_sim_gb":null,
+      "where":"any",
+      "slow":false,
+      "max_parallel":192
+    }
+  },
+  "_suites":"Per suite: enabled (or --suites / --skip-suites), its group, simpoint selection (top_simpoint N or simpoint_coverage fraction; every top_simpoint must be equal, since the merged descriptor holds all suites), warmup (null: the trace's whole warmup from the workload DB, which is 10M for datacenter and 50M for SPEC), params added to every setup for this suite only (through workload_params), simulation_type, and optional subsuites / workloads lists.",
+  "suites":{
+    "google":{
+      "group":"google",
+      "top_simpoint":24,
+      "warmup":50000000,
+      "params":"--inst_limit 250000000",
+      "simulation_type":"memtrace"
+    },
+    "datacenter":{
+      "group":"rest",
+      "simpoint_coverage":0.9,
+      "warmup":null,
+      "simulation_type":"memtrace"
+    },
+    "spec2006":{
+      "group":"rest",
+      "simpoint_coverage":0.9,
+      "warmup":null,
+      "simulation_type":"memtrace"
+    },
+    "spec2017":{
+      "group":"rest",
+      "simpoint_coverage":0.9,
+      "warmup":null,
+      "simulation_type":"memtrace"
+    },
+    "spec2026":{
+      "group":"rest",
+      "simpoint_coverage":0.9,
+      "warmup":null,
+      "simulation_type":"memtrace"
+    }
+  },
+  "_policies":"One sci configuration each, named by its key. `params`: Scarab flags. `mlp`: REPL_MLP on the gsearch study's base params, with gammas from core:all (the one static point for every suite), core:gi=0, core:gd=0, simpoint / input / workload / suite (each unit's own best, set through workload_params), or [gamma_i, gamma_d]. `fallback`: the levels a unit gsearch never searched takes its gammas from, in order, ending in a core unit (default: input, workload, core:all for simpoint; core:all otherwise).",
+  "policies":{
+    "lru":{
+      "_doc":"Baseline: golden_small's MLC policy (REPL_TRUE_LRU). The gsearch gains are over this.",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 0"
+    },
+    "mlp_core":{
+      "_doc":"REPL_MLP, one static (gamma_i, gamma_d) for the whole sweep: the core unit `all`.",
+      "enabled":true,
+      "mlp":"core:all"
+    },
+    "mlp_gd":{
+      "_doc":"REPL_MLP, best gamma_d with gamma_i = 0: the core unit `gi=0`.",
+      "enabled":true,
+      "mlp":"core:gi=0"
+    },
+    "mlp_gi":{
+      "_doc":"REPL_MLP, best gamma_i with gamma_d = 0: the core unit `gd=0`.",
+      "enabled":true,
+      "mlp":"core:gd=0"
+    },
+    "mlp_sp":{
+      "_doc":"REPL_MLP, each simpoint's own best pair where gsearch searched it (google top 6, others top 3); every other simpoint of the sweep falls back to its input's best, then its workload's, then core:all.",
+      "enabled":true,
+      "mlp":"simpoint",
+      "fallback":[
+        "input",
+        "workload",
+        "core:all"
+      ]
+    },
+    "mlp_wl":{
+      "_doc":"REPL_MLP, each workload's (benchmark's) best pair, given to all its inputs. Off by default (replaced by mlp_sp).",
+      "enabled":false,
+      "mlp":"workload"
+    },
+    "icarus":{
+      "_doc":"REPL_ICARUS (21) with its defaults.",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 21"
+    },
+    "emissary":{
+      "_doc":"REPL_EMISSARY (24) with its defaults: P(8):S&E&R(1/32).",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 24"
+    },
+    "emissary_r1":{
+      "_doc":"REPL_EMISSARY with R(1/1): every S&E miss is marked.",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 24 --emissary_rand_denom 1"
+    },
+    "lacs":{
+      "_doc":"REPL_LACS (20) at the MLC with its defaults.",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 20"
+    },
+    "clip":{
+      "_doc":"REPL_CLIP (25) with its defaults (32 sampled sets, theta 25%).",
+      "enabled":true,
+      "params":"--mlc_cache_repl_policy 25"
+    },
+    "drrip":{
+      "_doc":"DRRIP, the baseline of a DRRIP-boost study such as dr1. Off by default.",
+      "enabled":false,
+      "params":"--mlc_cache_repl_policy 18"
+    }
+  },
+  "_pakuchi_suites":"Suites whose traces are all on pakuchi, for estimates with pakuchi in --pool (cloudhost checks the real files).",
+  "pakuchi_suites":[
+    "google",
+    "datacenter"
+  ]
+}
