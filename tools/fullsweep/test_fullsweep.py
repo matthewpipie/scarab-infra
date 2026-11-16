@@ -264,6 +264,50 @@ class GenCd1Small(unittest.TestCase):
             F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=dict(self.plan, binary="scarab_7654321"),
                           only=["lru"])
 
+    def test_doc_edits_do_not_unfreeze(self):
+        """Digests leave out _doc keys: editing a launched setup's doc is fine, changing its params is not."""
+        name = "fs_test_docs"
+        base = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=self.plan, only=["lru"])
+        st = base["st"]
+        st["sweeps"] = [{"id": f"{name}-x", "group": "google", "desc": f"{name}_google", "configs": ["lru"],
+                         "digests": {"lru": st["groups"]["google"]["digests"]["lru"]}, "started": F.now()}]
+        F.write_json(base["st_path"], st)
+        plan = copy.deepcopy(self.plan)
+        plan["policies"]["lru"]["_doc"] = "reworded"
+        F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=plan, only=["lru"])
+        plan["policies"]["lru"]["params"] += " --mlc_size 1048576"
+        with self.assertRaises(SystemExit):
+            F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name=name, plan=plan, only=["lru"])
+
+    def test_min_binary(self):
+        """min_binary: a sweep whose binary has the commit runs the setup on its own binary, an older one on
+        min_binary; `binary` pins exactly."""
+        p = {"min_binary": "scarab_6984b13"}
+        self.assertEqual(F.policy_binary(self.plan, p, "scarab_138ae8d"), "scarab_6984b13")   # 138ae8d < #64
+        self.assertEqual(F.policy_binary(self.plan, p, "scarab_aa00448"), "scarab_aa00448")   # aa00448 has #64
+        self.assertEqual(F.policy_binary(self.plan, {"binary": "scarab_6984b13"}, "scarab_aa00448"), "scarab_6984b13")
+        self.assertEqual(F.policy_binary(self.plan, {}, "scarab_138ae8d"), "scarab_138ae8d")
+
+    def test_policy_with_its_own_gsearch(self):
+        """A REPL_MLP setup can take base params and core gammas from another study of the same architecture
+        (dr2: DRRIP + rrip_boost 2 on golden_small); one on another architecture is left out of the sweep."""
+        plan = copy.deepcopy(self.plan)
+        plan["policies"]["mlp_other"] = {"enabled": True, "mlp": "core:all", "gsearch": "dr2/small"}
+        plan["policies"]["mlp_incl"] = {"enabled": True, "mlp": "core:all", "gsearch": "cd1/small_incl"}
+        out = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name="fs_test_own_gs", plan=plan,
+                            only=["lru", "mlp_core", "mlp_other"])
+        cfg = out["master"]["configurations"]
+        self.assertEqual(F.flag_value(cfg["mlp_other"]["params"], "mlc_cache_repl_policy"), "18")
+        self.assertEqual(F.flag_value(cfg["mlp_other"]["params"], "mlp_rrip_boost"), "2")
+        self.assertEqual(gammas(cfg["mlp_other"]["params"]), ("32", "12"))
+        self.assertEqual(gammas(cfg["mlp_core"]["params"]), ("96", "48"))      # still cd1's
+        out = F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name="fs_test_own_gs2", plan=plan,
+                            skip=["mlp_gd", "mlp_gi", "mlp_sp"])
+        self.assertNotIn("mlp_incl", out["master"]["configurations"])         # golden_small_incl study
+        self.assertIn("mlp_other", out["master"]["configurations"])
+        with self.assertRaises(SystemExit):                                     # asked for by name: refuse
+            F.build_sweep(F.DEFAULT_PLAN, "cd1/small", name="fs_test_own_gs3", plan=plan, only=["lru", "mlp_incl"])
+
     def test_estimate_runs(self):
         for pool in ("h4d=5,n4d=10", "n4d=2,pakuchi=128"):
             buf = io.StringIO()

@@ -291,6 +291,42 @@ def resolve_binary(plan, policy=None):
     return f"scarab_{r.stdout.strip()}"
 
 
+def binary_contains(plan, binary, commit):
+    """Does scarab_<hash> `binary` contain `commit` (git ancestry in scarab_path)?"""
+    rev = binary[len("scarab_"):] if binary.startswith("scarab_") else binary
+    want = commit[len("scarab_"):] if commit.startswith("scarab_") else commit
+    r = subprocess.run(["git", "-C", plan["scarab_path"], "merge-base", "--is-ancestor", want, rev],
+                       capture_output=True, text=True)
+    if r.returncode not in (0, 1):
+        die(f"cannot compare {binary} with {commit} in {plan['scarab_path']}: {r.stderr.strip()}")
+    return r.returncode == 0
+
+
+def policy_binary(plan, p, binary):
+    """A setup's binary. `binary` pins one exactly. `min_binary` is the oldest binary that has what the
+    setup needs: a sweep whose binary already contains it runs the setup on that, an older one on this."""
+    if p.get("binary"):
+        return resolve_binary(plan, p)
+    if p.get("min_binary"):
+        need = resolve_binary(plan, {"binary": p["min_binary"]})
+        return binary if binary_contains(plan, binary, need) else need
+    return binary
+
+
+_GSEARCH = {}
+
+
+def policy_gsearch(plan, p, gs):
+    """The gsearch result a REPL_MLP setup takes its base params and gammas from: its own `gsearch`
+    (STUDY/VARIANT, e.g. REPL_MLP on another base policy) or the sweep's."""
+    r = p.get("gsearch")
+    if not r:
+        return gs
+    if r not in _GSEARCH:
+        _GSEARCH[r] = Gsearch(plan["gsearch_dir"], r, plan.get("pick", "best"))
+    return _GSEARCH[r]
+
+
 def choose_policies(plan, only, skip):
     pol = plan["policies"]
     bad = [p for p in (only or []) + (skip or []) if p not in pol]
@@ -422,12 +458,12 @@ def make_configs(plan, gs, inputs, names, binary):
         p = plan["policies"][name]
         wp = dict(suite_wp)
         if "mlp" in p:
-            params, extra, info[name] = mlp_config(name, p, gs, inputs)
+            params, extra, info[name] = mlp_config(name, p, policy_gsearch(plan, p, gs), inputs)
             for k, v in extra.items():
                 wp[k] = f"{wp[k]} {v}" if k in wp else v
         else:
             params, info[name] = p.get("params", "").strip(), {"gammas": "", "source": "params"}
-        c = {"_params": p.get("_doc", ""), "params": params.strip(), "binary": resolve_binary(plan, p) if p.get("binary") else binary,
+        c = {"_params": p.get("_doc", ""), "params": params.strip(), "binary": policy_binary(plan, p, binary),
              "slurm_options": "", "memory_overhead_mb": 64}
         if wp:
             c["_workload_params"] = ("Per-suite params (run length) and, for per-unit REPL_MLP, each input's own "
@@ -469,10 +505,12 @@ def descriptor(plan, experiment, inputs, configs, sel, arch, traces_dir, max_par
     return d
 
 
-def config_digest(d, config):
-    """What a setup's results depend on: its config and the sims it runs."""
+def config_digest(d, config, docs=False):
+    """What a setup's results depend on: its config, less its _doc keys, and the sims it runs. docs=True gives
+    the digest gen recorded before 11-16, which also covered the doc strings (still accepted for those sweeps)."""
     keep = {k: d[k] for k in ("architecture", "simulations", "top_simpoint", "simpoint_coverage")}
-    keep["configuration"] = d["configurations"][config]
+    cfg = d["configurations"][config]
+    keep["configuration"] = cfg if docs else {k: v for k, v in cfg.items() if not k.startswith("_")}
     return hashlib.sha1(json.dumps(keep, sort_keys=True).encode()).hexdigest()[:12]
 
 
@@ -768,7 +806,7 @@ def build_sweep(plan_path, result=None, only=None, skip=None, pick=None, name=No
     suite_names = choose_suites(plan, suites, skip_suites)
     plan["suites"] = {x: plan["suites"][x] for x in suite_names}
     names = choose_policies(plan, only, skip)
-    needs_gs = any("mlp" in plan["policies"][p] for p in names)
+    needs_gs = any("mlp" in plan["policies"][p] and not plan["policies"][p].get("gsearch") for p in names)
     gs = Gsearch(plan["gsearch_dir"], result, plan.get("pick", "best")) if result else None
     if needs_gs and gs is None:
         die("REPL_MLP setups need a gsearch RESULT (e.g. cd1/small)")
@@ -777,6 +815,14 @@ def build_sweep(plan_path, result=None, only=None, skip=None, pick=None, name=No
         die("no architecture: give a RESULT or set plan.architecture")
     if gs and plan.get("architecture") and plan["architecture"] != gs.arch:
         die(f"plan architecture {plan['architecture']} != gsearch {result}'s {gs.arch}")
+    # A setup with its own gsearch result belongs to that result's architecture: other sweeps leave it out.
+    other = [p for p in names if plan["policies"][p].get("gsearch")
+             and policy_gsearch(plan, plan["policies"][p], gs).arch != arch]
+    if other and only and set(other) & set(only):
+        die(f"{', '.join(sorted(set(other) & set(only)))}: their gsearch results are not on {arch}")
+    if other:
+        log(f"leaving out {', '.join(other)}: their gsearch results are on another architecture than {arch}")
+        names = [p for p in names if p not in other]
     if not name:
         name = f"fs_{gs.study}_{gs.variant}" if gs else f"fs_{arch}"
         if suite_names != default_suites:
@@ -821,7 +867,7 @@ def build_sweep(plan_path, result=None, only=None, skip=None, pick=None, name=No
             if sw["group"] != gname_:
                 continue
             for c in sw["configs"]:
-                if c in digests and sw["digests"].get(c) != digests[c]:
+                if c in digests and sw["digests"].get(c) not in (digests[c], config_digest(d, c, docs=True)):
                     die(f"setup {c} already ran on the {gname_} suites (sweep {sw['id']}) with different params or "
                         f"simpoints; give the changed sweep a new --name")
         files[dname] = d
@@ -904,7 +950,9 @@ def print_policies(st):
     for p, info in st["policies"].items():
         line = f"  {p:12s} {info.get('gammas', '')}"
         if info.get("gsearch_gain_pct") is not None:
-            line += f"  (gsearch Avg {info['gsearch_gain_pct']:+.2f}%{'' if info.get('converged') else ', NOT converged'})"
+            src = info.get("source", "").split(" ")[0]
+            line += (f"  (gsearch{'' if src == st.get('result') else ' ' + src} Avg {info['gsearch_gain_pct']:+.2f}%"
+                     f"{'' if info.get('converged') else ', NOT converged'})")
         print(line)
         if len(info.get("levels_used", {})) > 1:
             print(f"  {'':12s} simpoints by gamma source: "

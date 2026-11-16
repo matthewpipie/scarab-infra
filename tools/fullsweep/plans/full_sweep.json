@@ -149,8 +149,29 @@
     "shippp":{
       "_doc":"REPL_SHIPPP (26), SHiP++ (Young et al., CRC2 2017; scarab #64) with its defaults, FDIP instruction prefetches counted as prefetches (--mlc_shippp_inst_pref_is_pref 1). Needs a binary with #64 (6984b13); #64 only adds the policy, so its sims compare with setups on older binaries.",
       "enabled":true,
-      "binary":"scarab_6984b13",
+      "min_binary":"scarab_6984b13",
       "params":"--mlc_cache_repl_policy 26 --mlc_shippp_inst_pref_is_pref 1"
+    },
+    "mlp_drrip":{
+      "_doc":"REPL_MLP's countdown as a boost on DRRIP (--mlp_rrip_boost 3, #66), gsearch cdrrip. Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
+      "enabled":false,
+      "mlp":"core:all",
+      "gsearch":"cdrrip/small",
+      "min_binary":"scarab_aa00448"
+    },
+    "mlp_ship":{
+      "_doc":"REPL_MLP's countdown as a boost on SHiP++ (--mlp_rrip_boost 3, #66), gsearch cship. Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
+      "enabled":false,
+      "mlp":"core:all",
+      "gsearch":"cship/small",
+      "min_binary":"scarab_aa00448"
+    },
+    "mlp_mj":{
+      "_doc":"REPL_MLP's countdown on Mockingjay's aging step (--mlp_mj_boost, #65), gsearch cmj. Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
+      "enabled":false,
+      "mlp":"core:all",
+      "gsearch":"cmj/small",
+      "min_binary":"scarab_aa00448"
     }
   },
   "_pakuchi_suites":"Suites whose traces are all on pakuchi, for estimates with pakuchi in --pool (cloudhost checks the real files).",

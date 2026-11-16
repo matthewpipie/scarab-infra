@@ -14,6 +14,7 @@ tools/fullsweep/fullsweep.py run fs_cd1_small            # the cloudhost command
 tools/fullsweep/fullsweep.py status fs_cd1_small         # the sweeps and every setup's progress
 tools/fullsweep/fullsweep.py collect fs_cd1_small        # one ./sci --collect-stats over everything
 tools/fullsweep/fullsweep.py calibrate cd1 dr1           # refresh calibration.json from gsearch runs
+tools/fullsweep/plot.py fs_cd1_small                     # paper figure: geomean IPC gain per suite and policy
 ```
 
 It needs:
@@ -105,6 +106,25 @@ cd1/small has 16,380 sims:
 
 - google: 1,920 sims in 17 shards of 10–120. One 120-sim shard fills most of an H4D's 185 slots.
 - rest: 14,460 sims in 84 shards of 20–180.
+
+## Plotting
+
+`plot.py <name>` reads the collected experiment and writes a paper figure, plus a `.csv` of every plotted value. The
+figure shows the nested geomean IPC gain over LRU, as sci computes it, per suite and policy. Policies are named and
+ordered as the paper does (`NAMES`, `DEFAULT_CONFIGS`): Catalyst (REPL_MLP), Catalyst per-SP, D-only, I-only, then DRRIP, SHiP++,
+Mockingjay, LACS, CLIP, EMISSARY and ICARUS. Mockingjay is `mockingjay_p1`, with no prefetch penalty.
+
+```
+tools/fullsweep/plot.py fs_cd1_small --by suite --ymax 6 --out gain_by_suite.png   # a group per suite, a bar per policy
+tools/fullsweep/plot.py fs_cd1_small --out gain_by_policy.png                      # a group per policy, a bar per suite
+```
+
+- **Styles:** Catalyst is the dark solid bar. Every other policy has a texture on a pale tint. Textures repeat 7
+  bars apart. Each policy and suite keeps one tint in every figure (`TINT_OF`): Catalyst's ablations share its blue,
+  and variants of one policy share its tint. Bars that share a texture differ in color.
+- **`--ymax`** cuts the y axis. A cut bar gets a break mark and its value standing on top, and the value also goes to stderr
+  and to the CSV's `cut` column.
+- **Output:** run details go to stderr and the gain table to stdout.
 
 ## Counts and estimates
 
