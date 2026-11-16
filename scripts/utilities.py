@@ -66,6 +66,13 @@ INFRA_MOUNT_TARGET = "/scarab_infra"
 # /usr/local/bin/... references elsewhere keep working untouched.
 ROOT_ENTRYPOINT = f"{INFRA_MOUNT_TARGET}/common/scripts/root_entrypoint.sh"
 
+# Simulation containers get no network: a sim reads its traces and binaries from bind mounts,
+# and exec-mode client/server workloads talk over loopback, which "none" keeps. On the default
+# bridge every `docker run` also creates a veth pair, with its udev events and network setup,
+# and that work is serialized: on pakuchi with ~230 starts queued, one container took 307 s to
+# start on the bridge and 27 s without a network, and only ~25 of ~240 launched sims ran.
+SIM_DOCKER_NETWORK = "--network none"
+
 
 def infra_mount_arg(infra_dir):
     """Return the `docker --mount` spec exposing the host scarab-infra checkout."""
@@ -2049,7 +2056,7 @@ def write_docker_command_to_file(user, local_uid, local_gid, workload, workload_
             if slurm:
                 f.write("SLURM_CGROUP=$(cat /proc/self/cgroup | cut -d: -f3 | head -n 1)\n")
                 f.write("echo $SLURM_CGROUP\n")
-                f.write(f"docker run --privileged\
+                f.write(f"docker run --privileged {SIM_DOCKER_NETWORK}\
                 --cgroup-parent $SLURM_CGROUP \
                 --cgroupns=host \
                 -e user_id={local_uid} \
@@ -2068,7 +2075,7 @@ def write_docker_command_to_file(user, local_uid, local_gid, workload, workload_
                 {image_tag_for(docker_prefix, infra_dir)} \
                 /bin/bash\n")
             else:
-                f.write(f"docker run --privileged\
+                f.write(f"docker run --privileged {SIM_DOCKER_NETWORK}\
                 -e user_id={local_uid} \
                 -e group_id={local_gid} \
                 -e username={user} \
@@ -2147,7 +2154,7 @@ def _write_pooled_docker_command(f, user, local_uid, local_gid, workload, experi
     f.write("else\n")
     f.write("    echo \"Starting container $POOL\"\n")
     f.write("    remove_pool\n")
-    f.write("    if ! docker run --privileged"
+    f.write(f"    if ! docker run --privileged {SIM_DOCKER_NETWORK}"
             f" -e user_id={local_uid}"
             f" -e group_id={local_gid}"
             f" -e username={user}"
