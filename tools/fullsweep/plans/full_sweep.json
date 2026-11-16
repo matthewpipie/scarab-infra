@@ -160,10 +160,10 @@
       "min_binary":"scarab_aa00448"
     },
     "mlp_ship":{
-      "_doc":"REPL_MLP's countdown as a boost on SHiP++ (--mlp_rrip_boost 3, #66), gsearch cship. Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
+      "_doc":"REPL_MLP's countdown as a boost on SHiP++ (--mlp_rrip_boost 3, #66), gsearch cshippf (SHiP++ with --mlc_shippp_inst_pref_is_pref 1, as the shippp setup). Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
       "enabled":false,
       "mlp":"core:all",
-      "gsearch":"cship/small",
+      "gsearch":"cshippf/small",
       "min_binary":"scarab_aa00448"
     },
     "mlp_mj":{
