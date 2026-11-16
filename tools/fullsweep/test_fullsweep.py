@@ -70,7 +70,7 @@ class GenCd1Small(unittest.TestCase):
     def test_counts(self):
         per_cfg = Counter(r[0] for r in self.master)
         self.assertEqual(set(per_cfg), {"lru", "mlp_core", "mlp_gd", "mlp_gi", "mlp_sp", "icarus", "emissary",
-                                        "emissary_r1", "lacs", "clip", "drrip", "mockingjay", "mockingjay_p1"})
+                                        "emissary_r1", "lacs", "clip", "drrip", "mockingjay", "mockingjay_p1", "shippp"})
         self.assertEqual(set(per_cfg.values()), {1638})
         lru = Counter(r[1] for r in self.master if r[0] == "lru")
         self.assertEqual(lru, {"google": 192, "datacenter": 71, "spec2006": 433, "spec2017": 243, "spec2026": 699})
@@ -135,7 +135,7 @@ class GenCd1Small(unittest.TestCase):
     def test_policy_params(self):
         want = {"lru": "0", "mlp_core": "9", "mlp_gd": "9", "mlp_gi": "9", "mlp_sp": "9", "icarus": "21",
                 "emissary": "24", "emissary_r1": "24", "lacs": "20", "clip": "25", "drrip": "18", "mockingjay": "22",
-                "mockingjay_p1": "22"}
+                "mockingjay_p1": "22", "shippp": "26"}
         for cfg, suite, sub, wl, cid, params in self.master:
             self.assertEqual(F.flag_value(params, "mlc_cache_repl_policy"), want[cfg], cfg)
             if cfg == "emissary_r1":

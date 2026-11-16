@@ -145,6 +145,12 @@
       "_doc":"REPL_MOCKINGJAY (22), bypass off and no extra training distance for reuse that ends in a prefetch (--mockingjay_pf_penalty 1, vs the artifact's 2). Flex-MIN's penalty assumes prefetches are cheap to miss, which FDIP instruction prefetches are not.",
       "enabled":true,
       "params":"--mlc_cache_repl_policy 22 --mockingjay_bypass 0 --mockingjay_pf_penalty 1"
+    },
+    "shippp":{
+      "_doc":"REPL_SHIPPP (26), SHiP++ (Young et al., CRC2 2017; scarab #64) with its defaults, FDIP instruction prefetches counted as prefetches (--mlc_shippp_inst_pref_is_pref 1). Needs a binary with #64 (6984b13); #64 only adds the policy, so its sims compare with setups on older binaries.",
+      "enabled":true,
+      "binary":"scarab_6984b13",
+      "params":"--mlc_cache_repl_policy 26 --mlc_shippp_inst_pref_is_pref 1"
     }
   },
   "_pakuchi_suites":"Suites whose traces are all on pakuchi, for estimates with pakuchi in --pool (cloudhost checks the real files).",
