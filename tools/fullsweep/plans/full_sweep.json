@@ -168,7 +168,7 @@
     },
     "mlp_mj":{
       "_doc":"REPL_MLP's countdown on Mockingjay's aging step (--mlp_mj_boost, #65), gsearch cmj. Its base params and core:all gammas come from its own gsearch study (core units only), so it runs only in sweeps of that study's architecture. min_binary: needs scarab #65/#66 (aa00448). Enable it once the study has converged.",
-      "enabled":false,
+      "enabled":true,
       "mlp":"core:all",
       "gsearch":"cmj/small",
       "min_binary":"scarab_aa00448"
