@@ -5,6 +5,7 @@
 
 import subprocess
 import argparse
+import time
 import os
 import sys
 import re
@@ -322,6 +323,18 @@ def open_interactive_shell(user, descriptor_name, descriptor_data, workloads_dat
         raise e
 
 
+# How long a launch waits for apparently stale containers of its experiment to go away (a finished
+# runner's containers being removed by --rm) before refusing to start.
+STALE_RECHECK_S = 30
+STALE_RECHECK_STEP_S = 5
+
+
+def container_state(name):
+    """docker's State.Status of a container ("running", "exited", ...), or "" if it can't be inspected."""
+    r = subprocess.run(["docker", "inspect", "-f", "{{.State.Status}}", name], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
 def find_conflicting_containers(workload_manager, docker_prefix_list, experiment_name, user, dbg_lvl=2, configs=None):
     if use_apptainer():
         return {}, {}
@@ -548,6 +561,39 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
             dbg_lvl,
             configs,
         )
+        # A runner of this experiment that has just finished leaves its stopped pool containers for
+        # the seconds docker's --rm takes to remove them (longer on a loaded host); a second runner
+        # starting then counted them as stale and refused. Re-check for a while before refusing.
+        waited = 0
+        while stale_conflicts and waited < STALE_RECHECK_S:
+            time.sleep(STALE_RECHECK_STEP_S)
+            waited += STALE_RECHECK_STEP_S
+            stale_conflicts, active_conflicts = find_conflicting_containers(
+                workload_manager,
+                docker_image_list,
+                experiment_name,
+                user,
+                dbg_lvl,
+                configs,
+            )
+        if stale_conflicts and workload_manager == "manual":
+            # A finished runner's containers sometimes stay behind as exited (137) instead of being
+            # removed by --rm (seen on pakuchi at load ~390: 31 pool containers of a runner whose shard
+            # had completed). Nothing runs in an exited container and results live in the bind mounts,
+            # so finish the removal --rm should have done, then look again.
+            leftover = [n for names in stale_conflicts.values() for n in names if container_state(n) in ("exited", "dead", "created")]
+            if leftover:
+                subprocess.run(["docker", "rm", *leftover], capture_output=True, text=True)
+                print(f"Removed {len(leftover)} exited container(s) a finished runner of '{experiment_name}' left behind "
+                      f"(e.g. {leftover[0]}).")
+                stale_conflicts, active_conflicts = find_conflicting_containers(
+                    workload_manager,
+                    docker_image_list,
+                    experiment_name,
+                    user,
+                    dbg_lvl,
+                    configs,
+                )
         if stale_conflicts:
             print(f"Found existing stale containers for experiment '{experiment_name}'. Refusing to launch simulations.")
             for location, containers in sorted(stale_conflicts.items()):
