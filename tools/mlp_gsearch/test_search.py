@@ -205,6 +205,50 @@ def test_core():
           f"gi=0 line {core['gi=0'].best}; {rounds} rounds, sims per round {sims}")
 
 
+def test_core_only():
+    """levels ["core"]: only the core units are decided, they find the same optima as with every level on, and a
+    round runs far fewer sims (no per-simpoint climbs). A start near the optimum converges in one round."""
+    sps = [sp("google", "a", "1", 0.7), sp("google", "a", "2", 0.3), sp("spec2006", "b", "1", 0.6),
+           sp("spec2006", "b", "2", 0.4), sp("spec2006", "c", "1", 1.0)]
+
+    def fn(k, gi, gd):
+        if k[0].startswith("google"):
+            return 1 + 0.002 * gi - 0.000008 * gi * gi + 0.001 * gd - 0.00002 * gd * gd
+        if k[0].endswith("/c"):                      # its own optimum far from the core's
+            return 1 + 0.0004 * gd - 0.000001 * gd * gd
+        return 1 + 0.0003 * gd - 0.000002 * gd * gd
+    full = S.Settings.from_study({"step": 12, "max_gamma": [192, 192], "core": True})
+    only = S.Settings.from_study({"step": 12, "max_gamma": [192, 192], "levels": ["core"]})
+    assert only.core and only.searched == ("core",) and full.searched == S.LEVELS
+    _, r_full, u_full, _, s_full = loop(sps, fn, full, max_rounds=12)
+    _, r_only, u_only, _, s_only = loop(sps, fn, only, max_rounds=12)
+    assert {u.level for u in u_only} == {"core"}, {u.level for u in u_only}
+    best = lambda us: {u.name: u.best for u in us if u.level == "core"}
+    assert best(u_only) == best(u_full), (best(u_only), best(u_full))
+    assert all(u.converged for u in u_only)
+    assert sum(s_only) < sum(s_full), (s_only, s_full)
+    # Started at the optimum and its neighbors, it converges without another round.
+    b = best(u_only)
+    init = {0: [0, b["gi=0"][1] - 12, b["gi=0"][1], b["gi=0"][1] + 12]}
+    for gi in (b["gd=0"][0] - 12, b["gd=0"][0], b["gd=0"][0] + 12):
+        init.setdefault(gi, []).append(0)
+    gi, gd = b["all"]
+    for q in ((gi, gd), (gi - 12, gd), (gi + 12, gd), (gi, gd - 12), (gi, gd + 12)):
+        init.setdefault(q[0], []).append(q[1])
+    warm = S.Settings.from_study({"step": 12, "max_gamma": [192, 192], "levels": ["core"],
+                                  "init": {str(k): sorted(set(v)) for k, v in init.items()}})
+    _, r_warm, u_warm, m_warm, s_warm = loop(sps, fn, warm, max_rounds=12)
+    # On a plateau the incumbent may settle on another point within min_gain_pp of the cold start's; the
+    # partial-gain rule can ask for one more round.
+    keys = [x.key for x in sps]
+    tol = warm.min_gain_pp["core"]
+    for u in u_warm:
+        assert u.converged and m_warm.unit_value("core", keys, b[u.name]) - u.gain < tol, (u.name, u.best, b)
+    assert r_warm <= 2 and sum(s_warm) < sum(s_only), (r_warm, s_warm, s_only)
+    print(f"core_only: same core optima {b}; sims {sum(s_only)} in {r_only} rounds vs {sum(s_full)} in {r_full} "
+          f"with every level; warm start {best(u_warm)}: {r_warm} rounds, {sum(s_warm)} sims")
+
+
 def test_jump_ladder():
     """A frontier creeping up by less than min_gain_pp per step doesn't drag the incumbent along (jump "ladder")."""
     sp1 = S.Simpoint("google", "google/google/x", "0", 1.0)
@@ -298,6 +342,7 @@ def main():
     test_growing_lookahead()
     test_side_checks()
     test_core()
+    test_core_only()
     test_jump_ladder()
     if a.replay:
         replay(a.replay)

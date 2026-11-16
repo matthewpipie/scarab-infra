@@ -33,7 +33,8 @@ The rules, per unit:
     less than `min_gain_pp` but at least `partial_gain` of it, the point 2 steps away runs too, so a slow
     trend (two steps of 0.08 pp) is still found.
   - Converged when it needs nothing. A unit whose best sits on max_gamma while still rising is at_cap.
-With `core` on, a variant gets three core units over all its simpoints: `all` searches both gammas for the one best
+`levels` limits the search to some of these levels (e.g. only "core"); units of other levels are neither decided
+nor given needs, so only the searched units' neighbors run. With `core` on, a variant gets three core units over all its simpoints: `all` searches both gammas for the one best
 static setting; `gd=0` searches gamma_i along gamma_d = 0 (instruction boost only); `gi=0` searches gamma_d along
 gamma_i = 0 (data boost only). A line unit's incumbent and neighbors stay on its line.
 A core unit's needs run on every simpoint of the variant, a suite's on all of its simpoints, a workload's or an
@@ -93,6 +94,10 @@ class Settings:
     # Where a unit's incumbent jumps when a measured point off its climb beats it by min_gain_pp: "ladder" (the
     # smallest-gamma such point, repeated) or "max" (the best measured point; lets a slow frontier drag it along).
     jump: str = "ladder"
+    # The unit levels searched (study key `levels`); None: every level, with core only when `core` is on. A study
+    # after one static setting lists only "core": each round then runs just the core units' needs, on every
+    # simpoint, instead of also chasing hundreds of per-simpoint optima.
+    levels: tuple = None
 
     @classmethod
     def from_study(cls, s):
@@ -110,6 +115,13 @@ class Settings:
         st.max_attempts = int(s.get("max_attempts", st.max_attempts))
         st.partial_gain = float(s.get("partial_gain", st.partial_gain))
         st.core = bool(s.get("core", st.core))
+        if "levels" in s:
+            lv = tuple(s["levels"])
+            bad = [x for x in lv if x not in LEVELS]
+            if bad or not lv:
+                raise ValueError(f"levels: a non-empty subset of {LEVELS}, got {s['levels']!r}")
+            st.levels = tuple(x for x in LEVELS if x in lv)
+            st.core = "core" in st.levels
         st.jump = s.get("jump", st.jump)
         if st.jump not in ("ladder", "max"):
             raise ValueError(f"jump: 'ladder' or 'max', got {st.jump!r}")
@@ -127,6 +139,11 @@ class Settings:
         if 0 not in st.init or 0 not in st.init[0]:
             raise ValueError("init must include (0, 0), the baseline")
         return st
+
+    @property
+    def searched(self):
+        """The unit levels searched: `levels`, else every level (core only when `core` is on)."""
+        return self.levels or tuple(x for x in LEVELS if x != "core" or self.core)
 
     @property
     def steps(self):
@@ -246,7 +263,7 @@ class Model:
         out += [("suite", s, s, sorted(ks)) for s, ks in sorted(by_suite.items())]
         if self.st.core and act:
             out += [("core", name, "core", sorted(act)) for name in CORE_LINES]
-        return out
+        return [u for u in out if u[0] in self.st.searched]
 
     def unit_value(self, level, members, p):
         """% gain over (0, 0), or None when some member lacks p or (0, 0)."""

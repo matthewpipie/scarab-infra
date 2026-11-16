@@ -1,0 +1,63 @@
+{
+  "_doc":"Smoke test of study dr2: one workload per suite, top simpoint, one round, on pakuchi.",
+  "name":"dr2smoke",
+  "state_dir":"/mnt/storage/mgiordan/gsearch",
+  "variants":{
+    "small":{
+      "google":"gs_tmpl_dr2smoke_google_small",
+      "rest":"gs_tmpl_dr2smoke_rest_small"
+    }
+  },
+  "max_rounds":1,
+  "where":"any",
+  "extra_configs":{
+    "lru":"--mlc_cache_repl_policy 0",
+    "drrip":"--mlc_cache_repl_policy 18"
+  },
+  "step":[
+    4,
+    1
+  ],
+  "init":{
+    "0":[
+      0,
+      7,
+      8,
+      9
+    ],
+    "28":[
+      0,
+      10
+    ],
+    "32":[
+      0,
+      9,
+      10,
+      11
+    ],
+    "36":[
+      0,
+      10
+    ]
+  },
+  "max_gamma":[
+    128,
+    64
+  ],
+  "min_gain_pp":{
+    "simpoint":0.1,
+    "workload":0.1,
+    "suite":0.05
+  },
+  "gi_sensitive_pct":0.2,
+  "lookahead":2,
+  "partial_gain":0.5,
+  "jump":"ladder",
+  "max_lookahead":16,
+  "mem_per_sim_gb":{
+    "google":5.5
+  },
+  "levels":[
+    "core"
+  ]
+}

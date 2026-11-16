@@ -1,12 +1,12 @@
 # Adaptive REPL_MLP γ search
 
-`gsearch.py` finds the best instruction and data gammas (`--mlp_lin_instr_lambda`, `--mlp_lin_data_lambda`) for each simpoint, and keeps enough runs to give the best for each workload and suite too. It runs a few rounds of sims through the cloudhost pool instead of a full grid. Each round's runs are decided from the previous rounds' results.
+`gsearch.py` finds the best instruction and data gammas (`--mlp_lin_instr_lambda`, `--mlp_lin_data_lambda`) for each simpoint, and keeps enough runs to give the best for each workload and suite too; or, with `levels: ["core"]`, only the best static settings for sci's `Avg`. It runs a few rounds of sims through the cloudhost pool (as `cloudhost sweep`s) instead of a full grid. Each round's runs are decided from the previous rounds' results.
 
 ## Files
 
 | File | What it does |
 |---|---|
-| `gsearch.py` | The CLI: plans rounds, writes shard descriptors, launches them with cloudhost, collects stats, reports. |
+| `gsearch.py` | The CLI: plans rounds, writes round descriptors, runs each as a `cloudhost sweep`, ingests the stats, reports. |
 | `search.py` | The decision rules. No I/O; `test_search.py` runs them against fake IPC surfaces. |
 | `studies/*.json` | Study files: search settings and the template descriptors to use. |
 | `test_search.py` | Offline tests. `--replay DIR/ipc_long.csv` also replays a real sweep (`tools/mlp_gamma/report.py --out DIR`). |
@@ -21,7 +21,7 @@ gi0_gd0 is the base policy with no boost. A config is a search point if its para
 - `architecture`, `scarab_path`, `root_dir` and `traces_dir`
 - `top_simpoint`
 - `simulations`, which pick suites and workloads, with their warmup
-- in the base params, any instruction limit (Google: `--inst_limit 250000000` with warmup 50000000 is 50M warmup + 200M measured)
+- in the base params, any instruction limit (Google: `--inst_limit 250000000` with warmup 50000000 is 50M warmup + 200M measured; `dr2` uses 150000000, 50M + 100M)
 
 To search a new architecture, suite, run length or flag set, write a template. Templates whose suites need different `traces_dir`, `top_simpoint` or instruction limits must be separate, as in sci.
 
@@ -29,7 +29,7 @@ To search a new architecture, suite, run length or flag set, write a template. T
 
 | Key | Default | Meaning |
 |---|---|---|
-| `name` | | Letters and digits; part of every shard's name. |
+| `name` | | Letters and digits; part of every round descriptor's name. |
 | `variants` | | `{label: {tag: template}}`. Each variant is an independent search: its own optima, and its own cross-suite view. `cd1.json` has `small` and `small_incl`. |
 | `step` | 12 | Grid step for both gammas, or `[γi step, γd step]`. The right step depends on γ's unit: `dr1` (DRRIP, aging steps) uses `[4, 1]`. |
 | `init` | `{"0": [0,12,24,36,48], "96": [0,24,48]}` | Round 1's points, as rows keyed by γi. The largest γi row doubles as the γi probe. |
@@ -37,16 +37,16 @@ To search a new architecture, suite, run length or flag set, write a template. T
 | `lookahead` | 2 | Steps to run in a direction the search is still climbing. |
 | `max_lookahead` | 8 | The horizon doubles while a unit keeps climbing the same way, from `lookahead` to 2×, 4× … up to this many steps. Every step out to the horizon runs, so nothing on the path is skipped. |
 | `core` | false | Also search the three core units (see the rules): sci's `Avg` over the variant's suites, at its best static (γi, γd), along γi with γd = 0, and along γd with γi = 0. `cd1` and `dr1` turned it on in a later round. |
+| `levels` | every level | The unit levels searched, a subset of `simpoint`, `input`, `workload`, `suite`, `core`. Without it, every level is searched (core only with `core` on). `["core"]` searches only the three core units: each round runs just their needs, on every simpoint, and the report still shows each suite's gain at every point measured. `dr2` does this, started at `dr1`'s core optima. |
 | `jump` | `ladder` | Where an incumbent jumps when a point measured off its climb beats it by `min_gain_pp`. `ladder` takes the smallest-γ such point, and repeats, so the incumbent ends within `min_gain_pp` of the best measured point. A jump doesn't count as a climb step for the lookahead. `max` jumps straight to the best measured point. Then a frontier that creeps up by less than `min_gain_pp` per step drags the incumbent, and its needs, along every round: cd1's golden_small_incl Google suite crept from γi 180 to 240 at +0.01 pp per step before `cd1` switched to `ladder` in round 19. |
 | `min_gain_pp` | simpoint 0.1, workload 0.1, suite 0.05, core 0.05 | A point counts as better only if its gain over gi0_gd0 beats the incumbent's by this many percentage points. |
 | `partial_gain` | 0.5 | If a neighbor beats the incumbent by at least this fraction of `min_gain_pp`, the point one step further also runs. |
 | `gi_sensitive_pct` | 0.2 | A simpoint is γi-insensitive if no γi>0 run moves its IPC by more than this from γi=0 at the same γd. |
 | `max_gamma` | [192, 192] | Upper bounds for γi and γd. `cd1` started at 192 and was raised to 384 when simpoints reached 192 still improving. |
 | `max_rounds` | 5 | |
-| `shard_vm_hours` | 1.0 | Target length of a shard, in hours of one machine running the tag's `max_parallel` sims, a float or `{tag: float}`. One shard is one cloudhost run. Smaller shards spread a round over more machines. |
-| `where` | `any` | cloudhost `--where`, or a map from template tag to it, e.g. `{"google": "cloud", "rest": "any"}`, since 250M-instruction sims run about 1.6x faster on an H4D than on pakuchi. |
-| `max_parallel` | 192 | Sims at once per shard (sci `max_parallel`, cloudhost `--max-parallel`), an int or `{tag: int}`. Google at 50M+200M reaches ~5 GB RSS per sim, so 192 at once ran a 708 GB H4D out of memory; `cd1` used 112 for google on H4Ds; with n4d-96 machines (96 vCPU, 377 GB) in the pool it uses 64, which fits either. cloudhost never runs more sims than the machine has vCPUs. |
-| `mem_per_sim_gb` | 0 | GB of RAM one sim needs, a float or `{tag: float}`, passed to `cloudhost run --mem-per-sim`. cloudhost then caps a cloud run at what fits the chosen machine's RAM, so H4D and n4d machines each run as many as fit. `cd1` and `dr1` set google to 5.5 with `max_parallel` 128: 125 per H4D, 65 per n4d. |
+| `where` | `any` | `cloudhost sweep --where`, or a map from template tag to it, e.g. `{"google": "cloud", "rest": "any"}`. With `any`, a sweep already sends google (its `--slow-suites`) to the fastest free machines first: H4D, then pakuchi, then N4D. |
+| `shard_size` | 64 | Sims per sweep shard (`cloudhost sweep --shard-size`), an int or `{tag: int}`. A suite with fewer simpoints than this keeps all of them in each shard, with as many configs as fit; a bigger one is cut into chunks of simpoints, one config per shard. Fewer, bigger shards mean fewer launches; smaller ones finish a round's tail sooner. `dr2`: google 64, the rest 128. |
+| `mem_per_sim_gb` | 0 | GB of RAM one sim needs, a float or `{tag: float}`, passed to `cloudhost sweep --mem-per-sim`. cloudhost sizes each shard's slice of a machine by it. Google at 50M+200M reaches ~5 GB RSS per sim: `cd1`, `dr1` and `dr2` set google to 5.5 (125 per H4D, 65 per n4d). |
 | `extra_configs` | `{}` | `{name: params}` added to round 1 only, e.g. `{"lru": ""}` to check that gi0_gd0 is plain LRU. |
 | `state_dir` | `/mnt/storage/mgiordan/gsearch` | State goes in `<state_dir>/<name>/`. |
 
@@ -105,17 +105,17 @@ python tools/mlp_gsearch/gsearch.py plan cove1
 setsid nohup python -u tools/mlp_gsearch/gsearch.py run cove1 --yes > /mnt/storage/mgiordan/gsearch/cove1/run.log 2>&1 < /dev/null &
 ```
 
-Studies can run at the same time. They share the pool, and their shards queue for machines.
+Studies can run at the same time. They share the pool, and their sweeps' shards queue for machines.
 
 ## Running
 
 ```
 python tools/mlp_gsearch/gsearch.py plan cd1          # what round 1 would run, its sims and cost
 python tools/mlp_gsearch/gsearch.py run cd1 --yes     # all rounds, unattended
-python tools/mlp_gsearch/gsearch.py status cd1        # shards, hosts, and where each unit stands
+python tools/mlp_gsearch/gsearch.py status cd1        # round descriptors, their sweeps, and where each unit stands
 python tools/mlp_gsearch/gsearch.py report cd1       # summary.md + CSVs in <state_dir>/cd1/report/
-python tools/mlp_gsearch/gsearch.py pull cd1          # full cloud results to pakuchi (the search needs only the CSVs)
-python tools/mlp_gsearch/gsearch.py replan cd1        # re-lay out the current round's unlaunched shards (stop `run` first)
+python tools/mlp_gsearch/gsearch.py pull cd1          # only for rounds run before sweeps (sweeps pull their own results)
+python tools/mlp_gsearch/gsearch.py replan cd1        # re-lay out the current round's descriptors not yet started (stop `run` first)
 python tools/mlp_gsearch/gsearch.py top-up cd1 [--yes] # add to the current round what a fresh decision wants that it doesn't run yet,
                                                       # e.g. after turning on `core` (stop `run` first; without --yes, a dry run)
 python tools/mlp_gsearch/gsearch.py reingest cd1      # rewrite obs/ from every shard's collected_stats.csv (stop `run` first)
@@ -128,7 +128,7 @@ A study runs for hours, so start it detached:
 setsid nohup python -u tools/mlp_gsearch/gsearch.py run cd1 --yes > /mnt/storage/mgiordan/gsearch/cd1/run.log 2>&1 < /dev/null &
 ```
 
-Rerunning `run` resumes the current round. Relaunching a shard is safe, since sci skips sims that completed.
+Rerunning `run` resumes the current round. Sweeps keep running while `run` is stopped; it picks them up by their ids in `state.json`. `cloudhost sweep status` shows each one's shards.
 
 ### A round
 
@@ -140,21 +140,25 @@ Rerunning `run` resumes the current round. Relaunching a shard is safe, since sc
      - **Padding:** a padded slot first takes a speculative neighbor of the simpoint's incumbent that hasn't been measured yet: a diagonal, then a 2-step point. It repeats a point only after those run out. On a single-wave shard those sims use idle cores, and they check the corners an axis-by-axis climb never visits.
      - **Before slots:** sci's cross product made cd1 run 40,280 sims where it needed 19,583. Late rounds ran 3–6x what they needed.
      - **Check:** slot runs were cycle-identical to named runs of the same points (15/15).
-   - Cut each group into even shards of at most about `shard_vm_hours`, keeping a workload's simpoints together.
-   - Write `json/gs_<study>_r<k>_<variant>_<tag>_<i>.json`, a copy of the template with its own `simulations` and configurations.
-2. **Build:** `./sci --build-scarab` once per binary, before any launch, so no two sci processes build the same hash at once.
-3. **Launch:** shards go out longest first, one at a time, with `cloudhost run any <shard> --wait`. `CLOUDHOST_WHO` is `gsearch-<study>`.
-4. **Wait:** `cloudhost ls --json` is polled every 2 minutes; a shard is done when its lease is gone.
-5. **Collect:**
-   - **On pakuchi:** `./sci --collect-stats <shard>`.
-   - **On a cloud machine:** run `./sci --collect-stats` there and fetch only `collected_stats.csv`, gzipped. If that fails, or the machine has stopped, fall back to `cloudhost pull` and collect locally.
-   - **Retries:** a shard that comes back with under half its sims is relaunched, at most twice.
-6. **Ingest:** each shard's IPCs go to `obs/<shard>.json`, and `report/` is rewritten.
+   - Each group is one round descriptor, `json/gs_<study>_r<k>_<variant>_<tag>_<i>.json`: a copy of the template with its own `simulations` and configurations, one experiment.
+2. **Build:** `./sci --build-scarab` once per binary, before any launch, so no two sci processes build the same hash at once, and cloud machines get the cached build.
+3. **Launch:** each descriptor goes out as `cloudhost sweep start <descriptor> --detach` (longest sims first), with the study's `where`, `shard_size` and `mem_per_sim_gb`, as `gsearch-<study>`. The sweep cuts it into shards that share the experiment (sci's multi-runner fix, scarab-infra #22), places them across the pool, and:
+   - retries a shard whose sims did not all finish, on the host that has the rest, up to 3 times;
+   - pulls each cloud shard to pakuchi as it ends;
+   - checks the whole experiment with `./sci --status` and collects it once with `./sci --collect-stats`.
+4. **Wait:** each sweep's `state.json` is read every minute.
+   - **Complete:** ingest its `collected_stats.csv`.
+   - **Failed or incomplete** (some shard failed 3 times): `cloudhost sweep resume --retry-failed`, twice; then collect what finished here, and the search retries the missing points next round (a point that fails twice drops its simpoint).
+   - **No driver** (it died; its state file unchanged for 5 minutes): `cloudhost sweep resume`.
+   - **Mostly empty** (under half its runs have stats): stop the study rather than record them all as failures.
+5. **Ingest:** each descriptor's IPCs go to `obs/<descriptor>.json`, and `report/` is rewritten.
+
+Rounds before `dr2` ran on gsearch's own launcher (one `cloudhost run` per VM-sized shard, collecting on the machine); the per-core leases and sweeps of cloudhost replaced it. Those studies' reports still regenerate from their `obs/`.
 
 ### State (`<state_dir>/<study>/`)
 
 - `study.json` and `templates/` are frozen copies; later edits to the originals are ignored.
-- `state.json`: rounds, shards, hosts.
+- `state.json`: rounds, their descriptors and sweep ids.
 - `obs/`: per-shard IPCs.
 - `rounds/r<k>/decision.json`: every unit's incumbent and needs when round k was planned.
 - `rounds/r<k>/shards/`
@@ -163,10 +167,9 @@ Rerunning `run` resumes the current round. Relaunching a shard is safe, since sc
 
 ### Report
 
-`summary.md` has, per variant and suite:
-- the incumbent and the best measured point, with their gains;
-- per-workload and per-simpoint oracles;
-- convergence;
-- a grid of the suite's gain at every point all its simpoints have.
+`summary.md` has, per variant:
+- the core units (with `core` on): incumbent, best measured point, each suite's gain at the incumbent, and a grid of the `Avg` gain at every point all simpoints have;
+- per searched suite: the incumbent and the best measured point, with their gains, per-workload and per-simpoint oracles, and convergence;
+- per suite (searched or not): a grid of its gain at every point all its simpoints have.
 
 `units.csv` and `best_{simpoint,input,workload,suite}.csv` list every unit's incumbent, best measured point, gain, flags and remaining needs. `obs.csv` has every run, with its Periodic instructions and cycles, its sci workload and its simpoint's γi sensitivity.

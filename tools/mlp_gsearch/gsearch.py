@@ -10,23 +10,22 @@
 
 STUDY is tools/mlp_gsearch/studies/<name>.json or a path. It names template descriptors (ordinary sci
 descriptors in json/, one configuration each: the binary and base params) and the search settings; see
-README.md. Each round's sims are split into shard descriptors (json/gs_<study>_r<k>_*.json, copies of the
-templates with their own simulations and gi<I>_gd<D> configurations), launched with
-`cloudhost run any <shard> --wait`, and collected with ./sci --collect-stats (on the cloud machine, fetching
-only collected_stats.csv). The decision rules are in search.py. State lives in <state_dir>/<study>/ and a
-rerun resumes where the last one stopped.
+README.md. Each round's sims are written as round descriptors (json/gs_<study>_r<k>_*.json, copies of the
+templates with their own simulations and gi<I>_gd<D> configurations), one per group of simpoints that need the
+same points. Each goes out as one `cloudhost sweep`, which splits it into shards across the pool, retries missing
+sims, pulls cloud results to pakuchi and collects the experiment once; gsearch then ingests its
+collected_stats.csv. The decision rules are in search.py. State lives in <state_dir>/<study>/ and a rerun resumes
+where the last one stopped (sweeps keep running without it).
 """
 
 import argparse
 import copy
 import dataclasses
-import gzip
 import json
 import math
 import os
 import re
 import shlex
-import shutil
 import subprocess
 import sys
 import threading
@@ -49,24 +48,22 @@ CLOUDHOST = Path(os.environ.get("CLOUDHOST", "/home/mgiordan/carp/cloudhost/clou
 LOCAL = os.environ.get("CLOUDHOST_LOCAL", "pakuchi")
 H4D_MIN_PER_MINSTR = 0.125   # 11-11 benchmark: 60M-instruction google sims took ~7.5 min each on an H4D
 VM_CORES, VM_DOLLARS_HR = 192, 7.85
-POLL_S = 120
+POLL_S = 60
 MIN_GROUP_SIMS = 64
-SHARD_OVERHEAD_CORE_MIN = 192 * 10   # what one more shard costs: a launch, and a machine leased whole for its tail
-SHARD_RETRIES = 5            # relaunches of a shard that came back mostly empty (a job-level failure, e.g. a VM whose
-                             # data disk filled up), before its runs count as failed points
+SHARD_OVERHEAD_CORE_MIN = 192 * 10   # what one more descriptor costs: its sweep's launches and its tail
+# cloudhost sweeps: state in <CLOUDHOST_SHARED>/sweeps/<id>/state.json (cloudhost's own default).
+SWEEPS = Path(os.environ.get("CLOUDHOST_SHARED", "/mnt/storage/mgiordan/cloudhost")) / "sweeps"
+DEFAULT_SHARD_SIZE = 64      # sims per sweep shard (cloudhost's default)
+SWEEP_RESUMES = 2            # `sweep resume --retry-failed` of a sweep that ended failed/incomplete, before its
+                             # missing sims are collected as failed runs (the search retries them next round)
+SWEEP_STALE_S = 300          # a sweep whose driver is gone and whose state hasn't changed this long is resumed
+MAX_START_FAILURES = 5       # `cloudhost sweep start` failures of one descriptor before the round stops
 # sci's stat collector can hang: its parallel CSV writer's pool workers attach to a SharedMemory segment by
 # name, and when the segment is already gone (seen with Python 3.12, no `track=False`) each worker's
 # initializer dies, multiprocessing.Pool respawns it forever and the job log grows by GBs. So collection
 # runs under a timeout and falls back to one process (--jobs 1, no shared memory), and a collector that a
 # finished `sci --sim` left running this long is killed so the job, and its lease, can end.
 COLLECT_TIMEOUT_S = 900
-MAX_LAUNCH_FAILURES = 10    # launches that fail for a reason other than "no host" or an unreachable machine
-TRANSIENT = ("Connection timed out", "Connection refused", "Connection reset", "No route to host",
-             "ssh_exchange_identification", "kex_exchange_identification", "Temporary failure in name resolution",
-             "503 ", "502 ", "Internal error", "rateLimitExceeded")
-LOCAL_SMALL_SIMS = 24       # a shard this small may run on pakuchi even when its tag prefers the cloud
-LOCAL_MIN_PARALLEL = 48      # smallest pakuchi slice a shard takes when the cloud machines are busy (16 left two
-                             # 168- and 483-sim shards at 16 and 27 wide for over an hour after the VMs freed)
 GAMMA_FLAGS = ("--mlp_lin_instr_lambda", "--mlp_lin_data_lambda")
 
 
@@ -108,12 +105,10 @@ class Study:
         self.spec = spec
         self.settings = S.Settings.from_study(spec)
         self.max_rounds = int(spec.get("max_rounds", 5))
-        # Target shard length in hours of one machine running max_parallel sims; a float or {tag: float}.
-        self.shard_vm_hours = spec.get("shard_vm_hours", 1.0)
         self.where = spec.get("where", "any")
-        # Sims at once per shard (sci max_parallel, cloudhost --max-parallel), an int or {tag: int}. Google at
-        # 50M+200M reaches ~5 GB RSS per sim (merced), so 192 at once OOM-killed sims on a 708 GB H4D.
-        self.max_parallel = spec.get("max_parallel", VM_CORES)
+        # Sims per sweep shard (cloudhost sweep --shard-size), an int or {tag: int}. (Older studies' shard_vm_hours
+        # and max_parallel sized gsearch's own shards; sweeps replaced those and the keys are ignored.)
+        self.shard_size_spec = spec.get("shard_size", DEFAULT_SHARD_SIZE)
         # GB of RAM one sim needs, a float or {tag: float}: cloudhost then caps a cloud run's sims at once by the
         # chosen VM's memory (cloudhost run --mem-per-sim), so a mixed pool of H4D and n4d machines each run as
         # many as fit (google at 50M+200M: ~5.5 GB, 125 on an H4D, 65 on an n4d-96).
@@ -173,17 +168,13 @@ class Study:
         bench = {label: wk for wk, labels in hier.workloads.items() for label in labels}
         return {k: (dataclasses.replace(v[0], bench=bench[k[0]]), *v[1:]) for k, v in out.items()}
 
-    def shard_hours(self, lab):
-        h = self.shard_vm_hours
-        return float(h.get(lab, h.get("default", 1.0)) if isinstance(h, dict) else h)
-
     def mem_per_sim(self, lab):
         m = self.mem_per_sim_gb
         return float(m.get(lab, m.get("default", 0)) if isinstance(m, dict) else m or 0)
 
-    def parallel(self, lab):
-        mp = self.max_parallel
-        return int(mp.get(lab, mp.get("default", VM_CORES)) if isinstance(mp, dict) else mp)
+    def shard_size(self, lab):
+        z = self.shard_size_spec
+        return int(z.get(lab, z.get("default", DEFAULT_SHARD_SIZE)) if isinstance(z, dict) else z)
 
     def base(self, var, lab):
         return next(iter(self.variants[var][lab]["configurations"].values()))
@@ -304,7 +295,7 @@ def layout(study, var, lab, kneeds, spare=None):
     simpoint goes into slot shards: configs s0..s<K-1> whose workload_params (scarab-infra #17) give each
     simpoint its own point per slot, so it runs exactly the points it needs. Slot groups are formed by K (points
     per simpoint); a small group is padded up to the next K (repeating a point, a duplicate run) only while the
-    padding costs less than a shard's overhead. Each group is cut into shards of about shard_vm_hours."""
+    padding costs less than a descriptor's overhead. Each group is one descriptor; its sweep shards it."""
     members = study.members[var]
     mins = {k: study.sim_minutes(var, lab, members[k][3], members[k][2]) for k in kneeds}
     by_set = defaultdict(list)
@@ -328,7 +319,7 @@ def layout(study, var, lab, kneeds, spare=None):
         pad = sum(mins[k] for k in keys_small) * (k_next - k_small)
         # Pad only while the merged group still runs in one wave: then the padding fills cores a separate small
         # shard would leave idle anyway; past a wave it would add whole waves of repeats.
-        one_wave = (len(keys_small) + len(keys_next)) * k_next <= min(VM_CORES, study.parallel(lab))
+        one_wave = (len(keys_small) + len(keys_next)) * k_next <= study.shard_size(lab)
         if pad <= SHARD_OVERHEAD_CORE_MIN and one_wave:
             groups[i + 1] = [k_next, keys_next + keys_small]
             groups.pop(i)
@@ -343,56 +334,18 @@ def layout(study, var, lab, kneeds, spare=None):
             slots[key] = own + extra + [own[-1]] * (k_slots - len(own) - len(extra))
         items.append({"pts": sorted({p for v in slots.values() for p in v}), "keys": sorted(keys), "slots": slots,
                       "k": k_slots})
-    out = []
-    # H4D core-minutes per shard: shard_vm_hours of a machine running this tag's max_parallel sims at once.
-    cap = study.shard_hours(lab) * min(VM_CORES, study.parallel(lab)) * 60
-    for it in items:
-        per_wl = defaultdict(list)
-        for key in it["keys"]:
-            per_wl[key[0]].append(key)
-        total = sum(mins[key] for key in it["keys"]) * it["k"]
-        n = max(1, math.ceil(total / cap))
-        target = total / n                              # even shards rather than full ones and a stub
-        cur, cur_cost = [], 0.0
-
-        def emit(keys):
-            sl = {key: it["slots"][key] for key in keys} if it["slots"] else None
-            pts = sorted({p for v in sl.values() for p in v}) if sl else it["pts"]
-            out.append({"keys": keys, "pts": pts, "slots": sl})
-
-        for wl, wks in sorted(per_wl.items()):
-            c = sum(mins[key] for key in wks) * it["k"]
-            if cur and cur_cost + c > target * 1.05:
-                emit(cur)
-                cur, cur_cost = [], 0.0
-            cur += wks
-            cur_cost += c
-        if cur:
-            emit(cur)
-    return out
+    # Biggest first: the round's first descriptor (and so its first sweep) is its largest.
+    items.sort(key=lambda it: -sum(mins[key] for key in it["keys"]) * it["k"])
+    return [{"keys": it["keys"], "pts": it["pts"], "slots": it["slots"]} for it in items]
 
 
 def replan(study, state):
-    """Re-lay out the current round's shards that have not launched (e.g. after a layout change), keeping the
-    ones that did. A planned shard that holds a live cloudhost lease (its launch was in flight) counts as
-    launched."""
+    """Re-lay out the current round's descriptors that have not started a sweep (e.g. after a layout change),
+    keeping the ones that did. Run it with the orchestrator stopped."""
     rnd = state.current()
     if rnd is None or rnd["status"] == "done":
         raise SystemExit("no round in progress")
     k = rnd["round"]
-    p = pool()
-    for n, s in rnd["shards"].items():
-        if s["status"] != "planned":
-            continue
-        host = None
-        if any(l.get("desc") == n for l in p.get(LOCAL, {}).get("leases", [])):
-            host = LOCAL
-        for h, v in p.get("cloud", {}).items():
-            if v.get("lease") and v["lease"].get("desc") == n:
-                host = h
-        if host:
-            s.update(status="launched", host=host, launched=now(), adopted=True)
-            log(f"{n}: has a live lease on {host}; counted as launched")
     todo = [n for n, s in rnd["shards"].items() if s["status"] == "planned"]
     if not todo:
         log("every shard of the round has launched; nothing to re-lay out")
@@ -522,7 +475,7 @@ def shard_desc(study, var, lab, name, keys, pts, extra=False, slots=None):
             confs[cname] = c
     d["configurations"] = confs
     n = len(sims) * len(confs)
-    d["max_parallel"] = min(n, VM_CORES, study.parallel(lab))
+    d["max_parallel"] = min(n, study.shard_size(lab))      # a sweep shard's sims all at once (pakuchi slice)
     d["container_reuse"] = True
     vis = d.get("visualize")
     if isinstance(vis, dict):
@@ -544,7 +497,7 @@ def shard_desc(study, var, lab, name, keys, pts, extra=False, slots=None):
 def describe_plan(shards):
     tot_sims = sum(d["gsearch"]["sims"] for d in shards.values())
     tot_h = sum(d["gsearch"]["h4d_core_minutes"] for d in shards.values()) / 60
-    lines = [f"{len(shards)} shards, {tot_sims} sims, ~{tot_h:.0f} H4D core-hours "
+    lines = [f"{len(shards)} round descriptors (one sweep each), {tot_sims} sims, ~{tot_h:.0f} H4D core-hours "
              f"(~{tot_h / VM_CORES:.1f} VM-hours, ~${tot_h / VM_CORES * VM_DOLLARS_HR:.0f} if all on cloud)"]
     for name, d in shards.items():
         g = d["gsearch"]
@@ -564,6 +517,8 @@ def describe_units(summary):
         rows = s["units"]
         for lv in S.LEVELS:
             us = [u for u in rows if u["level"] == lv]
+            if not us:
+                continue                  # a level the study does not search
             conv = sum(u["converged"] for u in us)
             pend = sum(u["pending"] for u in us)
             cap = sum(u["at_cap"] for u in us)
@@ -650,11 +605,12 @@ def ingest_shard(name):
     for cfg, wl, cl, ins, cyc in got:
         if cfg not in kinds:
             continue
-        if slots:
+        m = re.fullmatch(r"s(\d+)", cfg) if slots else None
+        if m:
             # Slot config s<j>: this simpoint's j-th point. A padded slot repeats a point; the runs are identical.
+            # (A slot descriptor's other configs are extra_configs, handled below.)
             own = slots.get(f"{wl}:{cl}")
-            m = re.fullmatch(r"s(\d+)", cfg)
-            if own is None or m is None or int(m.group(1)) >= len(own):
+            if own is None or int(m.group(1)) >= len(own):
                 continue
             p = tuple(own[int(m.group(1))])
             if (wl, cl, p[0], p[1]) in vals and vals[(wl, cl, p[0], p[1])][1] is not None and cyc is None:
@@ -692,21 +648,45 @@ def collect_script(name, csv):
             f"-d $PWD/json/{name}.json -o {csv} --postprocess --jobs 1; }}")
 
 
-def pool():
-    r = sh([CLOUDHOST, "ls", "--json"])
-    if r.returncode != 0:
-        raise RuntimeError(f"cloudhost ls --json failed: {r.stderr.strip()[-500:]}")
-    return json.loads(r.stdout)
+def sweep_state(sid):
+    """A cloudhost sweep's state.json, or None while it can't be read."""
+    try:
+        return json.loads((SWEEPS / sid / "state.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
-def lease_alive(p, host, shard):
-    if host == LOCAL:
-        return any(l.get("desc") == shard for l in p.get(LOCAL, {}).get("leases", []))
-    l = p.get("cloud", {}).get(host, {}).get("lease")
-    return bool(l and l.get("desc") == shard and l.get("kind") == "run")
+def sweep_age_s(sid):
+    try:
+        return time.time() - (SWEEPS / sid / "state.json").stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+def driver_alive(st):
+    """As cloudhost's: the sweep's driver runs on this machine and its process is there."""
+    pid = st.get("driver_pid")
+    return bool(pid) and st.get("driver_host") == os.uname().nodename and Path(f"/proc/{pid}").exists()
+
+
+def sweep_summary(st):
+    if st is None:
+        return "state unreadable"
+    shards = st.get("shards", [])
+    counts = defaultdict(int)
+    for x in shards:
+        counts[x["state"]] += 1
+    return (f"{st.get('state')}, {counts.get('done', 0)}/{len(shards)} shards done"
+            + "".join(f", {v} {k}" for k, v in sorted(counts.items()) if k != "done")
+            + ("" if driver_alive(st) else ", no driver"))
 
 
 class Runner:
+    """Runs a round. Each round descriptor goes out as one `cloudhost sweep` (detached), which splits it into shards,
+    places them across the pool (slow suites first, on the fastest machines), retries missing sims on the host that
+    has the rest, pulls cloud results to pakuchi and collects the experiment once. This waits for each sweep and
+    ingests its collected_stats.csv."""
+
     def __init__(self, study, state, where, logdir):
         self.study, self.state, self.where = study, state, where
         self.logdir = logdir
@@ -714,6 +694,8 @@ class Runner:
         self.env = dict(os.environ, CLOUDHOST_WHO=f"gsearch-{study.name}")
 
     def build_once(self, rnd):
+        """Build each binary here once before any sweep ships it (cloud runs get the cached build, so no two
+        machines build the same hash, and a broken build stops the round before anything launches)."""
         need = {}
         for name, shd in rnd["shards"].items():
             d = json.loads((INFRA / "json" / f"{name}.json").read_text())
@@ -730,294 +712,143 @@ class Runner:
             self.state.save()
 
     def where_for(self, shd):
-        """cloudhost --where for a shard: --where on the command line, else the study's `where`, which may map
-        template tags to places (e.g. {"google": "cloud", "rest": "any"}: long sims run faster on an H4D). A shard's
-        own `where` in the state (set by hand, e.g. to move a shard off an overloaded pakuchi) wins."""
+        """cloudhost --where: --where on the command line, else the study's `where` (a place, or a map from template
+        tag to place). A descriptor's own `where` in the state (set by hand) wins."""
         if shd.get("where"):
             return shd["where"]
         w = self.where
         if isinstance(w, dict):
             w = w.get(shd.get("label"), w.get("default", "any"))
-        if w == "cloud" and shd.get("sims", 10**9) <= LOCAL_SMALL_SIMS:
-            w = "any"      # a few sims need neither the faster machine nor a whole one
         return w
 
-    def fit_local(self, name, shd):
-        """Size a shard's max_parallel to pakuchi's free cores (at least LOCAL_MIN_PARALLEL), so it can run there
-        when other runs hold the cloud machines. cloudhost asks pakuchi for min(sims, max_parallel) cores; on a
-        cloud machine --max-parallel sets it instead."""
-        try:
-            free = int(pool().get(LOCAL, {}).get("free", 0))
-        except (RuntimeError, json.JSONDecodeError, ValueError):
-            return
-        path = INFRA / "json" / f"{name}.json"
-        d = json.loads(path.read_text())
-        want = min(d["gsearch"]["sims"], self.study.parallel(shd.get("label")), max(LOCAL_MIN_PARALLEL, free))
-        if d.get("max_parallel") != want:
-            d["max_parallel"] = want
-            write_json(path, d)
-
-    def pinned_waiter_on_free_vm(self):
-        """Is someone's `cloudhost run <vm> ...` (pinned to one machine, e.g. a replay that needs that machine's
-        earlier output) waiting for a VM that is free right now? `run any` would take it first."""
-        r = subprocess.run(["pgrep", "-af", r"cloudhost run cloudhost-[0-9]+ "], capture_output=True, text=True)
-        pinned = set(re.findall(r"cloudhost run (cloudhost-\d+) ", r.stdout))
-        if not pinned:
-            return False
-        try:
-            p = pool()
-        except (RuntimeError, json.JSONDecodeError):
-            return False
-        free = [h for h in pinned if not p.get("cloud", {}).get(h, {}).get("lease")]
-        if free:
-            log(f"leaving {', '.join(sorted(free))} to a run pinned to it")
-        return bool(free)
-
-    def cleanup_previous(self, name, shd):
-        """Before a shard runs again, remove what its last attempt left on that host: job scripts
-        (<container>_tmp_run.sh, which cloudhost's rsync never deletes), pool containers and the partial
-        experiment dir. sci treats a killed attempt's sim dirs as done and its live-looking scripts as running,
-        so a relaunch on the same host would skip those sims."""
-        host = shd.get("host")
-        if not host:
-            return True
-        if host != LOCAL:
-            try:
-                status = pool().get("cloud", {}).get(host, {}).get("status")
-            except (RuntimeError, json.JSONDecodeError):
-                status = None
-            if status != "RUNNING":
-                self.rename_shard(name, shd, f"{host} is {status or 'unreachable'}, so its leftovers can't be removed")
-                return False
-        d = json.loads((INFRA / "json" / f"{name}.json").read_text())
-        exp_dir = f"{R.resolve(d['root_dir']).as_posix().rstrip('/')}/simulations/{d['experiment']}"
-        script = (f"if systemctl is-active -q cloudhost-job-sim-{name} 2>/dev/null; then echo 'job still active'; exit 3; fi; "
-                  f"cd {INFRA} && rm -f ./*_{name}_*_tmp_run.sh; "
-                  f"docker ps -aq --filter name=_{name}_ | xargs -r docker rm -f >/dev/null; rm -rf {exp_dir}")
-        cmd = ["bash", "-c", script] if host == LOCAL else [str(CLOUDHOST), "ssh", host, script]
-        r = sh(cmd, logf=self.logdir / f"{name}.launch.log")
-        if r.returncode != 0:
-            log(f"{name}: cleanup of its last attempt on {host} failed (exit {r.returncode}); not relaunching yet")
-            return False
-        log(f"{name}: removed its last attempt's scripts, containers and sim dirs on {host}")
-        with self.state.lock:
-            shd["previous_hosts"] = shd.get("previous_hosts", []) + [host]
-            for k in ("host", "lease", "launched", "fetched"):
-                shd.pop(k, None)
-            self.state.save()
-        return True
-
-    def rename_shard(self, name, shd, why):
-        """Relaunch a shard under a new name (a fresh experiment, so nothing a previous attempt left on any host's
-        disk can make sci skip its sims) and abandon the old name."""
-        with self.state.lock:
-            rnd = self.state.current()
-            var, lab = shd["variant"], shd["label"]
-            used = [int(n.rsplit("_", 1)[1]) for n, s in rnd["shards"].items() if s["variant"] == var and s["label"] == lab]
-            new = f"gs_{self.study.name}_r{rnd['round']}_{var}_{lab}_{max(used) + 1}"
-            d = json.loads((INFRA / "json" / f"{name}.json").read_text())
-            d["experiment"] = new
-            d["gsearch"]["renamed_from"] = name
-            write_json(INFRA / "json" / f"{new}.json", d)
-            write_json(self.study.dir / "rounds" / f"r{rnd['round']}" / "shards" / f"{new}.json", d)
-            rnd["shards"][new] = {k: shd[k] for k in ("variant", "label", "sims", "h4d_core_minutes")}
-            rnd["shards"][new].update(status="planned", renamed_from=name, relaunches=shd.get("relaunches", 0))
-            shd["status"] = "abandoned"
-            shd["abandoned_for"] = new
-            self.state.save()
-        log(f"{name}: relaunching as {new} ({why})")
-
-    def launch(self, name, shd):
-        if not self.cleanup_previous(name, shd):
-            time.sleep(60)
-            return False
-        logf = self.logdir / f"{name}.launch.log"
-        if self.where_for(shd) != "cloud":
-            self.fit_local(name, shd)
-        # No --wait: a shard that finds no host returns at once, so the launcher can try the next one (a
-        # google shard waiting for a cloud machine must not hold back a SPEC shard pakuchi could take).
-        cmd = [CLOUDHOST, "run", "any", name, "--infra", INFRA, "--where", self.where_for(shd),
-               "--max-parallel", str(self.study.parallel(shd.get("label")))]
-        mem = self.study.mem_per_sim(shd.get("label"))
+    def start(self, name, shd):
+        lab = shd.get("label")
+        cmd = [CLOUDHOST, "sweep", "start", INFRA / "json" / f"{name}.json", "--infra", INFRA, "--detach",
+               "--where", self.where_for(shd), "--shard-size", str(self.study.shard_size(lab)),
+               "--who", f"gsearch-{self.study.name}"]
+        mem = self.study.mem_per_sim(lab)
         if mem:
-            cmd += ["--mem-per-sim", f"{mem:g}"]     # cloudhost caps sims at once by the chosen VM's RAM
+            cmd += ["--mem-per-sim", f"{mem:g}"]     # cloudhost sizes a shard's slice by the machine's RAM
+        logf = self.logdir / f"{name}.sweep.log"
         start = logf.stat().st_size if logf.exists() else 0
         r = sh(cmd, logf=logf, env=self.env)
         text = logf.read_text()[start:]
-        if r.returncode != 0 and "no host available" in text:
-            return "nohost"
-        if r.returncode != 0 and any(s in text for s in TRANSIENT):
-            # cloudhost drops the lease of a launch that failed; an unreachable machine is not the shard's fault.
-            log(f"launch of {name} hit a transient error (ssh/gcloud); trying again later")
-            return "nohost"
-        m = re.findall(rf"{re.escape(name)}: \d+ sims -> (\S+) \(lease (\w+)", text)
+        m = re.search(r"^sweep (\S+): \d+ sims", text, re.M)
         with self.state.lock:
-            if r.returncode == 0 and m:
-                shd.update(status="launched", host=m[-1][0], lease=m[-1][1], launched=now())
-                log(f"launched {name} on {m[-1][0]}")
+            if m:          # the sweep exists once its state is written, even if detaching its driver failed
+                shd.update(status="launched", sweep=m.group(1), launched=now())
+                log(f"{name}: {shd['sims']} sims as sweep {m.group(1)}")
             else:
                 shd["launch_failures"] = shd.get("launch_failures", 0) + 1
-                shd["status"] = "planned"
-                log(f"launch of {name} failed (exit {r.returncode}); see {logf}")
+                log(f"{name}: cloudhost sweep start failed (exit {r.returncode}); see {logf}")
             self.state.save()
-        return shd["status"] == "launched"
 
-    def fetch(self, name, shd):
-        """Collect a finished shard's stats into the local root_dir. True when collected_stats.csv is here."""
-        d = json.loads((INFRA / "json" / f"{name}.json").read_text())
-        root = R.resolve(d["root_dir"]).as_posix().rstrip("/")
-        csv = Path(f"{root}/simulations/{d['experiment']}/collected_stats.csv")
-        logf = self.logdir / f"{name}.collect.log"
-        host = shd["host"]
-        if host == LOCAL:
-            sh(["bash", "-c", collect_script(name, csv)], logf=logf, cwd=INFRA)
-            return csv.is_file()
-        status = pool().get("cloud", {}).get(host, {}).get("status")
-        if status == "RUNNING":
-            script = f"cd {INFRA} && {{ {collect_script(name, csv)}; }} >&2 && gzip -c {csv}"
-            tmp = csv.with_name("collected_stats.csv.gz.part")
-            csv.parent.mkdir(parents=True, exist_ok=True)
-            with open(tmp, "wb") as out, open(logf, "a") as err:
-                err.write(f"\n=== {now()} remote collect on {host}\n")
-                err.flush()
-                r = subprocess.run([str(CLOUDHOST), "ssh", host, f"bash -lc {shlex.quote(script)}"], stdout=out,
-                                   stderr=err, stdin=subprocess.DEVNULL)
-            if r.returncode == 0:
-                try:
-                    with gzip.open(tmp, "rb") as src, open(csv.with_suffix(".csv.part"), "wb") as dst:
-                        shutil.copyfileobj(src, dst)
-                    csv.with_suffix(".csv.part").replace(csv)
-                    tmp.unlink()
-                    shd["fetched"] = "remote-collect"
-                    return True
-                except (OSError, EOFError) as e:
-                    log(f"{name}: bad collected_stats.csv.gz from {host}: {e}")
-            log(f"{name}: remote collect on {host} failed (exit {r.returncode}); pulling instead")
-        r = sh([CLOUDHOST, "pull", host, name, "--infra", INFRA], logf=logf, env=self.env)
+    def resume(self, name, sid, retry_failed=False):
+        cmd = [CLOUDHOST, "sweep", "resume", sid, "--detach"] + (["--retry-failed"] if retry_failed else [])
+        r = sh(cmd, logf=self.logdir / f"{name}.sweep.log", env=self.env)
         if r.returncode != 0:
-            return False
-        sh(["bash", "-c", collect_script(name, csv)], logf=logf, cwd=INFRA)
-        shd["fetched"] = "pull"
-        return csv.is_file()
+            log(f"{name}: cloudhost sweep resume {sid} failed (exit {r.returncode})")
 
-    def reap_stuck_collectors(self, launched, shards):
-        """Kill stat collectors of still-leased shards that have run longer than COLLECT_TIMEOUT_S."""
-        by_host = defaultdict(list)
-        for n in launched:
-            by_host[shards[n]["host"]].append(n)
-        for host, names in by_host.items():
-            pat = "|".join(re.escape(n) for n in names)
-            script = (f"ps -eo pid=,etimes=,args= | awk '/stat_collector[.]py -d [^ ]*({pat})[.]json/ "
-                      f"&& $2 > {COLLECT_TIMEOUT_S} {{print $1, $0}}' | while read pid rest; do "
-                      "echo \"killing stuck collector: $rest\"; pkill -P $pid; kill $pid; done")
-            cmd = ["bash", "-c", script] if host == LOCAL else [str(CLOUDHOST), "ssh", host, script]
-            try:
-                r = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=120)
-            except subprocess.TimeoutExpired:
-                continue
-            for line in r.stdout.splitlines():
-                log(f"{host}: {line.strip()[:200]}")
+    def csv(self, name):
+        d = json.loads((INFRA / "json" / f"{name}.json").read_text())
+        return R.resolve(d["root_dir"]) / "simulations" / d["experiment"] / "collected_stats.csv"
 
-    def ingest(self, name, shd=None):
-        return ingest_shard(name)
+    def collect_here(self, name):
+        """Collect an experiment whose sweep did not (some sims never finished, or its collection failed). The sweep
+        has already pulled every shard whose job ended."""
+        sh(["bash", "-c", collect_script(name, self.csv(name))], logf=self.logdir / f"{name}.collect.log", cwd=INFRA)
+
+    def poll(self, name, shd):
+        sid = shd.get("sweep")
+        if not sid:
+            raise SystemExit(f"{name}: launched without a sweep id (a shard from gsearch's pre-sweep launcher?); "
+                             "this version only follows sweeps")
+        st = sweep_state(sid)
+        if st is None:
+            return
+        state = st.get("state")
+        if state == "complete":
+            self.finish(name, shd)
+        elif state == "collect-failed":
+            log(f"{name}: sweep {sid} could not collect stats; collecting here")
+            self.collect_here(name)
+            self.finish(name, shd)
+        elif state in ("failed", "incomplete"):
+            n = shd.get("resumes", 0)
+            if n < SWEEP_RESUMES:
+                shd["resumes"] = n + 1
+                log(f"{name}: sweep {sid} {state} ({st.get('result', '')}); resume --retry-failed ({n + 1}/{SWEEP_RESUMES})")
+                self.resume(name, sid, retry_failed=True)
+            else:
+                log(f"{name}: sweep {sid} still {state} after {n} resumes ({st.get('result', '')}); collecting what "
+                    "finished, and the search retries the rest next round")
+                self.collect_here(name)
+                self.finish(name, shd)
+        elif (state == "running" and driver_alive(st) and st.get("shards")
+              and all(x["state"] == "done" for x in st["shards"]) and sweep_age_s(sid) > 2 * COLLECT_TIMEOUT_S):
+            # Every shard is done and the driver has been collecting the experiment (its state file is not rewritten
+            # meanwhile) for too long: sci's collector can hang (see COLLECT_TIMEOUT_S). Kill it; the sweep then ends
+            # collect-failed and this collects with the timeout and --jobs 1 fallback.
+            if not shd.get("collector_killed"):
+                shd["collector_killed"] = now()
+                log(f"{name}: sweep {sid} has been collecting for over {2 * COLLECT_TIMEOUT_S // 60} min; killing its "
+                    "stat collector")
+                sh(["pkill", "-f", f"stat_collector[.]py -d [^ ]*{name}[.]json"])
+        elif not driver_alive(st) and sweep_age_s(sid) > SWEEP_STALE_S:
+            # pending/running/stopped with no driver (it died, pakuchi rebooted, or someone stopped it). Its state
+            # file is rewritten every pass while a driver lives, so a stale file means none will come back.
+            shd["driver_restarts"] = shd.get("driver_restarts", 0) + 1
+            log(f"{name}: sweep {sid} is {state} with no driver; resuming it")
+            self.resume(name, sid)
 
     def finish(self, name, shd):
-        if not self.fetch(name, shd):
-            log(f"{name}: no collected stats")
-            rows, extra, ok = [], [], 0.0
-        else:
-            rows, extra, ok = self.ingest(name, shd)
-        if ok < 0.5 and shd.get("relaunches", 0) < SHARD_RETRIES:
-            shd["relaunches"] = shd.get("relaunches", 0) + 1
-            shd["status"] = "planned"
-            log(f"{name}: only {ok:.0%} of its sims ran; relaunching ({shd['relaunches']}/{SHARD_RETRIES})")
-            return
+        with self.state.lock:
+            shd["status"] = "collecting"
+            self.state.save()
+        rows, extra, ok = ingest_shard(name)
+        if ok < 0.5:
+            # Sweeps retry missing sims several times on their own, so a mostly empty result is a broken setup
+            # (descriptor, build, traces), not bad luck: stop rather than record every point as failed.
+            raise SystemExit(f"{name}: only {ok:.0%} of its runs have stats after its sweep {shd.get('sweep')}; "
+                             f"see `cloudhost sweep status {shd.get('sweep')}`. Fix the cause, then `cloudhost sweep "
+                             f"resume {shd.get('sweep')} --retry-failed` and rerun gsearch (it resumes).")
         obs = self.study.dir / "obs"
         write_json(obs / f"{name}.json", rows)
         if extra:
             write_json(obs / f"{name}.extra.json", extra)
-        shd.update(status="ingested", ok_fraction=round(ok, 4), finished=now())
+        with self.state.lock:
+            shd.update(status="ingested", ok_fraction=round(ok, 4), finished=now())
+            self.state.save()
         log(f"{name}: ingested {len(rows)} runs, {ok:.1%} ok")
 
     def run_round(self, rnd):
         self.build_once(rnd)
         shards = rnd["shards"]
-        # Longest wall time first: waves (sims / max_parallel) times minutes per sim, so single-wave 250M google
-        # shards go out before bigger but shorter SPEC ones.
-        def wall(n):
-            s = shards[n]
-            par = min(VM_CORES, self.study.parallel(s.get("label")))
-            return math.ceil(s["sims"] / par) * s["h4d_core_minutes"] / max(1, s["sims"])
-        def order():
-            """The round's live shards, longest first (shards can be added mid-round by a relaunch under a new
-            name; an abandoned one is not waited for)."""
-            with self.state.lock:
-                names = [n for n in list(shards) if shards[n]["status"] != "abandoned"]
-            return sorted(names, key=lambda n: -wall(n))
-        stop = threading.Event()
-
-        def launcher():
-            while not stop.is_set():
-                todo = [n for n in order() if shards[n]["status"] == "planned"
-                        and shards[n].get("launch_failures", 0) < MAX_LAUNCH_FAILURES]
-                if not todo:
-                    if all(shards[n]["status"] != "planned" for n in order()):
-                        return
-                    time.sleep(30)
-                    continue
-                if self.pinned_waiter_on_free_vm():
-                    time.sleep(90)               # let a run pinned to that VM (its own `--wait` polls every 60 s) take it
-                    continue
-                placed = False
-                for n in todo:                   # longest first; skip the ones no host can take right now
-                    if stop.is_set():
-                        return
-                    if self.launch(n, shards[n]) is True:
-                        placed = True
-                if not placed:
-                    time.sleep(60)
-
-        th = threading.Thread(target=launcher, daemon=True)
-        th.start()
-        try:
-            while True:
-                with self.state.lock:
-                    pending = [n for n in order() if shards[n]["status"] != "ingested"]
-                if not pending:
-                    break
-                stuck = [n for n in pending if shards[n]["status"] == "planned" and shards[n].get("launch_failures", 0) >= MAX_LAUNCH_FAILURES]
-                if stuck:
-                    raise SystemExit(f"shards failed to launch {MAX_LAUNCH_FAILURES} times: {stuck}; see {self.logdir}")
-                launched = [n for n in pending if shards[n]["status"] == "launched"]
-                self.reap_stuck_collectors(launched, shards)
-                if launched:
-                    try:
-                        p = pool()
-                    except (RuntimeError, json.JSONDecodeError) as e:
-                        log(f"pool poll failed: {e}")
-                        p = None
-                    for n in launched:
-                        if p is not None and not lease_alive(p, shards[n]["host"], n):
-                            log(f"{n} finished on {shards[n]['host']}; collecting")
-                            with self.state.lock:
-                                shards[n]["status"] = "collecting"
-                            self.finish(n, shards[n])
-                            self.state.save()
-                            if shards[n]["status"] == "planned" and not th.is_alive():
-                                th = threading.Thread(target=launcher, daemon=True)
-                                th.start()
-                for n in pending:
-                    if shards[n]["status"] == "collecting":       # interrupted mid-collect last time
-                        self.finish(n, shards[n])
-                        self.state.save()
-                if not th.is_alive() and any(shards[n]["status"] == "planned" for n in order()):
-                    th = threading.Thread(target=launcher, daemon=True)
-                    th.start()
-                if all(shards[n]["status"] == "ingested" for n in order()):
-                    continue
+        last = 0.0
+        while True:
+            live = [n for n in list(shards) if shards[n]["status"] not in ("ingested", "abandoned")]
+            if not live:
+                break
+            # Longest sims first, so their sweep places its shards before the short ones take the fast machines.
+            live.sort(key=lambda n: -shards[n]["h4d_core_minutes"] / max(1, shards[n]["sims"]))
+            for n in live:
+                s = shards[n]
+                if s["status"] == "planned":
+                    if s.get("launch_failures", 0) >= MAX_START_FAILURES:
+                        raise SystemExit(f"{n}: `cloudhost sweep start` failed {MAX_START_FAILURES} times; see "
+                                         f"{self.logdir / (n + '.sweep.log')}")
+                    self.start(n, s)
+                elif s["status"] == "launched":
+                    self.poll(n, s)
+                elif s["status"] == "collecting":     # interrupted while ingesting
+                    self.finish(n, s)
+            if time.time() - last > 15 * 60:
+                last = time.time()
+                log("round %d: " % rnd["round"] + "; ".join(
+                    f"{n.split('_', 3)[-1]} {sweep_summary(sweep_state(shards[n]['sweep'])) if shards[n].get('sweep') else shards[n]['status']}"
+                    for n in shards if shards[n]["status"] not in ("ingested", "abandoned")))
+            if any(shards[n]["status"] not in ("ingested", "abandoned") for n in shards):
                 time.sleep(POLL_S)
-        finally:
-            stop.set()
         rnd["status"] = "done"
         rnd["finished"] = now()
         self.state.save()
@@ -1096,11 +927,6 @@ def cmd_run(study, state, a):
 
 
 def cmd_status(study, state, a):
-    try:
-        p = pool()
-    except RuntimeError as e:
-        p = None
-        print(e)
     for rnd in state.rounds:
         counts = defaultdict(int)
         for s in rnd["shards"].values():
@@ -1109,9 +935,10 @@ def cmd_status(study, state, a):
               + (f", finished {rnd['finished']}" if rnd.get("finished") else "") + f"); {dict(counts)}")
         if rnd["status"] != "done":
             for n, s in rnd["shards"].items():
-                alive = p is not None and s.get("host") and lease_alive(p, s["host"], n)
-                print(f"  {n}: {s['status']}" + (f" on {s['host']} since {s.get('launched')}" if s.get("host") else "")
-                      + (" (running)" if alive else "") + f", {s['sims']} sims")
+                sweep = s.get("sweep")
+                print(f"  {n}: {s['status']}, {s['sims']} sims"
+                      + (f"; sweep {sweep}: {sweep_summary(sweep_state(sweep))}" if sweep else "")
+                      + (f" (since {s['launched']})" if s.get("launched") else ""))
     dec = study.dir / "rounds" / f"r{len(state.rounds)}" / "decision.json"
     if dec.is_file():
         print(f"decision before round {len(state.rounds)}:")
@@ -1198,27 +1025,39 @@ def write_report(study, state, quiet=False):
                          f"{S.config_name(u.max_point)} | {u.max_gain:+.3f} | {wl_or:+.3f} | {sp_or:+.3f} | "
                          f"{u.converged} | {u.at_cap} |")
         lines.append("")
-        for u in suites:
-            if u.best is None:
-                continue
-            members_u = [k for k in model.active() if model.sps[k].suite == u.name]
+
+        def grid(level, members_u, bold, title):
             ran = set().union(*(model.ipc[k].keys() for k in members_u))
             pts = sorted(p for p in model.candidates(members_u, ("gi", "gd"))
-                         if p in ran and model.unit_value("suite", members_u, p) is not None)
+                         if p in ran and model.unit_value(level, members_u, p) is not None)
+            if not pts:
+                return
             gis = sorted({p[0] for p in pts})
             gds = sorted({p[1] for p in pts})
-            lines.append(f"{var} / {u.name}: suite gain % at every point all its simpoints have "
-                         f"(rows γi, columns γd; imputed cells for γi-insensitive simpoints):\n")
+            lines.append(f"{title} (rows γi, columns γd; imputed cells for γi-insensitive simpoints; bold: "
+                         f"incumbent):\n")
             lines.append("| | " + " | ".join(f"γd {g}" for g in gds) + " |")
             lines.append("|---|" + "---|" * len(gds))
             for gi in gis:
                 cells = []
                 for gd in gds:
-                    v = model.unit_value("suite", members_u, (gi, gd)) if (gi, gd) in pts else None
+                    v = model.unit_value(level, members_u, (gi, gd)) if (gi, gd) in pts else None
                     c = "" if v is None else f"{v:+.2f}"
-                    cells.append(f"**{c}**" if (gi, gd) == u.best else c)
+                    cells.append(f"**{c}**" if c and (gi, gd) in bold else c)
                 lines.append(f"| **γi {gi}** | " + " | ".join(cells) + " |")
             lines.append("")
+
+        if cores:
+            grid("core", sorted(model.active()), {u.best for u in cores if u.best},
+                 f"{var} / core: sci Avg gain % at every point all simpoints have")
+        by_name = {u.name: u for u in suites}
+        core_all = next((u.best for u in cores if u.name == "all" and u.best), None)
+        for sname in sorted({model.sps[k].suite for k in model.active()}):
+            u = by_name.get(sname)
+            members_u = [k for k in model.active() if model.sps[k].suite == sname]
+            bold = {u.best} if u is not None and u.best else ({core_all} if core_all else set())
+            grid("suite", members_u, bold, f"{var} / {sname}: suite gain % at every point all its simpoints have"
+                 + ("" if u is not None else " (suite not searched; bold: the core `all` incumbent)"))
         sp_units = [u for u in units if u.level == "simpoint" and u.best]
         if sp_units:
             from collections import Counter
@@ -1329,6 +1168,8 @@ def cmd_report(study, state, a):
 
 
 def cmd_pull(study, state, a):
+    """Copy cloud shards' full results to pakuchi. Sweeps pull their own shards; this is for rounds run by gsearch's
+    pre-sweep launcher (one host per shard)."""
     env = dict(os.environ, CLOUDHOST_WHO=f"gsearch-{study.name}")
     for rnd in state.rounds:
         for n, s in rnd["shards"].items():
@@ -1434,7 +1275,8 @@ def new_study(a):
              "name": f"{name}smoke", "state_dir": spec.get("state_dir", "/mnt/storage/mgiordan/gsearch"),
              "variants": smoke_variants, "max_rounds": 1, "where": "local",
              "extra_configs": dict(spec.get("extra_configs", {}), lru=spec.get("extra_configs", {}).get("lru", "--mlc_cache_repl_policy 0"))}
-    for key in ("step", "init", "init_extra", "max_gamma", "min_gain_pp", "gi_sensitive_pct", "lookahead", "partial_gain", "max_parallel"):
+    for key in ("step", "init", "init_extra", "max_gamma", "min_gain_pp", "gi_sensitive_pct", "lookahead", "partial_gain",
+                "levels", "core", "jump", "max_lookahead", "shard_size", "mem_per_sim_gb"):
         if key in spec:
             smoke[key] = spec[key]
     write_json(HERE / "studies" / f"{name}_smoke.json", smoke)
