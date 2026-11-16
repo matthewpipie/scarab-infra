@@ -1,0 +1,96 @@
+{
+  "_descriptor_type":"A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
+  "descriptor_type":"simulation",
+  "_architecture":"PARAMS.<architecture> in scarab_path.",
+  "architecture":"golden_small",
+  "_experiment":"EMISSARY opt == dbg check: P(8):S&E&R(1/32) under the dbg build must give emissary_check_dc's opt IPC exactly. Three datacenter workloads, top simpoint, 10M warmup + 10M measured.",
+  "experiment":"emissary_check_dc_dbg",
+  "workload_manager":"manual",
+  "_max_parallel":"One slot per sim.",
+  "max_parallel":3,
+  "container_reuse":true,
+  "root_dir":"/mnt/storage/mgiordan/",
+  "application_dir":"/home/mgiordan/carp/applications",
+  "_scarab_path":"Private clone of matthewpipie/scarab on branch emissary, so hash builds touch no other session's checkout.",
+  "scarab_path":"/home/mgiordan/carp/scarab-emissary/",
+  "scarab_build":"dbg",
+  "traces_dir":"/mnt/storage/traces/scarab/",
+  "top_simpoint":1,
+  "simpoint_coverage":null,
+  "simulations":[
+    {
+      "suite":"datacenter",
+      "subsuite":"datacenter",
+      "workload":"clang",
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":10000000
+    },
+    {
+      "suite":"datacenter",
+      "subsuite":"datacenter",
+      "workload":"mysql",
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":10000000
+    },
+    {
+      "suite":"datacenter",
+      "subsuite":"datacenter",
+      "workload":"verilator",
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":10000000
+    }
+  ],
+  "_configurations":"main is origin/main cb3143f; the rest are the emissary commit. REPL_EMISSARY is --mlc_cache_repl_policy 24; its defaults are the paper's P(8):S&E&R(1/32).",
+  "configurations":{
+    "emissary":{
+      "_params":"REPL_EMISSARY P(8):S&E&R(1/32), dbg build.",
+      "params":"--mlc_cache_repl_policy 24",
+      "binary":"scarab_bdbc374",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    }
+  },
+  "collect_stats":{
+    "configs":null
+  },
+  "visualize":{
+    "baseline":"emissary",
+    "configs":[
+      "emissary"
+    ],
+    "counters":[
+      "IPC",
+      "EMISSARY_STARVE_IQE_CYCLES_ONPATH_count",
+      "EMISSARY_L1I_FILL_SE_count",
+      "EMISSARY_L1I_FILL_HIGH_count",
+      "EMISSARY_L1I_EVICT_HIGH_count",
+      "EMISSARY_MLC_MARK_count",
+      "EMISSARY_MLC_MARK_ABSENT_count",
+      "EMISSARY_MLC_HIT_HIGH_count",
+      "EMISSARY_MLC_EVICT_HIGH_count"
+    ]
+  },
+  "mem":{
+    "collection_baseline":null,
+    "fallback_mb":16384
+  },
+  "perf_analyze":{
+    "baseline":"emissary",
+    "counters":[
+      "Periodic_Cycles"
+    ],
+    "stat_groups":[
+      "core",
+      "memory"
+    ],
+    "compare_all_stats":false,
+    "drift_top_workloads":1000,
+    "drift_top_simpoints":1000,
+    "prompt_budget_tokens":12000,
+    "threshold_pct":2.0,
+    "analyzer_cli_cmd":""
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "_descriptor_type":"A type of descriptor. One of 'simulation', 'trace', and 'perf'.",
+  "descriptor_type":"simulation",
+  "_architecture":"PARAMS.<architecture> in scarab_path.",
+  "architecture":"golden_small",
+  "_experiment":"EMISSARY pilot on the emissary commit, golden_small (2 MiB 16-way MLC, FDIP on): P(8):S&E&R(1/32) and P(8):S&E against MLC TRUE_LRU, plus nomark (must equal lru). Google top-2 simpoints of every workload, 10M warmup + 50M measured.",
+  "experiment":"emissary_google",
+  "workload_manager":"manual",
+  "_max_parallel":"One slot per sim.",
+  "max_parallel":96,
+  "container_reuse":true,
+  "root_dir":"/mnt/storage/mgiordan/",
+  "application_dir":"/home/mgiordan/carp/applications",
+  "_scarab_path":"Private clone of matthewpipie/scarab on branch emissary, so hash builds touch no other session's checkout.",
+  "scarab_path":"/home/mgiordan/carp/scarab-emissary/",
+  "scarab_build":"opt",
+  "traces_dir":"/mnt/storage/traces/shanen/",
+  "top_simpoint":2,
+  "simpoint_coverage":null,
+  "simulations":[
+    {
+      "suite":"google",
+      "subsuite":"google",
+      "workload":null,
+      "cluster_id":null,
+      "simulation_type":"memtrace",
+      "warmup":10000000
+    }
+  ],
+  "_configurations":"main is origin/main cb3143f; the rest are the emissary commit. REPL_EMISSARY is --mlc_cache_repl_policy 24; its defaults are the paper's P(8):S&E&R(1/32).",
+  "configurations":{
+    "lru":{
+      "_params":"EMISSARY commit, MLC TRUE_LRU (the baseline).",
+      "params":"--inst_limit 60000000",
+      "binary":"scarab_bdbc374",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "nomark":{
+      "_params":"REPL_EMISSARY with no line ever marked: must equal lru.",
+      "params":"--mlc_cache_repl_policy 24 --emissary_rand_denom 4000000000 --inst_limit 60000000",
+      "binary":"scarab_bdbc374",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "emissary":{
+      "_params":"REPL_EMISSARY P(8):S&E&R(1/32), the paper's preferred configuration.",
+      "params":"--mlc_cache_repl_policy 24 --inst_limit 60000000",
+      "binary":"scarab_bdbc374",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    },
+    "emissary_se":{
+      "_params":"REPL_EMISSARY P(8):S&E, no random filter.",
+      "params":"--mlc_cache_repl_policy 24 --emissary_rand_denom 1 --inst_limit 60000000",
+      "binary":"scarab_bdbc374",
+      "slurm_options":"",
+      "memory_overhead_mb":64
+    }
+  },
+  "collect_stats":{
+    "configs":null
+  },
+  "visualize":{
+    "baseline":"lru",
+    "configs":[
+      "lru",
+      "nomark",
+      "emissary",
+      "emissary_se"
+    ],
+    "counters":[
+      "IPC",
+      "EMISSARY_STARVE_IQE_CYCLES_ONPATH_count",
+      "EMISSARY_L1I_FILL_SE_count",
+      "EMISSARY_L1I_FILL_HIGH_count",
+      "EMISSARY_L1I_EVICT_HIGH_count",
+      "EMISSARY_MLC_MARK_count",
+      "EMISSARY_MLC_MARK_ABSENT_count",
+      "EMISSARY_MLC_HIT_HIGH_count",
+      "EMISSARY_MLC_EVICT_HIGH_count"
+    ]
+  },
+  "mem":{
+    "collection_baseline":null,
+    "fallback_mb":16384
+  },
+  "perf_analyze":{
+    "baseline":"lru",
+    "counters":[
+      "Periodic_Cycles"
+    ],
+    "stat_groups":[
+      "core",
+      "memory"
+    ],
+    "compare_all_stats":false,
+    "drift_top_workloads":1000,
+    "drift_top_simpoints":1000,
+    "prompt_budget_tokens":12000,
+    "threshold_pct":2.0,
+    "analyzer_cli_cmd":""
+  }
+}

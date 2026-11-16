@@ -30,6 +30,10 @@ from .utilities import (
         check_can_skip,
         get_old_job_logs,
         remove_old_job_logs,
+        open_unique_job_log,
+        register_runner,
+        other_runners_alive,
+        session_descriptors,
         print_simulation_status_summary,
         normalize_simulations,
         require_aslr_disabled,
@@ -229,6 +233,7 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
     log_dir = os.path.join(docker_home, "simulations", experiment_name, "logs")
     log_files = set()
     log_index = 0
+    runner_entry = None
 
     dont_collect = True
 
@@ -305,12 +310,8 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
                     tmp_files.add(filename)
                     command = '/bin/bash ' + filename
                     remove_jobs.add((config_key, suite, subsuite, workload, cluster_id))
-                    log_path = os.path.join(
-                        log_dir,
-                        f"job_{log_index}.out",
-                    )
+                    log_path, log_handle = open_unique_job_log(log_dir)
                     log_index += 1
-                    log_handle = open(log_path, "w")
                     log_files.add(log_handle)
                     process = subprocess.Popen(
                         "exec " + command,
@@ -358,6 +359,10 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
             # This error prints a message. Now stop execution
             return
         os.makedirs(os.path.join(docker_home, "simulations", experiment_name, "logs"), exist_ok=True)
+        # Other runners of this experiment (e.g. shards of one sweep) may share the directory;
+        # the last one to finish collects stats.
+        runner_entry = register_runner(os.path.join(docker_home, "simulations", experiment_name),
+                                       Path(descriptor_path).stem)
 
         # Reused containers left by an earlier run of this experiment whose runner was killed,
         # except those a surviving job script is still running its sim in.
@@ -441,6 +446,21 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
 
         remove_old_job_logs(old_job_logs, remove_jobs, dbg_lvl)
 
+        if runner_entry is not None:
+            runner_entry.unlink(missing_ok=True)
+            others = other_runners_alive(os.path.join(docker_home, "simulations", experiment_name))
+            shared = session_descriptors(os.path.join(docker_home, "simulations", experiment_name))
+            if others and not dont_collect:
+                print(f"Other runners of {experiment_name} are still running here (pid "
+                      f"{', '.join(map(str, others))}); the last one to finish collects stats.")
+                dont_collect = True
+            elif len(shared) > 1 and not dont_collect:
+                # Each descriptor covers only its own part (e.g. a shard's configs or simpoints), so
+                # collecting with this one would overwrite collected_stats.csv with a partial table.
+                print(f"{experiment_name} was run by several descriptors at once ({', '.join(sorted(shared))}); "
+                      f"not collecting a partial table. Once all of it has run, collect it with a descriptor "
+                      f"that covers all of them: ./sci --collect-stats <descriptor>")
+                dont_collect = True
         finish_simulation(user, docker_home, descriptor_path, descriptor_data['root_dir'], experiment_name, image_tag_list, [], dont_collect=dont_collect)
 
     except Exception as e:
@@ -464,6 +484,8 @@ def run_simulation(user, descriptor_data, workloads_data, infra_dir, descriptor_
         kill_jobs(user, "simulation", experiment_name, docker_prefix_list, infra_dir, dbg_lvl,
                   list(configs))
     finally:
+        if runner_entry is not None:
+            runner_entry.unlink(missing_ok=True)
         # Ctrl-C reaches the job scripts too, and each takes its slot's container down, but idle
         # slots' containers would stay. Normal exits removed them above; this finds none then.
         if container_reuse:

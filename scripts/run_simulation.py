@@ -35,6 +35,8 @@ from .utilities import (
     ROOT_ENTRYPOINT,
     use_apptainer,
     experiment_name_regex,
+    containers_in_use,
+    pool_runner_alive,
 )
 from .image_identity import image_tag_for
 from . import slurm_runner, local_runner
@@ -344,6 +346,22 @@ def find_conflicting_containers(workload_manager, docker_prefix_list, experiment
         except Exception as exc:
             warn(f"Unable to query slurm queue for preflight orphan check: {exc}", dbg_lvl)
 
+    held = {}
+
+    def held_by_live_runner(name: str) -> bool:
+        """Is a stopped container still owned by a live run, e.g. another runner of this experiment?
+
+        One being created or started, or a pool between sims, is not running for a moment;
+        calling it stale made a second runner of the same experiment refuse to start.
+        """
+        if "names" not in held:
+            try:
+                held["names"] = containers_in_use()
+            except Exception as exc:  # psutil missing or /proc unreadable: old behavior
+                warn(f"Could not scan for live job scripts: {exc}", dbg_lvl)
+                held["names"] = set()
+        return name in held["names"] or pool_runner_alive(name, docker_prefix_list, experiment_name, user)
+
     def split_matching_containers(container_rows: List[str], assume_running=False) -> Tuple[List[str], List[str]]:
         active: List[str] = []
         stale: List[str] = []
@@ -369,8 +387,9 @@ def find_conflicting_containers(workload_manager, docker_prefix_list, experiment
                 else:
                     stale.append(name)
             else:
-                # For local/manual mode, running containers are considered active.
-                if state_is_running:
+                # For local/manual mode, running containers are considered active, and so are
+                # stopped ones a live runner still owns.
+                if state_is_running or held_by_live_runner(name):
                     active.append(name)
                 else:
                     stale.append(name)
