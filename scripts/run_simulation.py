@@ -5,6 +5,7 @@
 
 import subprocess
 import argparse
+import time
 import os
 import sys
 import re
@@ -322,6 +323,12 @@ def open_interactive_shell(user, descriptor_name, descriptor_data, workloads_dat
         raise e
 
 
+# How long a launch waits for apparently stale containers of its experiment to go away (a finished
+# runner's containers being removed by --rm) before refusing to start.
+STALE_RECHECK_S = 30
+STALE_RECHECK_STEP_S = 5
+
+
 def find_conflicting_containers(workload_manager, docker_prefix_list, experiment_name, user, dbg_lvl=2, configs=None):
     if use_apptainer():
         return {}, {}
@@ -548,6 +555,21 @@ def run_simulation_command(descriptor_path, action, dbg_lvl=2, infra_dir=None):
             dbg_lvl,
             configs,
         )
+        # A runner of this experiment that has just finished leaves its stopped pool containers for
+        # the seconds docker's --rm takes to remove them (longer on a loaded host); a second runner
+        # starting then counted them as stale and refused. Re-check for a while before refusing.
+        waited = 0
+        while stale_conflicts and waited < STALE_RECHECK_S:
+            time.sleep(STALE_RECHECK_STEP_S)
+            waited += STALE_RECHECK_STEP_S
+            stale_conflicts, active_conflicts = find_conflicting_containers(
+                workload_manager,
+                docker_image_list,
+                experiment_name,
+                user,
+                dbg_lvl,
+                configs,
+            )
         if stale_conflicts:
             print(f"Found existing stale containers for experiment '{experiment_name}'. Refusing to launch simulations.")
             for location, containers in sorted(stale_conflicts.items()):
